@@ -1,0 +1,5 @@
+function(target_cxx_version TGT VERSION)
+    set_property(TARGET ${TGT} PROPERTY CXX_STANDARD ${VERSION})
+    set_property(TARGET ${TGT} PROPERTY CXX_STANDARD_REQUIRED ON)
+    set_property(TARGET ${TGT} PROPERTY CXX_EXTENSIONS OFF)
+endfunction()
