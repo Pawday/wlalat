@@ -169,8 +169,6 @@ try {
 
     s.send(m);
 
-    std::pmr::vector<std::byte> active_message_buf;
-
     auto last_message = std::chrono::steady_clock::now();
 
     while (true) {
@@ -178,7 +176,7 @@ try {
         if (elapsed > message_timeout) {
             break;
         }
-        std::optional<wlalat::Message> message_op = s.recv(active_message_buf);
+        std::optional<wlalat::Message> message_op = s.recv();
         if (!message_op) {
             std::this_thread::yield();
             continue;

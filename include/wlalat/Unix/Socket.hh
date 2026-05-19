@@ -51,7 +51,7 @@ struct Socket
     }
 
     Socket(sockaddr_un addr, std::pmr::memory_resource *res)
-        : _send_serializer(res)
+        : _send_serializer{res}, _recv_buffer{res}
     {
         ClosableFD fd;
         {
@@ -93,7 +93,13 @@ struct Socket
         }
     }
 
-    std::optional<Message> recv(std::pmr::vector<std::byte> &buf)
+    std::optional<Message> recv()
+    {
+        return recv_at(_recv_buffer);
+    }
+
+  private:
+    std::optional<Message> recv_at(std::pmr::vector<std::byte> &buf)
     {
         std::array<std::byte, 8> header{};
         int status = ::recv(
@@ -147,9 +153,9 @@ struct Socket
         return parser.try_parse();
     }
 
-  private:
     ClosableFD _fd;
     MessageSerializer _send_serializer;
+    std::pmr::vector<std::byte> _recv_buffer;
 };
 
 } // namespace Unix
