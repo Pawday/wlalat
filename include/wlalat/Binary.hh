@@ -8,39 +8,29 @@
 
 namespace wlalat {
 
-inline auto fle32(std::span<const std::byte, 4> D) -> uint32_t
+constexpr auto fle32(std::span<const std::byte, 4> data) -> uint_fast32_t
 {
-    uint32_t o = 0;
-
-    auto shifted_at = [&](size_t idx) {
-        uint32_t v = std::to_integer<uint32_t>(D[idx]);
-        v <<= (idx * 8);
-        return v;
-    };
-
-    o |= shifted_at(0);
-    o |= shifted_at(1);
-    o |= shifted_at(2);
-    o |= shifted_at(3);
-
+    const std::byte *D = data.data();
+    uint_fast32_t o = 0;
+    o <<= 8; o |= std::to_integer<uint32_t>(D[3]);
+    o <<= 8; o |= std::to_integer<uint32_t>(D[2]);
+    o <<= 8; o |= std::to_integer<uint32_t>(D[1]);
+    o <<= 8; o |= std::to_integer<uint32_t>(D[0]);
+    o &= 0xffffffff;
     return o;
 }
 
-inline auto tole32(uint32_t N) -> std::array<std::byte, 4>
+constexpr auto tole32(uint_fast32_t N) -> std::array<std::byte, 4>
 {
-    auto byte_at = [N](size_t idx) {
-        uint32_t mask = 0xff;
-        mask <<= (idx * 8);
-        uint32_t masked = N & mask;
-        uint8_t o = masked >> (idx * 8);
-        return std::byte{o};
-    };
-
     std::array<std::byte, 4> O{};
-    O[0] = byte_at(0);
-    O[1] = byte_at(1);
-    O[2] = byte_at(2);
-    O[3] = byte_at(3);
+    std::byte *D = O.data();
+
+    unsigned char b;
+    uint_fast32_t sh;
+    sh = N >> (0 * 8); b = sh & 0xff; D[0] = std::byte{b};
+    sh = N >> (1 * 8); b = sh & 0xff; D[1] = std::byte{b};
+    sh = N >> (2 * 8); b = sh & 0xff; D[2] = std::byte{b};
+    sh = N >> (3 * 8); b = sh & 0xff; D[3] = std::byte{b};
     return O;
 }
 
