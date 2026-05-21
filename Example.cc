@@ -31,6 +31,69 @@ constexpr uint32_t wl_display_get_registry_request_id = 1;
 
 namespace wlalat {
 
+struct Numeric
+{
+    Numeric() = default;
+    Numeric(uint_fast32_t v) : _v{v}
+    {
+    }
+
+    int_fast32_t raw() const
+    {
+        return _v;
+    }
+
+protected:
+    uint_fast32_t _v;
+};
+
+struct Int : Numeric
+{
+    operator int_least32_t() const
+    {
+        return _v & 0xffffffffu;
+    }
+};
+
+struct UInt : Numeric
+{
+    operator uint_least32_t() const
+    {
+        return _v & 0xffffffffu;
+    }
+};
+
+struct String : std::basic_string_view<char>
+{
+    String() = default;
+    String(std::basic_string_view<char> s) : std::basic_string_view<char>{s}
+    {
+    }
+};
+
+struct Fixed : Numeric
+{
+    // clang-format off
+    double f() { return to_floating<float>(); }
+    double d() { return to_floating<double>(); }
+    operator float()  { return f(); }
+    operator double() { return d(); }
+    // clang-format on
+
+private:
+    template <typename F> F to_floating() const
+    {
+        uint_fast32_t up = _v;
+        up >>= 8;
+        up &= 0x00ffffff;
+        uint_fast32_t down_u = _v;
+        down_u &= 0xff;
+        F down = down_u;
+        down /= 255;
+        return up + down;
+    };
+};
+
 struct StringParser
 {
     StringParser(std::span<const std::byte> data) : _data{data}
@@ -62,7 +125,7 @@ struct StringParser
             return O;
         }
 
-        auto string_view() const -> std::optional<std::basic_string_view<char>>
+        auto string() const -> std::optional<String>
         {
             auto data_zterm_op = string_data_zero_term();
             if (!data_zterm_op) {
@@ -109,46 +172,86 @@ struct StringParser
     std::span<const std::byte> _data;
 };
 
+struct Parser
+{
+    Parser(std::span<const std::byte> data) : _data{data}
+    {
+    }
+
+    template <typename T> bool has() const = delete;
+    // clang-format off
+    template <> bool has<Numeric>()  const { return _data.size() >= 4; }
+    template <> bool has<Int>()      const { return has<Numeric>(); }
+    template <> bool has<UInt>()     const { return has<Numeric>(); }
+    template <> bool has<Fixed>()    const { return has<Numeric>(); }
+    // clang-format on
+
+    template <> bool has<String>() const
+    {
+        StringParser p{_data};
+        std::optional<StringParser::Layout> parsed_op = p.parse();
+        if (!parsed_op) {
+            return false;
+        }
+        StringParser::Layout parsed = parsed_op.value();
+        return parsed_op.has_value();
+    }
+
+    template <typename T> T next() = delete;
+    template <> Numeric next()
+    {
+        std::span<const std::byte, 4> d = _data.subspan<0, 4>();
+        _data = _data.subspan(4);
+        return Numeric{fle32(d)};
+    }
+
+    // clang-format off
+    template <> Int   next() { return Int   { next<Numeric>()}; };
+    template <> UInt  next() { return UInt  { next<Numeric>()}; };
+    template <> Fixed next() { return Fixed { next<Numeric>()}; };
+    // clang-format on
+
+    template <> String next()
+    {
+        StringParser p{_data};
+        StringParser::Layout parsed = p.parse().value();
+        String O = parsed.string().value();
+        _data = _data.subspan(parsed.message_size());
+        return O;
+    }
+
+private:
+    std::span<const std::byte> _data;
+};
+
 struct wl_registry_message_global
 {
     /* numeric name of the global object */
-    uint32_t name;
+    wlalat::UInt name;
 
     /* interface implemented by the object */
-    std::string_view interface;
+    wlalat::String interface;
 
     /* interface version */
-    uint32_t version;
+    wlalat::UInt version;
 
-    static auto parse(Message msg) -> std::optional<wl_registry_message_global>
+    static auto parse(
+        wlalat::Message M) -> std::optional<wl_registry_message_global>
     {
+        wlalat::Parser p{M.payload};
         wl_registry_message_global O{};
-        auto parse_span = msg.payload;
 
-        if (parse_span.size() < 4) {
-            return {};
-        }
-        O.name = fle32(parse_span.subspan<0, 4>());
-        parse_span = parse_span.subspan(4);
+        using name_t = decltype(O.name);
+        if (!p.has<name_t>()) { return {}; }
+        O.name = p.next<name_t>();
 
-        StringParser interface_string_parser{parse_span};
-        auto interface_string_layout_op = interface_string_parser.parse();
-        if (!interface_string_layout_op) {
-            return {};
-        }
-        auto interface_string_layout = interface_string_layout_op.value();
-        auto interface_string_op = interface_string_layout.string_view();
-        if (!interface_string_op) {
-            return {};
-        }
+        using interface_t = decltype(O.interface);
+        if(!p.has<interface_t>()) { return {}; }
+        O.interface = p.next<interface_t>();
 
-        O.interface = interface_string_op.value();
-        parse_span = parse_span.subspan(interface_string_layout.message_size());
-
-        if (parse_span.size() < 4) {
-            return {};
-        }
-        O.version = fle32(parse_span.subspan<0, 4>());
+        using version_t = decltype(O.version);
+        if(!p.has<version_t>()) { return {}; };
+        O.version = p.next<version_t>();
 
         return O;
     }
@@ -189,9 +292,9 @@ try {
 
         std::println(
             "{} {} {}",
-            global_msg.name,
-            global_msg.interface,
-            global_msg.version);
+            static_cast<uint32_t>(global_msg.name),
+            static_cast<std::string_view>(global_msg.interface),
+            static_cast<uint32_t>(global_msg.version));
     }
 
 } catch (std::exception &e) {
