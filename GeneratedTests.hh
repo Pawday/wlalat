@@ -6,9 +6,16 @@
 
 #include <optional>
 
-namespace Generated {
+namespace Generated
+{
 
-struct wl_registry_message_global
+namespace wl_registry
+{
+
+namespace message
+{
+
+struct global
 {
     /* numeric name of the global object */
     wlalat::UInt name;
@@ -18,27 +25,25 @@ struct wl_registry_message_global
 
     /* interface version */
     wlalat::UInt version;
-
-    static auto parse(
-        wlalat::Message M) -> std::optional<wl_registry_message_global>
-    {
-        wlalat::Parser p{M.payload};
-        wl_registry_message_global O{};
-
-        using name_t = decltype(O.name);
-        if (!p.has<name_t>()) { return {}; }
-        O.name = p.next<name_t>();
-
-        using interface_t = decltype(O.interface);
-        if(!p.has<interface_t>()) { return {}; }
-        O.interface = p.next<interface_t>();
-
-        using version_t = decltype(O.version);
-        if(!p.has<version_t>()) { return {}; };
-        O.version = p.next<version_t>();
-
-        return O;
-    }
 };
 
-}; // namespace Generated
+inline std::optional<global> as_global(wlalat::Message M)
+{
+    wlalat::Parser p{M.payload};
+    global O{};
+
+    if (!p.has<decltype(O.name)>()) return {};
+    O.name = p.next<decltype(O.name)>();
+
+    if (!p.has<decltype(O.interface)>()) return {};
+    O.interface = p.next<decltype(O.interface)>();
+
+    if (!p.has<decltype(O.version)>()) return {};
+    O.version = p.next<decltype(O.version)>();
+
+    return O;
+}
+
+} // namespace message
+} // namespace wl_registry
+} // namespace Generated

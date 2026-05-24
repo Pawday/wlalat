@@ -62,7 +62,7 @@ try {
         wlalat::Message msg = message_op.value();
         last_message = decltype(last_message)::clock::now();
 
-        auto global_msg_op = Generated::wl_registry_message_global::parse(msg);
+        auto global_msg_op = Generated::wl_registry::message::as_global(msg);
         auto &global_msg = global_msg_op.value();
 
         std::println(
