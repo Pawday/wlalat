@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <optional>
 #include <print>
 #include <string_view>
 #include <variant>
@@ -144,28 +145,6 @@ struct ProtocolParser
         template <typename AttrSinkT>
         void attribs(AttrSinkT &sink) const
         {
-            auto m_name_op = name();
-            std::string_view m_name{"__AA__"};
-            if (m_name_op) {
-                m_name = m_name_op.value();
-            }
-
-            std::string_view type_str{"?"};
-            auto type_op = type();
-            if (type_op) {
-                switch (type_op.value()) {
-                    case UNPAIRED:
-                        type_str = "UNPAIR";
-                        break;
-                    case PAIR_START:
-                        type_str = "START ";
-                        break;
-                    case PAIR_END:
-                        type_str = "END   ";
-                        break;
-                }
-            }
-
             auto s = _s;
             auto name_end = std::ranges::find_if(s, white);
             if (name_end == std::end(s)) {
@@ -196,7 +175,7 @@ struct ProtocolParser
                 auto attr_len = std::distance(s.begin(), attr_end);
 
                 std::string_view attr = s.substr(0, attr_len);
-                std::println("[{}][{}] [{}]", type_str, m_name, attr);
+                sink(attr);
                 s = s.substr(attr_len);
             }
         }
@@ -205,18 +184,49 @@ struct ProtocolParser
         std::string_view _s;
     };
 
+    struct TestAttribPrinter
+    {
+        std::string_view m_name;
+        std::string_view type_str;
+        void operator()(std::string_view attr)
+        {
+            std::println("[{}][{}] [{}]", type_str, m_name, attr);
+        }
+    };
+
     void process_tag_string(std::string_view tag)
     {
         TagParser p{tag};
 
-        auto type = p.type();
-        if (type && type.value() == TagParser::Type::PAIR_END) {
-            auto n = p.name();
-            std::println("END {}", n.value_or("?"));
+        auto m_name_op = p.name();
+        std::string_view m_name{"__AA__"};
+        if (m_name_op) {
+            m_name = m_name_op.value();
         }
 
-        int test;
-        p.attribs(test);
+        std::string_view type_str{"?"};
+        auto type_op = p.type();
+        if (type_op) {
+            switch (type_op.value()) {
+            case TagParser::UNPAIRED:
+                type_str = "UNPAIR";
+                break;
+            case TagParser::PAIR_START:
+                type_str = "START ";
+                break;
+            case TagParser::PAIR_END:
+                type_str = "END   ";
+                break;
+            }
+        }
+
+        auto type = p.type();
+        if (type && type.value() == TagParser::Type::PAIR_END) {
+            std::println("[{}][{}]", type_str, m_name);
+        }
+
+        TestAttribPrinter printer{m_name, type_str};
+        p.attribs(printer);
     }
 
     void process()
