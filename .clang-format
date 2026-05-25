@@ -1,0 +1,24 @@
+IndentWidth: 4
+Language: Cpp
+ColumnLimit: 80
+BinPackArguments: false
+DerivePointerAlignment: false
+PointerAlignment: Right
+AllowShortFunctionsOnASingleLine: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterEnum: true
+  AfterStruct: true
+  AfterClass: true
+  AfterFunction: true
+  AfterNamespace: true
+AlignOperands: false
+AllowShortLambdasOnASingleLine: true
+BinPackParameters: false
+BreakBeforeBinaryOperators: None
+BreakBeforeConceptDeclarations: Always
+IndentWrappedFunctionNames: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AlignAfterOpenBracket: AlwaysBreak
+AlwaysBreakTemplateDeclarations: true
+IndentCaseLabels: true
