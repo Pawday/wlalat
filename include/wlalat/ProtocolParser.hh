@@ -97,6 +97,8 @@ struct ProtocolParser
         static constexpr std::string_view tag_name = "event";
         AttrString name;
         AttrString since;
+        AttrString type;
+        AttrString deprecated_since;
     };
 
     struct ArgRawTag
@@ -415,6 +417,8 @@ struct ProtocolParser
             MappingType mappings[]{
                 {"name", &t.name},
                 {"since", &t.since},
+                {"type", &t.type},
+                {"deprecated-since", &t.deprecated_since},
             };
             std::span sp_mappings{mappings};
             try_bind(sp_mappings, t.tag_name);
