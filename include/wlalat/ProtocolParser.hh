@@ -326,6 +326,16 @@ struct ProtocolParser
         std::string_view _s;
     };
 
+    struct TypedTagVariant : RawTagVariant
+    {
+        constexpr TypedTagVariant(RawTagVariant raw_tag, TagParser::Type type)
+            : RawTagVariant{raw_tag}, type{type}
+        {
+        }
+
+        TagParser::Type type;
+    };
+
     struct BindAttrVisitor
     {
         static constexpr std::optional<BindAttrVisitor>
@@ -521,9 +531,11 @@ struct ProtocolParser
         TagVariantAttrBinder b{tag_content};
         p.attribs(b);
 
-        tags.push_back(tag_content);
+        TypedTagVariant typed_tag{tag_content, tag_type};
+
+        tags.push_back(typed_tag);
     }
-    std::vector<RawTagVariant> tags;
+    std::vector<TypedTagVariant> tags;
 
     constexpr void process()
     {
