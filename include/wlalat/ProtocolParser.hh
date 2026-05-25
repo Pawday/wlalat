@@ -181,15 +181,15 @@ struct ProtocolParser
         auto type_op = p.type();
         if (type_op) {
             switch (type_op.value()) {
-            case TagParser::UNPAIRED:
-                type_str = "UNPAIR";
-                break;
-            case TagParser::PAIR_START:
-                type_str = "START ";
-                break;
-            case TagParser::PAIR_END:
-                type_str = "END   ";
-                break;
+                case TagParser::UNPAIRED:
+                    type_str = "UNPAIR";
+                    break;
+                case TagParser::PAIR_START:
+                    type_str = "START ";
+                    break;
+                case TagParser::PAIR_END:
+                    type_str = "END   ";
+                    break;
             }
         }
 
