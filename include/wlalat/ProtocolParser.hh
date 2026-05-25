@@ -46,33 +46,6 @@ struct ProtocolParser
         return white(c);
     }
 
-    struct KnownTag
-    {
-        // clang-format off
-        struct protocol  {};
-        struct interface {};
-        struct request   {};
-        struct event     {};
-        struct arg       {};
-        struct entry     {};
-
-        struct description {};
-        struct copyright   {};
-        // clang-format on
-    };
-
-    struct KnownTagVariant :
-    std::variant<// clang-format off
-            KnownTag::protocol,
-            KnownTag::interface,
-            KnownTag::request,
-            KnownTag::event,
-            KnownTag::arg,
-            KnownTag::entry
-        > // clang-format on
-    {
-    };
-
     struct TagContentInterface
     {
         std::string_view name;
