@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <format>
+#include <functional>
 #include <iterator>
 #include <optional>
 #include <span>
@@ -143,6 +144,46 @@ struct ProtocolParser
     struct CopyrightRawTag
     {
         static constexpr std::string_view tag_name = "copyright";
+    };
+
+    struct EntryNode : EntryRawTag
+    {
+        std::optional<std::reference_wrapper<EntryNode>> next;
+    };
+
+    struct EnumNode : EnumRawTag
+    {
+        std::optional<std::reference_wrapper<EnumNode>> next;
+        std::optional<EntryNode> entries;
+    };
+
+    struct ArgNode : ArgRawTag
+    {
+        std::optional<std::reference_wrapper<ArgNode>> next;
+    };
+
+    struct EventNode : EventRawTag
+    {
+        std::optional<std::reference_wrapper<EventNode>> next;
+    };
+
+    struct RequestNode : RequestRawTag
+    {
+        std::optional<std::reference_wrapper<RequestNode>> next;
+    };
+
+    struct InterfaceNode : InterfaceRawTag
+    {
+        std::optional<std::reference_wrapper<InterfaceNode>> next;
+        std::optional<RequestNode> requests;
+        std::optional<EventNode> events;
+        std::optional<EnumNode> enums;
+    };
+
+    struct ProtocolNode : ProtocolRawTag
+    {
+        std::optional<std::reference_wrapper<ProtocolNode>> next;
+        std::optional<InterfaceNode> interfaces;
     };
 
     struct RawTagVariant : std::variant<
