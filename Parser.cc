@@ -8,6 +8,21 @@
 #include <iterator>
 #include <print>
 #include <string>
+#include <string_view>
+
+constexpr auto test(std::string_view str)
+{
+    wlalat::ProtocolParser p{str};
+    p.test_process();
+    p.test_process();
+    p.test_process();
+    p.test_process();
+    p.test_process();
+    return p.test_n_tags();
+}
+
+static_assert(test("<protocol>") == 1);
+static_assert(test("<protocol><interface>") == 2);
 
 int main(int argc, char **argv)
 try {

@@ -43,6 +43,11 @@ struct ProtocolParser
         return o;
     }
 
+    constexpr size_t test_n_tags() const
+    {
+        return tags.size();
+    }
+
   private:
     static constexpr bool white(char c)
     {
