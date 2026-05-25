@@ -30,7 +30,7 @@ struct ProtocolParser
         process();
     }
 
-    constexpr std::vector<std::string> test_tags() const
+    std::vector<std::string> test_tags() const
     {
         std::vector<std::string> o;
         for (auto &t : tags) {
@@ -351,9 +351,8 @@ struct ProtocolParser
         using MappingType =
             std::pair<std::string_view, std::optional<std::string_view> *>;
 
-        template <size_t SZ>
-        constexpr void try_bind(
-            std::span<MappingType, SZ> &mappings, std::string_view tag_name)
+        constexpr void
+            try_bind(std::span<MappingType> mappings, std::string_view tag_name)
         {
             auto same_key = [this](auto &mapping) {
                 return mapping.first == key;
@@ -386,8 +385,7 @@ struct ProtocolParser
             MappingType mappings[]{
                 {"name", &t.name},
             };
-            std::span sp_mappings{mappings};
-            try_bind(sp_mappings, t.tag_name);
+            try_bind(mappings, t.tag_name);
         }
 
         constexpr void bind(InterfaceRawTag &t)
@@ -397,8 +395,7 @@ struct ProtocolParser
                 {"version", &t.version},
                 {"frozen", &t.frozen},
             };
-            std::span sp_mappings{mappings};
-            try_bind(sp_mappings, t.tag_name);
+            try_bind(mappings, t.tag_name);
         }
 
         constexpr void bind(RequestRawTag &t)
@@ -408,8 +405,7 @@ struct ProtocolParser
                 {"type", &t.type},
                 {"since", &t.since},
             };
-            std::span sp_mappings{mappings};
-            try_bind(sp_mappings, t.tag_name);
+            try_bind(mappings, t.tag_name);
         }
 
         constexpr void bind(EventRawTag &t)
@@ -420,8 +416,7 @@ struct ProtocolParser
                 {"type", &t.type},
                 {"deprecated-since", &t.deprecated_since},
             };
-            std::span sp_mappings{mappings};
-            try_bind(sp_mappings, t.tag_name);
+            try_bind(mappings, t.tag_name);
         }
 
         constexpr void bind(ArgRawTag &t)
@@ -434,8 +429,7 @@ struct ProtocolParser
                 {"allow-null", &t.allow_null},
                 {"enum", &t.enum_name},
             };
-            std::span sp_mappings{mappings};
-            try_bind(sp_mappings, t.tag_name);
+            try_bind(mappings, t.tag_name);
         }
 
         constexpr void bind(EnumRawTag &t)
@@ -445,8 +439,7 @@ struct ProtocolParser
                 {"since", &t.since},
                 {"bitfield", &t.bitfield},
             };
-            std::span sp_mappings{mappings};
-            try_bind(sp_mappings, t.tag_name);
+            try_bind(mappings, t.tag_name);
         }
 
         constexpr void bind(EntryRawTag &t)
@@ -457,8 +450,7 @@ struct ProtocolParser
                 {"summary", &t.summary},
                 {"since", &t.since},
             };
-            std::span sp_mappings{mappings};
-            try_bind(sp_mappings, t.tag_name);
+            try_bind(mappings, t.tag_name);
         }
 
         constexpr void bind(DescriptionRawTag &t)
@@ -466,8 +458,7 @@ struct ProtocolParser
             MappingType mappings[]{
                 {"summary", &t.summary},
             };
-            std::span sp_mappings{mappings};
-            try_bind(sp_mappings, t.tag_name);
+            try_bind(mappings, t.tag_name);
         }
 
         constexpr void bind(CopyrightRawTag &t)
