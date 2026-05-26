@@ -641,7 +641,8 @@ struct ProtocolParser
 
         switch (tag_type) {
             case TagParser::UNPAIRED:
-                tree.add(raw_tag);
+                tree.begin(raw_tag);
+                tree.finish(raw_tag);
                 break;
             case TagParser::PAIR_START:
                 tree.begin(raw_tag);
@@ -878,6 +879,50 @@ struct ProtocolParser
             finish_delete_check_alt<EntryNode>();
         }
 
+        constexpr void
+            bind(ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
+        {
+            ArgNode node{_nodes.size()};
+            static_cast<decltype(raw_tag)>(node) = raw_tag;
+
+            _nodes.push_back(Node{node});
+            _unfinished_stack.push_back(node);
+
+            auto &req_node = req.get(_nodes);
+            if (!req_node.args) {
+                req_node.args = node;
+            } else {
+                auto end_idx = chain_end(req_node.args.value());
+                Node &end = end_idx.get(std::span{_nodes});
+                auto &end_t = std::get<decltype(node)>(end);
+                end_t.next = node;
+            }
+        }
+
+        constexpr void bind(ArgRawTag &raw_tag, TypedNodeIndex<EventNode> &ev)
+        {
+            ArgNode node{_nodes.size()};
+            static_cast<decltype(raw_tag)>(node) = raw_tag;
+
+            _nodes.push_back(Node{node});
+            _unfinished_stack.push_back(node);
+
+            auto &ev_node = ev.get(_nodes);
+            if (!ev_node.args) {
+                ev_node.args = node;
+            } else {
+                auto end_idx = chain_end(ev_node.args.value());
+                Node &end = end_idx.get(std::span{_nodes});
+                auto &end_t = std::get<decltype(node)>(end);
+                end_t.next = node;
+            }
+        }
+
+        constexpr void finish(std::type_identity<ArgRawTag>)
+        {
+            finish_delete_check_alt<ArgNode>();
+        }
+
         constexpr void bind(
             RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
         {
@@ -933,9 +978,8 @@ struct ProtocolParser
             Node &node = _unfinished_stack.back().get(std::span{_nodes});
             ProtocolNode &proto = std::get<ProtocolNode>(node);
 
-            auto interfaces = chain_nodes(proto.interfaces.value());
-
             if not consteval {
+                auto interfaces = chain_nodes(proto.interfaces.value());
                 for (InterfaceNode &el : interfaces) {
                     std::println("__AA__ [{}]", el.name.value_or("?"));
                     if (el.requests) {
@@ -943,6 +987,15 @@ struct ProtocolParser
                         for (RequestNode &req : reqs) {
                             std::println(
                                 "__AA__     req [{}]", req.name.value_or("?"));
+
+                            if (req.args) {
+                                auto args = chain_nodes(req.args.value());
+                                for (ArgNode &arg : args) {
+                                    std::println(
+                                        "__AA__         arg [{}]",
+                                        arg.name.value_or("?"));
+                                }
+                            }
                         }
                     }
 
@@ -951,6 +1004,15 @@ struct ProtocolParser
                         for (EventNode &ev : evs) {
                             std::println(
                                 "__AA__     ev [{}]", ev.name.value_or("?"));
+
+                            if (ev.args) {
+                                auto args = chain_nodes(ev.args.value());
+                                for (ArgNode &arg : args) {
+                                    std::println(
+                                        "__AA__         arg [{}]",
+                                        arg.name.value_or("?"));
+                                }
+                            }
                         }
                     }
 
@@ -959,6 +1021,16 @@ struct ProtocolParser
                         for (EnumNode &en : ens) {
                             std::println(
                                 "__AA__     en [{}]", en.name.value_or("?"));
+
+                            if (en.entries) {
+                                auto ens = chain_nodes(en.entries.value());
+                                for (EntryNode &ent : ens) {
+                                    std::println(
+                                        "__AA__         enr [{}] [{}]",
+                                        ent.name.value_or("?"),
+                                        ent.value.value_or("?"));
+                                }
+                            }
                         }
                     }
                 }
@@ -1035,10 +1107,6 @@ struct ProtocolParser
         constexpr void finish(RawTagVariant raw_tag)
         {
             std::visit(finish_visitor{*this}, raw_tag);
-        }
-
-        constexpr void add(RawTagVariant raw_tag)
-        {
         }
 
         constexpr Index unfinished_tag()
