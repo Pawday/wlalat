@@ -183,7 +183,7 @@ struct ProtocolParser
 
     struct EnumNode : IndexChainNode<EnumNode>, EnumRawTag
     {
-        std::optional<EntryNode> entries;
+        std::optional<IndexChainNode<EntryNode>> entries;
     };
 
     struct ArgNode : IndexChainNode<ArgNode>, ArgRawTag
@@ -192,24 +192,24 @@ struct ProtocolParser
 
     struct EventNode : IndexChainNode<EventNode>, EventRawTag
     {
-        std::optional<ArgNode> args;
+        std::optional<IndexChainNode<ArgNode>> args;
     };
 
     struct RequestNode : IndexChainNode<RequestNode>, RequestRawTag
     {
-        std::optional<ArgNode> args;
+        std::optional<IndexChainNode<ArgNode>> args;
     };
 
     struct InterfaceNode : IndexChainNode<InterfaceNode>, InterfaceRawTag
     {
-        std::optional<RequestNode> requests;
-        std::optional<EventNode> events;
-        std::optional<EnumNode> enums;
+        std::optional<IndexChainNode<RequestNode>> requests;
+        std::optional<IndexChainNode<EventNode>> events;
+        std::optional<IndexChainNode<EnumNode>> enums;
     };
 
     struct ProtocolNode : IndexChainNode<ProtocolNode>, ProtocolRawTag
     {
-        std::optional<InterfaceNode> interfaces;
+        std::optional<IndexChainNode<InterfaceNode>> interfaces;
     };
 
     struct RawTagVariant : std::variant<
