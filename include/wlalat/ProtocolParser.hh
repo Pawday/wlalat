@@ -8,6 +8,7 @@
 #include <functional>
 #include <iterator>
 #include <optional>
+#include <print>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -31,7 +32,7 @@ struct ProtocolParser
         process();
     }
 
-    std::vector<std::string> test_tags() const
+    [[deprecated]] std::vector<std::string> test_tags() const
     {
         std::vector<std::string> o;
         for (auto &t : tags) {
@@ -44,7 +45,7 @@ struct ProtocolParser
         return o;
     }
 
-    constexpr size_t test_n_tags() const
+    [[deprecated]] constexpr size_t test_n_tags() const
     {
         return tags.size();
     }
@@ -146,43 +147,68 @@ struct ProtocolParser
         static constexpr std::string_view tag_name = "copyright";
     };
 
-    struct EntryNode : EntryRawTag
+    struct Index
     {
-        std::optional<std::reference_wrapper<EntryNode>> next;
+        constexpr Index(size_t index) : _index{index}
+        {
+        }
+
+        template <typename T>
+        constexpr T &get(std::span<T> C)
+        {
+            if (C.size() < _index) {
+                throw std::out_of_range{"IndexRef::at"};
+            }
+            return C[_index];
+        }
+
+        constexpr size_t index() const
+        {
+            return _index;
+        }
+
+      private:
+        size_t _index;
     };
 
-    struct EnumNode : EnumRawTag
+    template <typename T>
+    struct IndexChainNode : Index
     {
-        std::optional<std::reference_wrapper<EnumNode>> next;
+        std::optional<Index> next;
+    };
+
+    struct EntryNode : IndexChainNode<EntryNode>, EntryRawTag
+    {
+    };
+
+    struct EnumNode : IndexChainNode<EnumNode>, EnumRawTag
+    {
         std::optional<EntryNode> entries;
     };
 
-    struct ArgNode : ArgRawTag
+    struct ArgNode : IndexChainNode<ArgNode>, ArgRawTag
     {
-        std::optional<std::reference_wrapper<ArgNode>> next;
     };
 
-    struct EventNode : EventRawTag
+    struct EventNode : IndexChainNode<EventNode>, EventRawTag
     {
-        std::optional<std::reference_wrapper<EventNode>> next;
+        std::optional<ArgNode> args;
     };
 
-    struct RequestNode : RequestRawTag
+    struct RequestNode : IndexChainNode<RequestNode>, RequestRawTag
     {
-        std::optional<std::reference_wrapper<RequestNode>> next;
+        std::optional<ArgNode> args;
     };
 
-    struct InterfaceNode : InterfaceRawTag
+    struct InterfaceNode : IndexChainNode<InterfaceNode>, InterfaceRawTag
     {
-        std::optional<std::reference_wrapper<InterfaceNode>> next;
         std::optional<RequestNode> requests;
         std::optional<EventNode> events;
         std::optional<EnumNode> enums;
     };
 
-    struct ProtocolNode : ProtocolRawTag
+    struct ProtocolNode : IndexChainNode<ProtocolNode>, ProtocolRawTag
     {
-        std::optional<std::reference_wrapper<ProtocolNode>> next;
         std::optional<InterfaceNode> interfaces;
     };
 
@@ -260,6 +286,43 @@ struct ProtocolParser
                 return {};
             }
             return *same_name_alternative_it;
+        }
+    };
+
+    struct Node : std::variant<
+                      ProtocolNode,
+                      InterfaceNode,
+                      RequestNode,
+                      EventNode,
+                      ArgNode,
+                      EnumNode,
+                      EntryNode>
+    {
+        struct tag_name_visitor
+        {
+            template <typename Alternative>
+            constexpr std::string_view operator()(const Alternative &)
+            {
+                return Alternative::tag_name;
+            }
+        };
+        constexpr std::string_view tag_name() const
+        {
+            return std::visit(tag_name_visitor{}, *this);
+        }
+
+        struct node_index_visitor
+        {
+            template <typename AltT>
+            constexpr Index operator()(const AltT &alt)
+            {
+                return alt.index();
+            }
+        };
+
+        constexpr Index node_index() const
+        {
+            return std::visit(node_index_visitor{}, *this);
         }
     };
 
@@ -367,7 +430,7 @@ struct ProtocolParser
         std::string_view _s;
     };
 
-    struct TypedTagVariant : RawTagVariant
+    struct [[deprecated]] TypedTagVariant : RawTagVariant
     {
         constexpr TypedTagVariant(RawTagVariant raw_tag, TagParser::Type type)
             : RawTagVariant{raw_tag}, type{type}
@@ -563,20 +626,433 @@ struct ProtocolParser
             return;
         }
 
-        auto tag_content_op = RawTagVariant::from_tag_name(tag_name);
-        if (!tag_content_op) {
+        auto raw_tag_op = RawTagVariant::from_tag_name(tag_name);
+        if (!raw_tag_op) {
             auto msg = std::format("Unknown tag [{}]", tag_name);
             throw std::runtime_error{std::move(msg)};
         }
-        RawTagVariant tag_content = tag_content_op.value();
-        TagVariantAttrBinder b{tag_content};
+        RawTagVariant raw_tag = raw_tag_op.value();
+        TagVariantAttrBinder b{raw_tag};
         p.attribs(b);
 
-        TypedTagVariant typed_tag{tag_content, tag_type};
+        TypedTagVariant typed_tag{raw_tag, tag_type};
 
         tags.push_back(typed_tag);
+
+        switch (tag_type) {
+            case TagParser::UNPAIRED:
+                tree.add(raw_tag);
+                break;
+            case TagParser::PAIR_START:
+                tree.begin(raw_tag);
+                break;
+            case TagParser::PAIR_END:
+                tree.finish(raw_tag);
+                break;
+        }
     }
-    std::vector<TypedTagVariant> tags;
+
+    [[deprecated]] std::vector<TypedTagVariant> tags;
+
+    struct ProtocolTree
+    {
+        template <typename NodeT>
+        constexpr IndexChainNode<NodeT> chain_end(IndexChainNode<NodeT> node)
+        {
+            IndexChainNode<NodeT> curr = node;
+
+            while (true) {
+                Node &curr_node = curr.get(std::span{_nodes});
+                NodeT &curr_node_alt = std::get<NodeT>(curr_node);
+                if (!curr_node_alt.next) {
+                    return curr;
+                }
+
+                Node &next_node = curr_node_alt.next->get(std::span{_nodes});
+                IndexChainNode<NodeT> next{next_node.node_index()};
+                curr = next;
+            }
+
+            return curr;
+        }
+
+        template <typename NodeT>
+        constexpr std::vector<std::reference_wrapper<NodeT>>
+            chain_nodes(IndexChainNode<NodeT> node)
+        {
+            std::vector<std::reference_wrapper<NodeT>> O;
+            IndexChainNode<NodeT> curr = node;
+
+            while (true) {
+                Node &curr_node = curr.get(std::span{_nodes});
+                NodeT &curr_node_alt = std::get<NodeT>(curr_node);
+                O.push_back(std::ref(curr_node_alt));
+                if (!curr_node_alt.next) {
+                    break;
+                }
+
+                Node &next_node = curr_node_alt.next->get(std::span{_nodes});
+                IndexChainNode<NodeT> next{next_node.node_index()};
+                curr = next;
+            }
+
+            return O;
+        }
+
+        template <typename T>
+        struct TypedNodeIndex
+        {
+            size_t index;
+
+            constexpr T &get(std::span<Node> nodes)
+            {
+                if (index >= nodes.size()) {
+                    throw std::out_of_range{"TypepedNodeIndex::get"};
+                }
+                return std::get<T>(nodes[index]);
+            }
+        };
+
+        template <typename NodeT>
+        constexpr void finish_delete_check_alt()
+        {
+            if (_unfinished_stack.empty()) {
+                throw std::runtime_error{"Premature tag finish"};
+            }
+
+            Node &node = _unfinished_stack.back().get(std::span{_nodes});
+
+            if (!std::holds_alternative<NodeT>(node)) {
+                auto msg = std::format(
+                    "Cannot finish [{}] tag with [{}]",
+                    node.tag_name(),
+                    NodeT::tag_name);
+                throw std::runtime_error{std::move(msg)};
+            }
+            _unfinished_stack.pop_back();
+        }
+
+        template <typename RawTagT, typename NodeT>
+        constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<NodeT>)
+        {
+            if not consteval {
+                auto msg = std::format(
+                    "[generic binder] Cannot bind [{}] to [{}]",
+                    RawTagT::tag_name,
+                    NodeT::tag_name);
+                throw std::runtime_error{std::move(msg)};
+            }
+        }
+
+        template <typename RawTagT>
+        constexpr void finish(std::type_identity<RawTagT>)
+        {
+            auto msg = std::format(
+                "[generic finisher] Cannot finish [{}]", RawTagT::tag_name);
+            throw std::runtime_error{std::move(msg)};
+        }
+
+        template <typename RawTagT>
+        constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<ProtocolNode>)
+        {
+            if not consteval {
+                auto msg = std::format(
+                    "Cannot bind [{}] to protocol", RawTagT::tag_name);
+                throw std::runtime_error{std::move(msg)};
+            }
+        }
+
+        constexpr void
+            bind(CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+        {
+        }
+        constexpr void finish(std::type_identity<CopyrightRawTag>)
+        {
+        }
+
+        constexpr void
+            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+        {
+        }
+        constexpr void finish(std::type_identity<DescriptionRawTag>)
+        {
+        }
+
+        constexpr void
+            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<InterfaceNode>)
+        {
+        }
+
+        constexpr void
+            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<RequestNode>)
+        {
+        }
+
+        constexpr void
+            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<EventNode>)
+        {
+        }
+
+        constexpr void
+            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<EnumNode>)
+        {
+        }
+
+        constexpr void
+            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<EntryNode>)
+        {
+        }
+
+        constexpr void bind(
+            InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &proto_idx)
+        {
+            InterfaceNode node{_nodes.size()};
+            static_cast<decltype(raw_tag)>(node) = raw_tag;
+
+            _nodes.push_back(Node{node});
+            _unfinished_stack.push_back(node);
+
+            auto &proto = proto_idx.get(_nodes);
+            if (!proto.interfaces) {
+                proto.interfaces = node;
+            } else {
+                auto end_idx = chain_end(proto.interfaces.value());
+                Node &end = end_idx.get(std::span{_nodes});
+                auto &end_t = std::get<decltype(node)>(end);
+                end_t.next = node;
+            }
+        }
+
+        constexpr void finish(std::type_identity<InterfaceRawTag>)
+        {
+            finish_delete_check_alt<InterfaceNode>();
+        }
+
+        constexpr void
+            bind(EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+        {
+            EnumNode node{_nodes.size()};
+            static_cast<decltype(raw_tag)>(node) = raw_tag;
+
+            _nodes.push_back(Node{node});
+            _unfinished_stack.push_back(node);
+
+            auto &iface = iface_idx.get(_nodes);
+            if (!iface.enums) {
+                iface.enums = node;
+            } else {
+                auto end_idx = chain_end(iface.enums.value());
+                Node &end = end_idx.get(std::span{_nodes});
+                auto &end_t = std::get<decltype(node)>(end);
+                end_t.next = node;
+            }
+        }
+
+        constexpr void finish(std::type_identity<EnumRawTag>)
+        {
+            finish_delete_check_alt<EnumNode>();
+        }
+
+        constexpr void
+            bind(EntryRawTag &raw_tag, TypedNodeIndex<EnumNode> &enum_idx)
+        {
+            EntryNode node{_nodes.size()};
+            static_cast<decltype(raw_tag)>(node) = raw_tag;
+
+            _nodes.push_back(Node{node});
+            _unfinished_stack.push_back(node);
+
+            auto &enum_node = enum_idx.get(_nodes);
+            if (!enum_node.entries) {
+                enum_node.entries = node;
+            } else {
+                auto end_idx = chain_end(enum_node.entries.value());
+                Node &end = end_idx.get(std::span{_nodes});
+                auto &end_t = std::get<decltype(node)>(end);
+                end_t.next = node;
+            }
+        }
+
+        constexpr void finish(std::type_identity<EntryRawTag>)
+        {
+            finish_delete_check_alt<EntryNode>();
+        }
+
+        constexpr void bind(
+            RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+        {
+            RequestNode node{_nodes.size()};
+            static_cast<decltype(raw_tag)>(node) = raw_tag;
+
+            _nodes.push_back(Node{node});
+            _unfinished_stack.push_back(node);
+
+            auto &iface = iface_idx.get(_nodes);
+            if (!iface.requests) {
+                iface.requests = node;
+            } else {
+                auto end_idx = chain_end(iface.requests.value());
+                Node &end = end_idx.get(std::span{_nodes});
+                auto &end_t = std::get<decltype(node)>(end);
+                end_t.next = node;
+            }
+        }
+
+        constexpr void finish(std::type_identity<RequestRawTag>)
+        {
+            finish_delete_check_alt<RequestNode>();
+        }
+
+        constexpr void
+            bind(EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+        {
+            EventNode node{_nodes.size()};
+            static_cast<decltype(raw_tag)>(node) = raw_tag;
+
+            _nodes.push_back(Node{node});
+            _unfinished_stack.push_back(node);
+
+            auto &iface = iface_idx.get(_nodes);
+            if (!iface.events) {
+                iface.events = node;
+            } else {
+                auto end_idx = chain_end(iface.events.value());
+                Node &end = end_idx.get(std::span{_nodes});
+                auto &end_t = std::get<decltype(node)>(end);
+                end_t.next = node;
+            }
+        }
+
+        constexpr void finish(std::type_identity<EventRawTag>)
+        {
+            finish_delete_check_alt<EventNode>();
+        }
+
+        constexpr void finish(std::type_identity<ProtocolRawTag>)
+        {
+            Node &node = _unfinished_stack.back().get(std::span{_nodes});
+            ProtocolNode &proto = std::get<ProtocolNode>(node);
+
+            auto interfaces = chain_nodes(proto.interfaces.value());
+
+            if not consteval {
+                for (InterfaceNode &el : interfaces) {
+                    std::println("__AA__ [{}]", el.name.value_or("?"));
+                    if (el.requests) {
+                        auto reqs = chain_nodes(el.requests.value());
+                        for (RequestNode &req : reqs) {
+                            std::println(
+                                "__AA__     req [{}]", req.name.value_or("?"));
+                        }
+                    }
+
+                    if (el.events) {
+                        auto evs = chain_nodes(el.events.value());
+                        for (EventNode &ev : evs) {
+                            std::println(
+                                "__AA__     ev [{}]", ev.name.value_or("?"));
+                        }
+                    }
+
+                    if (el.enums) {
+                        auto ens = chain_nodes(el.enums.value());
+                        for (EnumNode &en : ens) {
+                            std::println(
+                                "__AA__     en [{}]", en.name.value_or("?"));
+                        }
+                    }
+                }
+            }
+
+            finish_delete_check_alt<ProtocolNode>();
+        }
+
+        friend struct begin_visitor;
+        struct begin_visitor
+        {
+            ProtocolTree &tree;
+
+            template <typename RawTagT>
+            struct bind_visitor
+            {
+                ProtocolTree &tree;
+                RawTagT &raw_tag;
+                size_t node_index;
+
+                template <typename NodeT>
+                constexpr void operator()(NodeT &)
+                {
+                    TypedNodeIndex<NodeT> node_idx{node_index};
+                    tree.bind(raw_tag, node_idx);
+                }
+            };
+
+            template <typename RawTagT>
+            constexpr void operator()(RawTagT &raw_tag)
+            {
+                if (tree._unfinished_stack.empty()) {
+                    auto msg = std::format(
+                        "<{}> must not be a top level tag", RawTagT::tag_name);
+                    throw std::runtime_error{std::move(msg)};
+                }
+
+                Index unfinished_node = tree.unfinished_tag();
+                std::visit(
+                    bind_visitor{tree, raw_tag, unfinished_node.index()},
+                    unfinished_node.get(std::span{tree._nodes}));
+            }
+
+            constexpr void operator()(ProtocolRawTag &raw_proto)
+            {
+                if (!tree._unfinished_stack.empty()) {
+                    throw std::runtime_error{
+                        "<protocol> must be the top level tag"};
+                }
+
+                ProtocolNode node{tree._nodes.size()};
+                static_cast<ProtocolRawTag &>(node) = raw_proto;
+                tree._nodes.push_back(Node{node});
+                tree._unfinished_stack.push_back(node);
+            }
+        };
+
+        constexpr void begin(RawTagVariant raw_tag)
+        {
+            std::visit(begin_visitor{*this}, raw_tag);
+        }
+
+        friend struct finish_visitor;
+        struct finish_visitor
+        {
+            ProtocolTree &tree;
+            template <typename RawTagT>
+            void operator()(RawTagT &)
+            {
+                tree.finish(std::type_identity<RawTagT>{});
+            }
+        };
+
+        constexpr void finish(RawTagVariant raw_tag)
+        {
+            std::visit(finish_visitor{*this}, raw_tag);
+        }
+
+        constexpr void add(RawTagVariant raw_tag)
+        {
+        }
+
+        constexpr Index unfinished_tag()
+        {
+            if (_unfinished_stack.empty()) {
+                throw std::out_of_range{"unfinished_tag: empty stack"};
+            }
+            return _unfinished_stack.back();
+        }
+
+      private:
+        std::vector<Node> _nodes;
+        std::vector<Index> _unfinished_stack;
+    };
 
     constexpr void process()
     {
@@ -618,6 +1094,7 @@ struct ProtocolParser
     }
 
     std::string_view _s;
+    ProtocolTree tree;
 };
 
 }; // namespace wlalat
