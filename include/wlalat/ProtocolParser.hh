@@ -21,6 +21,9 @@
 namespace wlalat
 {
 
+namespace ProtocolParsing
+{
+
 struct ProtocolParser
 {
     constexpr ProtocolParser(std::string_view string) : _s{string}
@@ -1103,4 +1106,5 @@ struct ProtocolParser
     ProtocolTree tree;
 };
 
+}; // namespace ProtocolParsing
 }; // namespace wlalat

@@ -12,7 +12,7 @@
 
 constexpr auto test(std::string_view str)
 {
-    wlalat::ProtocolParser p{str};
+    wlalat::ProtocolParsing::ProtocolParser p{str};
     return p.test_n_tags();
 }
 
@@ -28,7 +28,7 @@ try {
     std::string content{
         std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>()};
 
-    wlalat::ProtocolParser p{content};
+    wlalat::ProtocolParsing::ProtocolParser p{content};
 
     auto tags = p.test_tags();
     for (auto &t : tags) {
