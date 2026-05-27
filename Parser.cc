@@ -13,11 +13,6 @@
 constexpr auto test(std::string_view str)
 {
     wlalat::ProtocolParser p{str};
-    p.test_process();
-    p.test_process();
-    p.test_process();
-    p.test_process();
-    p.test_process();
     return p.test_n_tags();
 }
 
@@ -34,10 +29,6 @@ try {
         std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>()};
 
     wlalat::ProtocolParser p{content};
-
-    for (size_t i = 0; i != 10000; ++i) {
-        p.test_process();
-    }
 
     auto tags = p.test_tags();
     for (auto &t : tags) {

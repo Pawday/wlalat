@@ -25,11 +25,12 @@ struct ProtocolParser
 {
     constexpr ProtocolParser(std::string_view string) : _s{string}
     {
-    }
-
-    constexpr void test_process()
-    {
-        process();
+        while (!_s.empty()) {
+            auto err = process();
+            if (err) {
+                throw std::runtime_error{err.value()};
+            }
+        }
     }
 
     [[deprecated]] std::vector<std::string> test_tags() const
@@ -157,7 +158,7 @@ struct ProtocolParser
         constexpr T &get(std::span<T> C)
         {
             if (C.size() < _index) {
-                throw std::out_of_range{"IndexRef::at"};
+                throw std::out_of_range{"Index::at"};
             }
             return C[_index];
         }
@@ -628,27 +629,26 @@ struct ProtocolParser
         }
     };
 
-    constexpr void process_tag_string(std::string_view tag)
+    [[nodiscard("Possible error message")]] constexpr std::optional<std::string>
+        process_tag_string(std::string_view tag)
     {
         TagParser p{tag};
 
         auto tag_type_op = p.type();
         auto tag_name_op = p.name();
         if (!tag_name_op || !tag_type_op) {
-            auto msg = std::format("Bad tag [{}]", tag);
-            throw std::runtime_error{std::move(msg)};
+            return std::format("Bad tag [{}]", tag);
         }
 
         auto tag_type = tag_type_op.value();
         std::string_view tag_name = tag_name_op.value();
         if (tag_name == "xml") {
-            return;
+            return {};
         }
 
         auto raw_tag_op = RawTagVariant::from_tag_name(tag_name);
         if (!raw_tag_op) {
-            auto msg = std::format("Unknown tag [{}]", tag_name);
-            throw std::runtime_error{std::move(msg)};
+            return std::format("Unknown tag [{}]", tag_name);
         }
         RawTagVariant raw_tag = raw_tag_op.value();
         TagVariantAttrBinder b{raw_tag};
@@ -670,6 +670,8 @@ struct ProtocolParser
                 tree.tag_end(raw_tag);
                 break;
         }
+
+        return {};
     }
 
     [[deprecated]] std::vector<TypedTagVariant> tags;
@@ -1050,17 +1052,18 @@ struct ProtocolParser
         std::vector<Index> _active_tags;
     };
 
-    constexpr void process()
+    [[nodiscard("Possible error message")]] constexpr std::optional<std::string>
+        process()
     {
         if (_s.empty()) {
-            return;
+            return "End of string";
         }
 
         auto tag_start = _s.find('<');
         if (tag_start == _s.npos) {
             on_data(_s);
             _s = std::string_view{};
-            return;
+            return {};
         }
 
         std::string_view data = _s.substr(0, tag_start);
@@ -1069,7 +1072,7 @@ struct ProtocolParser
 
         auto tag_end_pos = _s.find('>');
         if (tag_end_pos == _s.npos) {
-            return;
+            return "Cannot find tag end";
         }
 
         std::string_view tag_string = _s.substr(0, tag_end_pos + 1);
@@ -1079,10 +1082,17 @@ struct ProtocolParser
             is_comment = true;
         }
 
-        if (!is_comment) {
-            process_tag_string(tag_string);
+        if (is_comment) {
+            _s = _s.substr(tag_string.size());
+            return {};
+        }
+
+        auto err = process_tag_string(tag_string);
+        if (err) {
+            return err;
         }
         _s = _s.substr(tag_string.size());
+        return {};
     }
 
     constexpr void on_data(std::string_view data)
