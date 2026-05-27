@@ -24,6 +24,154 @@ namespace wlalat
 namespace ProtocolParsing
 {
 
+using AttrString = std::optional<std::string_view>;
+
+struct ProtocolRawTag
+{
+    static constexpr std::string_view tag_name = "protocol";
+    AttrString name;
+};
+
+struct InterfaceRawTag
+{
+    static constexpr std::string_view tag_name = "interface";
+    AttrString name;
+    AttrString version;
+    AttrString frozen;
+};
+
+struct RequestRawTag
+{
+    static constexpr std::string_view tag_name = "request";
+    AttrString name;
+    AttrString type;
+    AttrString since;
+};
+
+struct EventRawTag
+{
+    static constexpr std::string_view tag_name = "event";
+    AttrString name;
+    AttrString since;
+    AttrString type;
+    AttrString deprecated_since;
+};
+
+struct ArgRawTag
+{
+    static constexpr std::string_view tag_name = "arg";
+    AttrString name;
+    AttrString type;
+    AttrString interface;
+    AttrString summary;
+    AttrString allow_null;
+    AttrString enum_name;
+};
+
+struct EnumRawTag
+{
+    static constexpr std::string_view tag_name = "enum";
+    AttrString name;
+    AttrString since;
+    AttrString bitfield;
+};
+
+struct EntryRawTag
+{
+    static constexpr std::string_view tag_name = "entry";
+    AttrString name;
+    AttrString value;
+    AttrString summary;
+    AttrString since;
+};
+
+struct DescriptionRawTag
+{
+    static constexpr std::string_view tag_name = "description";
+    AttrString summary;
+};
+
+struct CopyrightRawTag
+{
+    static constexpr std::string_view tag_name = "copyright";
+};
+
+struct RawTagVariant : std::variant<
+                           ProtocolRawTag,
+                           InterfaceRawTag,
+                           RequestRawTag,
+                           EventRawTag,
+                           ArgRawTag,
+                           EnumRawTag,
+                           EntryRawTag,
+                           DescriptionRawTag,
+                           CopyrightRawTag>
+{
+    struct tag_name_visitor
+    {
+        template <typename Alternative>
+        constexpr std::string_view operator()(const Alternative &)
+        {
+            return Alternative::tag_name;
+        }
+    };
+    constexpr std::string_view tag_name() const
+    {
+        return std::visit(tag_name_visitor{}, *this);
+    }
+
+    struct name_attr_visitor
+    {
+        template <typename Alternative>
+        constexpr std::optional<std::string_view>
+            operator()(const Alternative &a)
+        {
+            return a.name;
+        }
+
+        constexpr std::optional<std::string_view>
+            operator()(const CopyrightRawTag &a)
+        {
+            return {};
+        }
+
+        constexpr std::optional<std::string_view>
+            operator()(const DescriptionRawTag &a)
+        {
+            return {};
+        }
+    };
+
+    constexpr std::optional<std::string_view> name_attr() const
+    {
+        return std::visit(name_attr_visitor{}, *this);
+    }
+
+    template <typename... Alternatives>
+    static constexpr auto
+        make_alternatives_array(const std::variant<Alternatives...> &arg)
+    {
+        return std::array<
+            RawTagVariant,
+            std::variant_size_v<std::remove_cvref_t<decltype(arg)>>>{
+            RawTagVariant{Alternatives{}}...};
+    }
+
+    static constexpr auto
+        from_tag_name(std::string_view tag_name) -> std::optional<RawTagVariant>
+    {
+        auto name_match = [tag_name](RawTagVariant &v) {
+            return v.tag_name() == tag_name;
+        };
+        auto array = make_alternatives_array(RawTagVariant{});
+        auto same_name_alternative_it = std::ranges::find_if(array, name_match);
+        if (same_name_alternative_it == std::end(array)) {
+            return {};
+        }
+        return *same_name_alternative_it;
+    }
+};
+
 struct ProtocolParser
 {
     constexpr ProtocolParser(std::string_view string) : _s{string}
@@ -78,78 +226,6 @@ struct ProtocolParser
 
         return white(c);
     }
-
-    using AttrString = std::optional<std::string_view>;
-
-    struct ProtocolRawTag
-    {
-        static constexpr std::string_view tag_name = "protocol";
-        AttrString name;
-    };
-
-    struct InterfaceRawTag
-    {
-        static constexpr std::string_view tag_name = "interface";
-        AttrString name;
-        AttrString version;
-        AttrString frozen;
-    };
-
-    struct RequestRawTag
-    {
-        static constexpr std::string_view tag_name = "request";
-        AttrString name;
-        AttrString type;
-        AttrString since;
-    };
-
-    struct EventRawTag
-    {
-        static constexpr std::string_view tag_name = "event";
-        AttrString name;
-        AttrString since;
-        AttrString type;
-        AttrString deprecated_since;
-    };
-
-    struct ArgRawTag
-    {
-        static constexpr std::string_view tag_name = "arg";
-        AttrString name;
-        AttrString type;
-        AttrString interface;
-        AttrString summary;
-        AttrString allow_null;
-        AttrString enum_name;
-    };
-
-    struct EnumRawTag
-    {
-        static constexpr std::string_view tag_name = "enum";
-        AttrString name;
-        AttrString since;
-        AttrString bitfield;
-    };
-
-    struct EntryRawTag
-    {
-        static constexpr std::string_view tag_name = "entry";
-        AttrString name;
-        AttrString value;
-        AttrString summary;
-        AttrString since;
-    };
-
-    struct DescriptionRawTag
-    {
-        static constexpr std::string_view tag_name = "description";
-        AttrString summary;
-    };
-
-    struct CopyrightRawTag
-    {
-        static constexpr std::string_view tag_name = "copyright";
-    };
 
     struct Index
     {
@@ -231,83 +307,6 @@ struct ProtocolParser
     struct CopyrightNode : IndexChainNode<CopyrightNode>, CopyrightRawTag
     {
         using RawTagT = CopyrightRawTag;
-    };
-
-    struct RawTagVariant : std::variant<
-                               ProtocolRawTag,
-                               InterfaceRawTag,
-                               RequestRawTag,
-                               EventRawTag,
-                               ArgRawTag,
-                               EnumRawTag,
-                               EntryRawTag,
-                               DescriptionRawTag,
-                               CopyrightRawTag>
-    {
-        struct tag_name_visitor
-        {
-            template <typename Alternative>
-            constexpr std::string_view operator()(const Alternative &)
-            {
-                return Alternative::tag_name;
-            }
-        };
-        constexpr std::string_view tag_name() const
-        {
-            return std::visit(tag_name_visitor{}, *this);
-        }
-
-        struct name_attr_visitor
-        {
-            template <typename Alternative>
-            constexpr std::optional<std::string_view>
-                operator()(const Alternative &a)
-            {
-                return a.name;
-            }
-
-            constexpr std::optional<std::string_view>
-                operator()(const CopyrightRawTag &a)
-            {
-                return {};
-            }
-
-            constexpr std::optional<std::string_view>
-                operator()(const DescriptionRawTag &a)
-            {
-                return {};
-            }
-        };
-
-        constexpr std::optional<std::string_view> name_attr() const
-        {
-            return std::visit(name_attr_visitor{}, *this);
-        }
-
-        template <typename... Alternatives>
-        static constexpr auto
-            make_alternatives_array(const std::variant<Alternatives...> &arg)
-        {
-            return std::array<
-                RawTagVariant,
-                std::variant_size_v<std::remove_cvref_t<decltype(arg)>>>{
-                RawTagVariant{Alternatives{}}...};
-        }
-
-        static constexpr auto from_tag_name(std::string_view tag_name)
-            -> std::optional<RawTagVariant>
-        {
-            auto name_match = [tag_name](RawTagVariant &v) {
-                return v.tag_name() == tag_name;
-            };
-            auto array = make_alternatives_array(RawTagVariant{});
-            auto same_name_alternative_it =
-                std::ranges::find_if(array, name_match);
-            if (same_name_alternative_it == std::end(array)) {
-                return {};
-            }
-            return *same_name_alternative_it;
-        }
     };
 
     struct Node : std::variant<
