@@ -179,29 +179,35 @@ struct ProtocolParser
 
     struct EntryNode : IndexChainNode<EntryNode>, EntryRawTag
     {
+        using RawTagT = EntryRawTag;
     };
 
     struct EnumNode : IndexChainNode<EnumNode>, EnumRawTag
     {
+        using RawTagT = EnumRawTag;
         std::optional<IndexChainNode<EntryNode>> entries;
     };
 
     struct ArgNode : IndexChainNode<ArgNode>, ArgRawTag
     {
+        using RawTagT = ArgRawTag;
     };
 
     struct EventNode : IndexChainNode<EventNode>, EventRawTag
     {
+        using RawTagT = EventRawTag;
         std::optional<IndexChainNode<ArgNode>> args;
     };
 
     struct RequestNode : IndexChainNode<RequestNode>, RequestRawTag
     {
+        using RawTagT = RequestRawTag;
         std::optional<IndexChainNode<ArgNode>> args;
     };
 
     struct InterfaceNode : IndexChainNode<InterfaceNode>, InterfaceRawTag
     {
+        using RawTagT = InterfaceRawTag;
         std::optional<IndexChainNode<RequestNode>> requests;
         std::optional<IndexChainNode<EventNode>> events;
         std::optional<IndexChainNode<EnumNode>> enums;
@@ -209,7 +215,18 @@ struct ProtocolParser
 
     struct ProtocolNode : IndexChainNode<ProtocolNode>, ProtocolRawTag
     {
+        using RawTagT = ProtocolRawTag;
         std::optional<IndexChainNode<InterfaceNode>> interfaces;
+    };
+
+    struct DescriptionNode : IndexChainNode<DescriptionNode>, DescriptionRawTag
+    {
+        using RawTagT = DescriptionRawTag;
+    };
+
+    struct CopyrightNode : IndexChainNode<CopyrightNode>, CopyrightRawTag
+    {
+        using RawTagT = CopyrightRawTag;
     };
 
     struct RawTagVariant : std::variant<
@@ -296,7 +313,9 @@ struct ProtocolParser
                       EventNode,
                       ArgNode,
                       EnumNode,
-                      EntryNode>
+                      EntryNode,
+                      DescriptionNode,
+                      CopyrightNode>
     {
         struct tag_name_visitor
         {
@@ -714,6 +733,42 @@ struct ProtocolParser
             }
         };
 
+        template <typename NodeT, typename DstNodeT>
+        constexpr void t_bind(
+            NodeT::RawTagT &tag,
+            TypedNodeIndex<DstNodeT> &target_node_idx,
+            std::optional<IndexChainNode<NodeT>> DstNodeT::*proj)
+        {
+            NodeT node{_nodes.size()};
+            static_cast<NodeT::RawTagT &>(node) = tag;
+
+            _nodes.push_back(Node{node});
+            _active_tags.push_back(node);
+
+            DstNodeT &target_node = target_node_idx.get(_nodes);
+
+            std::optional<IndexChainNode<NodeT>> &dst_chain =
+                std::invoke(proj, target_node);
+            if (!dst_chain) {
+                dst_chain = node;
+                return;
+            }
+
+            auto end_idx = chain_end(dst_chain.value());
+            Node &end = end_idx.get(std::span{_nodes});
+            NodeT &end_t = std::get<NodeT>(end);
+            end_t.next = node;
+        }
+
+        template <typename NodeT>
+        constexpr void t_bind_stack_only(NodeT::RawTagT &tag)
+        {
+            NodeT node{_nodes.size()};
+            static_cast<NodeT::RawTagT &>(node) = tag;
+            _nodes.push_back(Node{node});
+            _active_tags.push_back(node);
+        }
+
         template <typename NodeT>
         constexpr void tag_end_delete_check_alt()
         {
@@ -767,62 +822,37 @@ struct ProtocolParser
         constexpr void
             bind(CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
         {
+            t_bind_stack_only<CopyrightNode>(raw_tag);
         }
         constexpr void tag_end(std::type_identity<CopyrightRawTag>)
         {
+            tag_end_delete_check_alt<CopyrightNode>();
+        }
+
+        template <typename DestNodeT>
+        constexpr void
+            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
+        {
+            t_bind_stack_only<DescriptionNode>(raw_tag);
         }
 
         constexpr void
             bind(DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
         {
+            t_bind_stack_only<DescriptionNode>(raw_tag);
         }
+
         constexpr void tag_end(std::type_identity<DescriptionRawTag>)
         {
-        }
-
-        constexpr void
-            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<InterfaceNode>)
-        {
-        }
-
-        constexpr void
-            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<RequestNode>)
-        {
-        }
-
-        constexpr void
-            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<EventNode>)
-        {
-        }
-
-        constexpr void
-            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<EnumNode>)
-        {
-        }
-
-        constexpr void
-            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<EntryNode>)
-        {
+            tag_end_delete_check_alt<DescriptionNode>();
         }
 
         constexpr void bind(
-            InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &proto_idx)
+            InterfaceRawTag &raw_tag,
+            TypedNodeIndex<ProtocolNode> &target_node_idx)
         {
-            InterfaceNode node{_nodes.size()};
-            static_cast<decltype(raw_tag)>(node) = raw_tag;
-
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-
-            auto &proto = proto_idx.get(_nodes);
-            if (!proto.interfaces) {
-                proto.interfaces = node;
-            } else {
-                auto end_idx = chain_end(proto.interfaces.value());
-                Node &end = end_idx.get(std::span{_nodes});
-                auto &end_t = std::get<decltype(node)>(end);
-                end_t.next = node;
-            }
+            t_bind<InterfaceNode>(
+                raw_tag, target_node_idx, &ProtocolNode::interfaces);
         }
 
         constexpr void tag_end(std::type_identity<InterfaceRawTag>)
@@ -833,21 +863,7 @@ struct ProtocolParser
         constexpr void
             bind(EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
         {
-            EnumNode node{_nodes.size()};
-            static_cast<decltype(raw_tag)>(node) = raw_tag;
-
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-
-            auto &iface = iface_idx.get(_nodes);
-            if (!iface.enums) {
-                iface.enums = node;
-            } else {
-                auto end_idx = chain_end(iface.enums.value());
-                Node &end = end_idx.get(std::span{_nodes});
-                auto &end_t = std::get<decltype(node)>(end);
-                end_t.next = node;
-            }
+            t_bind<EnumNode>(raw_tag, iface_idx, &InterfaceNode::enums);
         }
 
         constexpr void tag_end(std::type_identity<EnumRawTag>)
@@ -858,21 +874,7 @@ struct ProtocolParser
         constexpr void
             bind(EntryRawTag &raw_tag, TypedNodeIndex<EnumNode> &enum_idx)
         {
-            EntryNode node{_nodes.size()};
-            static_cast<decltype(raw_tag)>(node) = raw_tag;
-
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-
-            auto &enum_node = enum_idx.get(_nodes);
-            if (!enum_node.entries) {
-                enum_node.entries = node;
-            } else {
-                auto end_idx = chain_end(enum_node.entries.value());
-                Node &end = end_idx.get(std::span{_nodes});
-                auto &end_t = std::get<decltype(node)>(end);
-                end_t.next = node;
-            }
+            t_bind<EntryNode>(raw_tag, enum_idx, &EnumNode::entries);
         }
 
         constexpr void tag_end(std::type_identity<EntryRawTag>)
@@ -883,40 +885,12 @@ struct ProtocolParser
         constexpr void
             bind(ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
         {
-            ArgNode node{_nodes.size()};
-            static_cast<decltype(raw_tag)>(node) = raw_tag;
-
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-
-            auto &req_node = req.get(_nodes);
-            if (!req_node.args) {
-                req_node.args = node;
-            } else {
-                auto end_idx = chain_end(req_node.args.value());
-                Node &end = end_idx.get(std::span{_nodes});
-                auto &end_t = std::get<decltype(node)>(end);
-                end_t.next = node;
-            }
+            t_bind<ArgNode>(raw_tag, req, &RequestNode::args);
         }
 
         constexpr void bind(ArgRawTag &raw_tag, TypedNodeIndex<EventNode> &ev)
         {
-            ArgNode node{_nodes.size()};
-            static_cast<decltype(raw_tag)>(node) = raw_tag;
-
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-
-            auto &ev_node = ev.get(_nodes);
-            if (!ev_node.args) {
-                ev_node.args = node;
-            } else {
-                auto end_idx = chain_end(ev_node.args.value());
-                Node &end = end_idx.get(std::span{_nodes});
-                auto &end_t = std::get<decltype(node)>(end);
-                end_t.next = node;
-            }
+            t_bind<ArgNode>(raw_tag, ev, &EventNode::args);
         }
 
         constexpr void tag_end(std::type_identity<ArgRawTag>)
@@ -927,21 +901,7 @@ struct ProtocolParser
         constexpr void bind(
             RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
         {
-            RequestNode node{_nodes.size()};
-            static_cast<decltype(raw_tag)>(node) = raw_tag;
-
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-
-            auto &iface = iface_idx.get(_nodes);
-            if (!iface.requests) {
-                iface.requests = node;
-            } else {
-                auto end_idx = chain_end(iface.requests.value());
-                Node &end = end_idx.get(std::span{_nodes});
-                auto &end_t = std::get<decltype(node)>(end);
-                end_t.next = node;
-            }
+            t_bind<RequestNode>(raw_tag, iface_idx, &InterfaceNode::requests);
         }
 
         constexpr void tag_end(std::type_identity<RequestRawTag>)
@@ -952,21 +912,7 @@ struct ProtocolParser
         constexpr void
             bind(EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
         {
-            EventNode node{_nodes.size()};
-            static_cast<decltype(raw_tag)>(node) = raw_tag;
-
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-
-            auto &iface = iface_idx.get(_nodes);
-            if (!iface.events) {
-                iface.events = node;
-            } else {
-                auto end_idx = chain_end(iface.events.value());
-                Node &end = end_idx.get(std::span{_nodes});
-                auto &end_t = std::get<decltype(node)>(end);
-                end_t.next = node;
-            }
+            t_bind<EventNode>(raw_tag, iface_idx, &InterfaceNode::events);
         }
 
         constexpr void tag_end(std::type_identity<EventRawTag>)
