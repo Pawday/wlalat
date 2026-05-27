@@ -293,6 +293,376 @@ struct Node : std::variant<
     }
 };
 
+struct ProtocolTree
+{
+    template <typename NodeT>
+    constexpr IndexChainNode<NodeT> chain_end(IndexChainNode<NodeT> node)
+    {
+        IndexChainNode<NodeT> curr = node;
+
+        while (true) {
+            Node &curr_node = curr.get(std::span{_nodes});
+            NodeT &curr_node_alt = std::get<NodeT>(curr_node);
+            if (!curr_node_alt.next) {
+                return curr;
+            }
+
+            Node &next_node = curr_node_alt.next->get(std::span{_nodes});
+            IndexChainNode<NodeT> next{next_node.node_index()};
+            curr = next;
+        }
+
+        return curr;
+    }
+
+    template <typename NodeT>
+    constexpr std::vector<std::reference_wrapper<NodeT>>
+        chain_nodes(IndexChainNode<NodeT> node)
+    {
+        std::vector<std::reference_wrapper<NodeT>> O;
+        IndexChainNode<NodeT> curr = node;
+
+        while (true) {
+            Node &curr_node = curr.get(std::span{_nodes});
+            NodeT &curr_node_alt = std::get<NodeT>(curr_node);
+            O.push_back(std::ref(curr_node_alt));
+            if (!curr_node_alt.next) {
+                break;
+            }
+
+            Node &next_node = curr_node_alt.next->get(std::span{_nodes});
+            IndexChainNode<NodeT> next{next_node.node_index()};
+            curr = next;
+        }
+
+        return O;
+    }
+
+    template <typename T>
+    struct TypedNodeIndex
+    {
+        size_t index;
+
+        constexpr T &get(std::span<Node> nodes)
+        {
+            if (index >= nodes.size()) {
+                throw std::out_of_range{"TypepedNodeIndex::get"};
+            }
+            return std::get<T>(nodes[index]);
+        }
+    };
+
+    template <typename NodeT, typename DstNodeT>
+    constexpr void t_bind(
+        NodeT::RawTagT &tag,
+        TypedNodeIndex<DstNodeT> &target_node_idx,
+        std::optional<IndexChainNode<NodeT>> DstNodeT::*proj)
+    {
+        NodeT node{_nodes.size()};
+        static_cast<NodeT::RawTagT &>(node) = tag;
+
+        _nodes.push_back(Node{node});
+        _active_tags.push_back(node);
+
+        DstNodeT &target_node = target_node_idx.get(_nodes);
+
+        std::optional<IndexChainNode<NodeT>> &dst_chain =
+            std::invoke(proj, target_node);
+        if (!dst_chain) {
+            dst_chain = node;
+            return;
+        }
+
+        auto end_idx = chain_end(dst_chain.value());
+        Node &end = end_idx.get(std::span{_nodes});
+        NodeT &end_t = std::get<NodeT>(end);
+        end_t.next = node;
+    }
+
+    template <typename NodeT>
+    constexpr void t_bind_stack_only(NodeT::RawTagT &tag)
+    {
+        NodeT node{_nodes.size()};
+        static_cast<NodeT::RawTagT &>(node) = tag;
+        _nodes.push_back(Node{node});
+        _active_tags.push_back(node);
+    }
+
+    template <typename NodeT>
+    constexpr void tag_end_delete_check_alt()
+    {
+        if (_active_tags.empty()) {
+            throw std::runtime_error{"Premature tag_end"};
+        }
+
+        Node &node = _active_tags.back().get(std::span{_nodes});
+
+        if (!std::holds_alternative<NodeT>(node)) {
+            auto msg = std::format(
+                "Cannot end [{}] tag with [{}]",
+                node.tag_name(),
+                NodeT::tag_name);
+            throw std::runtime_error{std::move(msg)};
+        }
+        _active_tags.pop_back();
+    }
+
+    template <typename RawTagT, typename NodeT>
+    constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<NodeT>)
+    {
+        if not consteval {
+            auto msg = std::format(
+                "[generic binder] Cannot bind [{}] to [{}]",
+                RawTagT::tag_name,
+                NodeT::tag_name);
+            throw std::runtime_error{std::move(msg)};
+        }
+    }
+
+    template <typename RawTagT>
+    constexpr void tag_end(std::type_identity<RawTagT>)
+    {
+        auto msg = std::format(
+            "[generic tag_end handler] Cannot end tag [{}]", RawTagT::tag_name);
+        throw std::runtime_error{std::move(msg)};
+    }
+
+    template <typename RawTagT>
+    constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<ProtocolNode>)
+    {
+        if not consteval {
+            auto msg =
+                std::format("Cannot bind [{}] to protocol", RawTagT::tag_name);
+            throw std::runtime_error{std::move(msg)};
+        }
+    }
+
+    constexpr void bind(CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+    {
+        t_bind_stack_only<CopyrightNode>(raw_tag);
+    }
+    constexpr void tag_end(std::type_identity<CopyrightRawTag>)
+    {
+        tag_end_delete_check_alt<CopyrightNode>();
+    }
+
+    template <typename DestNodeT>
+    constexpr void bind(DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
+    {
+        t_bind_stack_only<DescriptionNode>(raw_tag);
+    }
+
+    constexpr void
+        bind(DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+    {
+        t_bind_stack_only<DescriptionNode>(raw_tag);
+    }
+
+    constexpr void tag_end(std::type_identity<DescriptionRawTag>)
+    {
+        tag_end_delete_check_alt<DescriptionNode>();
+    }
+
+    constexpr void bind(
+        InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &target_node_idx)
+    {
+        t_bind<InterfaceNode>(
+            raw_tag, target_node_idx, &ProtocolNode::interfaces);
+    }
+
+    constexpr void tag_end(std::type_identity<InterfaceRawTag>)
+    {
+        tag_end_delete_check_alt<InterfaceNode>();
+    }
+
+    constexpr void
+        bind(EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    {
+        t_bind<EnumNode>(raw_tag, iface_idx, &InterfaceNode::enums);
+    }
+
+    constexpr void tag_end(std::type_identity<EnumRawTag>)
+    {
+        tag_end_delete_check_alt<EnumNode>();
+    }
+
+    constexpr void
+        bind(EntryRawTag &raw_tag, TypedNodeIndex<EnumNode> &enum_idx)
+    {
+        t_bind<EntryNode>(raw_tag, enum_idx, &EnumNode::entries);
+    }
+
+    constexpr void tag_end(std::type_identity<EntryRawTag>)
+    {
+        tag_end_delete_check_alt<EntryNode>();
+    }
+
+    constexpr void bind(ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
+    {
+        t_bind<ArgNode>(raw_tag, req, &RequestNode::args);
+    }
+
+    constexpr void bind(ArgRawTag &raw_tag, TypedNodeIndex<EventNode> &ev)
+    {
+        t_bind<ArgNode>(raw_tag, ev, &EventNode::args);
+    }
+
+    constexpr void tag_end(std::type_identity<ArgRawTag>)
+    {
+        tag_end_delete_check_alt<ArgNode>();
+    }
+
+    constexpr void
+        bind(RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    {
+        t_bind<RequestNode>(raw_tag, iface_idx, &InterfaceNode::requests);
+    }
+
+    constexpr void tag_end(std::type_identity<RequestRawTag>)
+    {
+        tag_end_delete_check_alt<RequestNode>();
+    }
+
+    constexpr void
+        bind(EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    {
+        t_bind<EventNode>(raw_tag, iface_idx, &InterfaceNode::events);
+    }
+
+    constexpr void tag_end(std::type_identity<EventRawTag>)
+    {
+        tag_end_delete_check_alt<EventNode>();
+    }
+
+    constexpr void tag_end(std::type_identity<ProtocolRawTag>)
+    {
+        Node &node = _active_tags.back().get(std::span{_nodes});
+        ProtocolNode &proto = std::get<ProtocolNode>(node);
+
+        if not consteval {
+            auto interfaces = chain_nodes(proto.interfaces.value());
+            for (InterfaceNode &el : interfaces) {
+                std::println("__AA__ [{}]", el.name.value_or("?"));
+                if (el.requests) {
+                    auto reqs = chain_nodes(el.requests.value());
+                    for (RequestNode &req : reqs) {
+                        std::println(
+                            "__AA__     req [{}]", req.name.value_or("?"));
+
+                        if (req.args) {
+                            auto args = chain_nodes(req.args.value());
+                            for (ArgNode &arg : args) {
+                                std::println(
+                                    "__AA__         arg [{}]",
+                                    arg.name.value_or("?"));
+                            }
+                        }
+                    }
+                }
+
+                if (el.events) {
+                    auto evs = chain_nodes(el.events.value());
+                    for (EventNode &ev : evs) {
+                        std::println(
+                            "__AA__     ev [{}]", ev.name.value_or("?"));
+
+                        if (ev.args) {
+                            auto args = chain_nodes(ev.args.value());
+                            for (ArgNode &arg : args) {
+                                std::println(
+                                    "__AA__         arg [{}]",
+                                    arg.name.value_or("?"));
+                            }
+                        }
+                    }
+                }
+
+                if (el.enums) {
+                    auto ens = chain_nodes(el.enums.value());
+                    for (EnumNode &en : ens) {
+                        std::println(
+                            "__AA__     en [{}]", en.name.value_or("?"));
+
+                        if (en.entries) {
+                            auto ens = chain_nodes(en.entries.value());
+                            for (EntryNode &ent : ens) {
+                                std::println(
+                                    "__AA__         enr [{}] [{}]",
+                                    ent.name.value_or("?"),
+                                    ent.value.value_or("?"));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        tag_end_delete_check_alt<ProtocolNode>();
+    }
+
+    friend struct tag_start_visitor;
+    struct tag_start_visitor
+    {
+        ProtocolTree &tree;
+
+        template <typename RawTagT>
+        constexpr void operator()(RawTagT &raw_tag)
+        {
+            if (tree._active_tags.empty()) {
+                auto msg = std::format(
+                    "<{}> must not be a top level tag", RawTagT::tag_name);
+                throw std::runtime_error{std::move(msg)};
+            }
+
+            Index active_tag = tree.active_tag_index();
+            auto visitor = [&]<typename NodeT>(NodeT &) {
+                TypedNodeIndex<NodeT> node_idx{active_tag.index()};
+                tree.bind(raw_tag, node_idx);
+            };
+
+            Node &node = active_tag.get(std::span{tree._nodes});
+            std::visit(visitor, node);
+        }
+
+        constexpr void operator()(ProtocolRawTag &raw_proto)
+        {
+            if (!tree._active_tags.empty()) {
+                throw std::runtime_error{"<protocol> must be a top level tag"};
+            }
+
+            ProtocolNode node{tree._nodes.size()};
+            static_cast<ProtocolRawTag &>(node) = raw_proto;
+            tree._nodes.push_back(Node{node});
+            tree._active_tags.push_back(node);
+        }
+    };
+
+    constexpr void tag_start(RawTagVariant raw_tag)
+    {
+        std::visit(tag_start_visitor{*this}, raw_tag);
+    }
+
+    constexpr void tag_end(RawTagVariant raw_tag)
+    {
+        auto visitor = [&]<typename RawTagT>(RawTagT &) {
+            tag_end(std::type_identity<RawTagT>{});
+        };
+        std::visit(visitor, raw_tag);
+    }
+
+    constexpr Index active_tag_index()
+    {
+        if (_active_tags.empty()) {
+            throw std::out_of_range{"unfinished_tag: empty stack"};
+        }
+        return _active_tags.back();
+    }
+
+  private:
+    std::vector<Node> _nodes;
+    std::vector<Index> _active_tags;
+};
+
 struct ProtocolParser
 {
     constexpr ProtocolParser(std::string_view string) : _s{string}
@@ -677,382 +1047,6 @@ struct ProtocolParser
     }
 
     [[deprecated]] std::vector<TypedTagVariant> tags;
-
-    struct ProtocolTree
-    {
-        template <typename NodeT>
-        constexpr IndexChainNode<NodeT> chain_end(IndexChainNode<NodeT> node)
-        {
-            IndexChainNode<NodeT> curr = node;
-
-            while (true) {
-                Node &curr_node = curr.get(std::span{_nodes});
-                NodeT &curr_node_alt = std::get<NodeT>(curr_node);
-                if (!curr_node_alt.next) {
-                    return curr;
-                }
-
-                Node &next_node = curr_node_alt.next->get(std::span{_nodes});
-                IndexChainNode<NodeT> next{next_node.node_index()};
-                curr = next;
-            }
-
-            return curr;
-        }
-
-        template <typename NodeT>
-        constexpr std::vector<std::reference_wrapper<NodeT>>
-            chain_nodes(IndexChainNode<NodeT> node)
-        {
-            std::vector<std::reference_wrapper<NodeT>> O;
-            IndexChainNode<NodeT> curr = node;
-
-            while (true) {
-                Node &curr_node = curr.get(std::span{_nodes});
-                NodeT &curr_node_alt = std::get<NodeT>(curr_node);
-                O.push_back(std::ref(curr_node_alt));
-                if (!curr_node_alt.next) {
-                    break;
-                }
-
-                Node &next_node = curr_node_alt.next->get(std::span{_nodes});
-                IndexChainNode<NodeT> next{next_node.node_index()};
-                curr = next;
-            }
-
-            return O;
-        }
-
-        template <typename T>
-        struct TypedNodeIndex
-        {
-            size_t index;
-
-            constexpr T &get(std::span<Node> nodes)
-            {
-                if (index >= nodes.size()) {
-                    throw std::out_of_range{"TypepedNodeIndex::get"};
-                }
-                return std::get<T>(nodes[index]);
-            }
-        };
-
-        template <typename NodeT, typename DstNodeT>
-        constexpr void t_bind(
-            NodeT::RawTagT &tag,
-            TypedNodeIndex<DstNodeT> &target_node_idx,
-            std::optional<IndexChainNode<NodeT>> DstNodeT::*proj)
-        {
-            NodeT node{_nodes.size()};
-            static_cast<NodeT::RawTagT &>(node) = tag;
-
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-
-            DstNodeT &target_node = target_node_idx.get(_nodes);
-
-            std::optional<IndexChainNode<NodeT>> &dst_chain =
-                std::invoke(proj, target_node);
-            if (!dst_chain) {
-                dst_chain = node;
-                return;
-            }
-
-            auto end_idx = chain_end(dst_chain.value());
-            Node &end = end_idx.get(std::span{_nodes});
-            NodeT &end_t = std::get<NodeT>(end);
-            end_t.next = node;
-        }
-
-        template <typename NodeT>
-        constexpr void t_bind_stack_only(NodeT::RawTagT &tag)
-        {
-            NodeT node{_nodes.size()};
-            static_cast<NodeT::RawTagT &>(node) = tag;
-            _nodes.push_back(Node{node});
-            _active_tags.push_back(node);
-        }
-
-        template <typename NodeT>
-        constexpr void tag_end_delete_check_alt()
-        {
-            if (_active_tags.empty()) {
-                throw std::runtime_error{"Premature tag_end"};
-            }
-
-            Node &node = _active_tags.back().get(std::span{_nodes});
-
-            if (!std::holds_alternative<NodeT>(node)) {
-                auto msg = std::format(
-                    "Cannot end [{}] tag with [{}]",
-                    node.tag_name(),
-                    NodeT::tag_name);
-                throw std::runtime_error{std::move(msg)};
-            }
-            _active_tags.pop_back();
-        }
-
-        template <typename RawTagT, typename NodeT>
-        constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<NodeT>)
-        {
-            if not consteval {
-                auto msg = std::format(
-                    "[generic binder] Cannot bind [{}] to [{}]",
-                    RawTagT::tag_name,
-                    NodeT::tag_name);
-                throw std::runtime_error{std::move(msg)};
-            }
-        }
-
-        template <typename RawTagT>
-        constexpr void tag_end(std::type_identity<RawTagT>)
-        {
-            auto msg = std::format(
-                "[generic tag_end handler] Cannot end tag [{}]",
-                RawTagT::tag_name);
-            throw std::runtime_error{std::move(msg)};
-        }
-
-        template <typename RawTagT>
-        constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<ProtocolNode>)
-        {
-            if not consteval {
-                auto msg = std::format(
-                    "Cannot bind [{}] to protocol", RawTagT::tag_name);
-                throw std::runtime_error{std::move(msg)};
-            }
-        }
-
-        constexpr void
-            bind(CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
-        {
-            t_bind_stack_only<CopyrightNode>(raw_tag);
-        }
-        constexpr void tag_end(std::type_identity<CopyrightRawTag>)
-        {
-            tag_end_delete_check_alt<CopyrightNode>();
-        }
-
-        template <typename DestNodeT>
-        constexpr void
-            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
-        {
-            t_bind_stack_only<DescriptionNode>(raw_tag);
-        }
-
-        constexpr void
-            bind(DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
-        {
-            t_bind_stack_only<DescriptionNode>(raw_tag);
-        }
-
-        constexpr void tag_end(std::type_identity<DescriptionRawTag>)
-        {
-            tag_end_delete_check_alt<DescriptionNode>();
-        }
-
-        constexpr void bind(
-            InterfaceRawTag &raw_tag,
-            TypedNodeIndex<ProtocolNode> &target_node_idx)
-        {
-            t_bind<InterfaceNode>(
-                raw_tag, target_node_idx, &ProtocolNode::interfaces);
-        }
-
-        constexpr void tag_end(std::type_identity<InterfaceRawTag>)
-        {
-            tag_end_delete_check_alt<InterfaceNode>();
-        }
-
-        constexpr void
-            bind(EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
-        {
-            t_bind<EnumNode>(raw_tag, iface_idx, &InterfaceNode::enums);
-        }
-
-        constexpr void tag_end(std::type_identity<EnumRawTag>)
-        {
-            tag_end_delete_check_alt<EnumNode>();
-        }
-
-        constexpr void
-            bind(EntryRawTag &raw_tag, TypedNodeIndex<EnumNode> &enum_idx)
-        {
-            t_bind<EntryNode>(raw_tag, enum_idx, &EnumNode::entries);
-        }
-
-        constexpr void tag_end(std::type_identity<EntryRawTag>)
-        {
-            tag_end_delete_check_alt<EntryNode>();
-        }
-
-        constexpr void
-            bind(ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
-        {
-            t_bind<ArgNode>(raw_tag, req, &RequestNode::args);
-        }
-
-        constexpr void bind(ArgRawTag &raw_tag, TypedNodeIndex<EventNode> &ev)
-        {
-            t_bind<ArgNode>(raw_tag, ev, &EventNode::args);
-        }
-
-        constexpr void tag_end(std::type_identity<ArgRawTag>)
-        {
-            tag_end_delete_check_alt<ArgNode>();
-        }
-
-        constexpr void bind(
-            RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
-        {
-            t_bind<RequestNode>(raw_tag, iface_idx, &InterfaceNode::requests);
-        }
-
-        constexpr void tag_end(std::type_identity<RequestRawTag>)
-        {
-            tag_end_delete_check_alt<RequestNode>();
-        }
-
-        constexpr void
-            bind(EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
-        {
-            t_bind<EventNode>(raw_tag, iface_idx, &InterfaceNode::events);
-        }
-
-        constexpr void tag_end(std::type_identity<EventRawTag>)
-        {
-            tag_end_delete_check_alt<EventNode>();
-        }
-
-        constexpr void tag_end(std::type_identity<ProtocolRawTag>)
-        {
-            Node &node = _active_tags.back().get(std::span{_nodes});
-            ProtocolNode &proto = std::get<ProtocolNode>(node);
-
-            if not consteval {
-                auto interfaces = chain_nodes(proto.interfaces.value());
-                for (InterfaceNode &el : interfaces) {
-                    std::println("__AA__ [{}]", el.name.value_or("?"));
-                    if (el.requests) {
-                        auto reqs = chain_nodes(el.requests.value());
-                        for (RequestNode &req : reqs) {
-                            std::println(
-                                "__AA__     req [{}]", req.name.value_or("?"));
-
-                            if (req.args) {
-                                auto args = chain_nodes(req.args.value());
-                                for (ArgNode &arg : args) {
-                                    std::println(
-                                        "__AA__         arg [{}]",
-                                        arg.name.value_or("?"));
-                                }
-                            }
-                        }
-                    }
-
-                    if (el.events) {
-                        auto evs = chain_nodes(el.events.value());
-                        for (EventNode &ev : evs) {
-                            std::println(
-                                "__AA__     ev [{}]", ev.name.value_or("?"));
-
-                            if (ev.args) {
-                                auto args = chain_nodes(ev.args.value());
-                                for (ArgNode &arg : args) {
-                                    std::println(
-                                        "__AA__         arg [{}]",
-                                        arg.name.value_or("?"));
-                                }
-                            }
-                        }
-                    }
-
-                    if (el.enums) {
-                        auto ens = chain_nodes(el.enums.value());
-                        for (EnumNode &en : ens) {
-                            std::println(
-                                "__AA__     en [{}]", en.name.value_or("?"));
-
-                            if (en.entries) {
-                                auto ens = chain_nodes(en.entries.value());
-                                for (EntryNode &ent : ens) {
-                                    std::println(
-                                        "__AA__         enr [{}] [{}]",
-                                        ent.name.value_or("?"),
-                                        ent.value.value_or("?"));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            tag_end_delete_check_alt<ProtocolNode>();
-        }
-
-        friend struct tag_start_visitor;
-        struct tag_start_visitor
-        {
-            ProtocolTree &tree;
-
-            template <typename RawTagT>
-            constexpr void operator()(RawTagT &raw_tag)
-            {
-                if (tree._active_tags.empty()) {
-                    auto msg = std::format(
-                        "<{}> must not be a top level tag", RawTagT::tag_name);
-                    throw std::runtime_error{std::move(msg)};
-                }
-
-                Index active_tag = tree.active_tag_index();
-                auto visitor = [&]<typename NodeT>(NodeT &) {
-                    TypedNodeIndex<NodeT> node_idx{active_tag.index()};
-                    tree.bind(raw_tag, node_idx);
-                };
-
-                Node &node = active_tag.get(std::span{tree._nodes});
-                std::visit(visitor, node);
-            }
-
-            constexpr void operator()(ProtocolRawTag &raw_proto)
-            {
-                if (!tree._active_tags.empty()) {
-                    throw std::runtime_error{
-                        "<protocol> must be a top level tag"};
-                }
-
-                ProtocolNode node{tree._nodes.size()};
-                static_cast<ProtocolRawTag &>(node) = raw_proto;
-                tree._nodes.push_back(Node{node});
-                tree._active_tags.push_back(node);
-            }
-        };
-
-        constexpr void tag_start(RawTagVariant raw_tag)
-        {
-            std::visit(tag_start_visitor{*this}, raw_tag);
-        }
-
-        constexpr void tag_end(RawTagVariant raw_tag)
-        {
-            auto visitor = [&]<typename RawTagT>(RawTagT &) {
-                tag_end(std::type_identity<RawTagT>{});
-            };
-            std::visit(visitor, raw_tag);
-        }
-
-        constexpr Index active_tag_index()
-        {
-            if (_active_tags.empty()) {
-                throw std::out_of_range{"unfinished_tag: empty stack"};
-            }
-            return _active_tags.back();
-        }
-
-      private:
-        std::vector<Node> _nodes;
-        std::vector<Index> _active_tags;
-    };
 
     [[nodiscard("Possible error message")]] constexpr std::optional<std::string>
         process()
