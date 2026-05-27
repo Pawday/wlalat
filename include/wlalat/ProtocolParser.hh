@@ -172,6 +172,127 @@ struct RawTagVariant : std::variant<
     }
 };
 
+struct Index
+{
+    constexpr Index(size_t index) : _index{index}
+    {
+    }
+
+    template <typename T>
+    constexpr T &get(std::span<T> C)
+    {
+        if (C.size() < _index) {
+            throw std::out_of_range{"Index::at"};
+        }
+        return C[_index];
+    }
+
+    constexpr size_t index() const
+    {
+        return _index;
+    }
+
+  private:
+    size_t _index;
+};
+
+template <typename T>
+struct IndexChainNode : Index
+{
+    std::optional<Index> next;
+};
+
+struct EntryNode : IndexChainNode<EntryNode>, EntryRawTag
+{
+    using RawTagT = EntryRawTag;
+};
+
+struct EnumNode : IndexChainNode<EnumNode>, EnumRawTag
+{
+    using RawTagT = EnumRawTag;
+    std::optional<IndexChainNode<EntryNode>> entries;
+};
+
+struct ArgNode : IndexChainNode<ArgNode>, ArgRawTag
+{
+    using RawTagT = ArgRawTag;
+};
+
+struct EventNode : IndexChainNode<EventNode>, EventRawTag
+{
+    using RawTagT = EventRawTag;
+    std::optional<IndexChainNode<ArgNode>> args;
+};
+
+struct RequestNode : IndexChainNode<RequestNode>, RequestRawTag
+{
+    using RawTagT = RequestRawTag;
+    std::optional<IndexChainNode<ArgNode>> args;
+};
+
+struct InterfaceNode : IndexChainNode<InterfaceNode>, InterfaceRawTag
+{
+    using RawTagT = InterfaceRawTag;
+    std::optional<IndexChainNode<RequestNode>> requests;
+    std::optional<IndexChainNode<EventNode>> events;
+    std::optional<IndexChainNode<EnumNode>> enums;
+};
+
+struct ProtocolNode : IndexChainNode<ProtocolNode>, ProtocolRawTag
+{
+    using RawTagT = ProtocolRawTag;
+    std::optional<IndexChainNode<InterfaceNode>> interfaces;
+};
+
+struct DescriptionNode : IndexChainNode<DescriptionNode>, DescriptionRawTag
+{
+    using RawTagT = DescriptionRawTag;
+};
+
+struct CopyrightNode : IndexChainNode<CopyrightNode>, CopyrightRawTag
+{
+    using RawTagT = CopyrightRawTag;
+};
+
+struct Node : std::variant<
+                  ProtocolNode,
+                  InterfaceNode,
+                  RequestNode,
+                  EventNode,
+                  ArgNode,
+                  EnumNode,
+                  EntryNode,
+                  DescriptionNode,
+                  CopyrightNode>
+{
+    struct tag_name_visitor
+    {
+        template <typename Alternative>
+        constexpr std::string_view operator()(const Alternative &)
+        {
+            return Alternative::tag_name;
+        }
+    };
+    constexpr std::string_view tag_name() const
+    {
+        return std::visit(tag_name_visitor{}, *this);
+    }
+
+    struct node_index_visitor
+    {
+        template <typename AltT>
+        constexpr Index operator()(const AltT &alt)
+        {
+            return alt.index();
+        }
+    };
+
+    constexpr Index node_index() const
+    {
+        return std::visit(node_index_visitor{}, *this);
+    }
+};
+
 struct ProtocolParser
 {
     constexpr ProtocolParser(std::string_view string) : _s{string}
@@ -226,127 +347,6 @@ struct ProtocolParser
 
         return white(c);
     }
-
-    struct Index
-    {
-        constexpr Index(size_t index) : _index{index}
-        {
-        }
-
-        template <typename T>
-        constexpr T &get(std::span<T> C)
-        {
-            if (C.size() < _index) {
-                throw std::out_of_range{"Index::at"};
-            }
-            return C[_index];
-        }
-
-        constexpr size_t index() const
-        {
-            return _index;
-        }
-
-      private:
-        size_t _index;
-    };
-
-    template <typename T>
-    struct IndexChainNode : Index
-    {
-        std::optional<Index> next;
-    };
-
-    struct EntryNode : IndexChainNode<EntryNode>, EntryRawTag
-    {
-        using RawTagT = EntryRawTag;
-    };
-
-    struct EnumNode : IndexChainNode<EnumNode>, EnumRawTag
-    {
-        using RawTagT = EnumRawTag;
-        std::optional<IndexChainNode<EntryNode>> entries;
-    };
-
-    struct ArgNode : IndexChainNode<ArgNode>, ArgRawTag
-    {
-        using RawTagT = ArgRawTag;
-    };
-
-    struct EventNode : IndexChainNode<EventNode>, EventRawTag
-    {
-        using RawTagT = EventRawTag;
-        std::optional<IndexChainNode<ArgNode>> args;
-    };
-
-    struct RequestNode : IndexChainNode<RequestNode>, RequestRawTag
-    {
-        using RawTagT = RequestRawTag;
-        std::optional<IndexChainNode<ArgNode>> args;
-    };
-
-    struct InterfaceNode : IndexChainNode<InterfaceNode>, InterfaceRawTag
-    {
-        using RawTagT = InterfaceRawTag;
-        std::optional<IndexChainNode<RequestNode>> requests;
-        std::optional<IndexChainNode<EventNode>> events;
-        std::optional<IndexChainNode<EnumNode>> enums;
-    };
-
-    struct ProtocolNode : IndexChainNode<ProtocolNode>, ProtocolRawTag
-    {
-        using RawTagT = ProtocolRawTag;
-        std::optional<IndexChainNode<InterfaceNode>> interfaces;
-    };
-
-    struct DescriptionNode : IndexChainNode<DescriptionNode>, DescriptionRawTag
-    {
-        using RawTagT = DescriptionRawTag;
-    };
-
-    struct CopyrightNode : IndexChainNode<CopyrightNode>, CopyrightRawTag
-    {
-        using RawTagT = CopyrightRawTag;
-    };
-
-    struct Node : std::variant<
-                      ProtocolNode,
-                      InterfaceNode,
-                      RequestNode,
-                      EventNode,
-                      ArgNode,
-                      EnumNode,
-                      EntryNode,
-                      DescriptionNode,
-                      CopyrightNode>
-    {
-        struct tag_name_visitor
-        {
-            template <typename Alternative>
-            constexpr std::string_view operator()(const Alternative &)
-            {
-                return Alternative::tag_name;
-            }
-        };
-        constexpr std::string_view tag_name() const
-        {
-            return std::visit(tag_name_visitor{}, *this);
-        }
-
-        struct node_index_visitor
-        {
-            template <typename AltT>
-            constexpr Index operator()(const AltT &alt)
-            {
-                return alt.index();
-            }
-        };
-
-        constexpr Index node_index() const
-        {
-            return std::visit(node_index_visitor{}, *this);
-        }
-    };
 
     struct TagParser
     {
