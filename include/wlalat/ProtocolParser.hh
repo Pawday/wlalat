@@ -694,30 +694,6 @@ struct ProtocolParser
     }
 
   private:
-    static constexpr bool white(char c)
-    {
-        switch (c) {
-            case ' ':
-            case '\n':
-            case '\r':
-            case '\t':
-                return true;
-        }
-
-        return false;
-    }
-
-    static constexpr bool white_or_name_end(char c)
-    {
-        switch (c) {
-            case '/':
-            case '>':
-                return true;
-        }
-
-        return white(c);
-    }
-
     struct TagParser
     {
         constexpr TagParser(std::string_view string) : _s{string}
@@ -819,6 +795,30 @@ struct ProtocolParser
         }
 
       private:
+        static constexpr bool white(char c)
+        {
+            switch (c) {
+                case ' ':
+                case '\n':
+                case '\r':
+                case '\t':
+                    return true;
+            }
+
+            return false;
+        }
+
+        static constexpr bool white_or_name_end(char c)
+        {
+            switch (c) {
+                case '/':
+                case '>':
+                    return true;
+            }
+
+            return white(c);
+        }
+
         std::string_view _s;
     };
 
