@@ -641,14 +641,14 @@ struct ProtocolParser
 
         switch (tag_type) {
             case TagParser::UNPAIRED:
-                tree.begin(raw_tag);
-                tree.finish(raw_tag);
+                tree.tag_start(raw_tag);
+                tree.tag_end(raw_tag);
                 break;
             case TagParser::PAIR_START:
-                tree.begin(raw_tag);
+                tree.tag_start(raw_tag);
                 break;
             case TagParser::PAIR_END:
-                tree.finish(raw_tag);
+                tree.tag_end(raw_tag);
                 break;
         }
     }
@@ -715,22 +715,22 @@ struct ProtocolParser
         };
 
         template <typename NodeT>
-        constexpr void finish_delete_check_alt()
+        constexpr void tag_end_delete_check_alt()
         {
-            if (_unfinished_stack.empty()) {
-                throw std::runtime_error{"Premature tag finish"};
+            if (_active_tags.empty()) {
+                throw std::runtime_error{"Premature tag_end"};
             }
 
-            Node &node = _unfinished_stack.back().get(std::span{_nodes});
+            Node &node = _active_tags.back().get(std::span{_nodes});
 
             if (!std::holds_alternative<NodeT>(node)) {
                 auto msg = std::format(
-                    "Cannot finish [{}] tag with [{}]",
+                    "Cannot end [{}] tag with [{}]",
                     node.tag_name(),
                     NodeT::tag_name);
                 throw std::runtime_error{std::move(msg)};
             }
-            _unfinished_stack.pop_back();
+            _active_tags.pop_back();
         }
 
         template <typename RawTagT, typename NodeT>
@@ -746,10 +746,11 @@ struct ProtocolParser
         }
 
         template <typename RawTagT>
-        constexpr void finish(std::type_identity<RawTagT>)
+        constexpr void tag_end(std::type_identity<RawTagT>)
         {
             auto msg = std::format(
-                "[generic finisher] Cannot finish [{}]", RawTagT::tag_name);
+                "[generic tag_end handler] Cannot end tag [{}]",
+                RawTagT::tag_name);
             throw std::runtime_error{std::move(msg)};
         }
 
@@ -767,7 +768,7 @@ struct ProtocolParser
             bind(CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
         {
         }
-        constexpr void finish(std::type_identity<CopyrightRawTag>)
+        constexpr void tag_end(std::type_identity<CopyrightRawTag>)
         {
         }
 
@@ -775,7 +776,7 @@ struct ProtocolParser
             bind(DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
         {
         }
-        constexpr void finish(std::type_identity<DescriptionRawTag>)
+        constexpr void tag_end(std::type_identity<DescriptionRawTag>)
         {
         }
 
@@ -811,7 +812,7 @@ struct ProtocolParser
             static_cast<decltype(raw_tag)>(node) = raw_tag;
 
             _nodes.push_back(Node{node});
-            _unfinished_stack.push_back(node);
+            _active_tags.push_back(node);
 
             auto &proto = proto_idx.get(_nodes);
             if (!proto.interfaces) {
@@ -824,9 +825,9 @@ struct ProtocolParser
             }
         }
 
-        constexpr void finish(std::type_identity<InterfaceRawTag>)
+        constexpr void tag_end(std::type_identity<InterfaceRawTag>)
         {
-            finish_delete_check_alt<InterfaceNode>();
+            tag_end_delete_check_alt<InterfaceNode>();
         }
 
         constexpr void
@@ -836,7 +837,7 @@ struct ProtocolParser
             static_cast<decltype(raw_tag)>(node) = raw_tag;
 
             _nodes.push_back(Node{node});
-            _unfinished_stack.push_back(node);
+            _active_tags.push_back(node);
 
             auto &iface = iface_idx.get(_nodes);
             if (!iface.enums) {
@@ -849,9 +850,9 @@ struct ProtocolParser
             }
         }
 
-        constexpr void finish(std::type_identity<EnumRawTag>)
+        constexpr void tag_end(std::type_identity<EnumRawTag>)
         {
-            finish_delete_check_alt<EnumNode>();
+            tag_end_delete_check_alt<EnumNode>();
         }
 
         constexpr void
@@ -861,7 +862,7 @@ struct ProtocolParser
             static_cast<decltype(raw_tag)>(node) = raw_tag;
 
             _nodes.push_back(Node{node});
-            _unfinished_stack.push_back(node);
+            _active_tags.push_back(node);
 
             auto &enum_node = enum_idx.get(_nodes);
             if (!enum_node.entries) {
@@ -874,9 +875,9 @@ struct ProtocolParser
             }
         }
 
-        constexpr void finish(std::type_identity<EntryRawTag>)
+        constexpr void tag_end(std::type_identity<EntryRawTag>)
         {
-            finish_delete_check_alt<EntryNode>();
+            tag_end_delete_check_alt<EntryNode>();
         }
 
         constexpr void
@@ -886,7 +887,7 @@ struct ProtocolParser
             static_cast<decltype(raw_tag)>(node) = raw_tag;
 
             _nodes.push_back(Node{node});
-            _unfinished_stack.push_back(node);
+            _active_tags.push_back(node);
 
             auto &req_node = req.get(_nodes);
             if (!req_node.args) {
@@ -905,7 +906,7 @@ struct ProtocolParser
             static_cast<decltype(raw_tag)>(node) = raw_tag;
 
             _nodes.push_back(Node{node});
-            _unfinished_stack.push_back(node);
+            _active_tags.push_back(node);
 
             auto &ev_node = ev.get(_nodes);
             if (!ev_node.args) {
@@ -918,9 +919,9 @@ struct ProtocolParser
             }
         }
 
-        constexpr void finish(std::type_identity<ArgRawTag>)
+        constexpr void tag_end(std::type_identity<ArgRawTag>)
         {
-            finish_delete_check_alt<ArgNode>();
+            tag_end_delete_check_alt<ArgNode>();
         }
 
         constexpr void bind(
@@ -930,7 +931,7 @@ struct ProtocolParser
             static_cast<decltype(raw_tag)>(node) = raw_tag;
 
             _nodes.push_back(Node{node});
-            _unfinished_stack.push_back(node);
+            _active_tags.push_back(node);
 
             auto &iface = iface_idx.get(_nodes);
             if (!iface.requests) {
@@ -943,9 +944,9 @@ struct ProtocolParser
             }
         }
 
-        constexpr void finish(std::type_identity<RequestRawTag>)
+        constexpr void tag_end(std::type_identity<RequestRawTag>)
         {
-            finish_delete_check_alt<RequestNode>();
+            tag_end_delete_check_alt<RequestNode>();
         }
 
         constexpr void
@@ -955,7 +956,7 @@ struct ProtocolParser
             static_cast<decltype(raw_tag)>(node) = raw_tag;
 
             _nodes.push_back(Node{node});
-            _unfinished_stack.push_back(node);
+            _active_tags.push_back(node);
 
             auto &iface = iface_idx.get(_nodes);
             if (!iface.events) {
@@ -968,14 +969,14 @@ struct ProtocolParser
             }
         }
 
-        constexpr void finish(std::type_identity<EventRawTag>)
+        constexpr void tag_end(std::type_identity<EventRawTag>)
         {
-            finish_delete_check_alt<EventNode>();
+            tag_end_delete_check_alt<EventNode>();
         }
 
-        constexpr void finish(std::type_identity<ProtocolRawTag>)
+        constexpr void tag_end(std::type_identity<ProtocolRawTag>)
         {
-            Node &node = _unfinished_stack.back().get(std::span{_nodes});
+            Node &node = _active_tags.back().get(std::span{_nodes});
             ProtocolNode &proto = std::get<ProtocolNode>(node);
 
             if not consteval {
@@ -1036,90 +1037,71 @@ struct ProtocolParser
                 }
             }
 
-            finish_delete_check_alt<ProtocolNode>();
+            tag_end_delete_check_alt<ProtocolNode>();
         }
 
-        friend struct begin_visitor;
-        struct begin_visitor
+        friend struct tag_start_visitor;
+        struct tag_start_visitor
         {
             ProtocolTree &tree;
 
             template <typename RawTagT>
-            struct bind_visitor
-            {
-                ProtocolTree &tree;
-                RawTagT &raw_tag;
-                size_t node_index;
-
-                template <typename NodeT>
-                constexpr void operator()(NodeT &)
-                {
-                    TypedNodeIndex<NodeT> node_idx{node_index};
-                    tree.bind(raw_tag, node_idx);
-                }
-            };
-
-            template <typename RawTagT>
             constexpr void operator()(RawTagT &raw_tag)
             {
-                if (tree._unfinished_stack.empty()) {
+                if (tree._active_tags.empty()) {
                     auto msg = std::format(
                         "<{}> must not be a top level tag", RawTagT::tag_name);
                     throw std::runtime_error{std::move(msg)};
                 }
 
-                Index unfinished_node = tree.unfinished_tag();
-                std::visit(
-                    bind_visitor{tree, raw_tag, unfinished_node.index()},
-                    unfinished_node.get(std::span{tree._nodes}));
+                Index active_tag = tree.active_tag_index();
+                auto visitor = [&]<typename NodeT>(NodeT &) {
+                    TypedNodeIndex<NodeT> node_idx{active_tag.index()};
+                    tree.bind(raw_tag, node_idx);
+                };
+
+                Node &node = active_tag.get(std::span{tree._nodes});
+                std::visit(visitor, node);
             }
 
             constexpr void operator()(ProtocolRawTag &raw_proto)
             {
-                if (!tree._unfinished_stack.empty()) {
+                if (!tree._active_tags.empty()) {
                     throw std::runtime_error{
-                        "<protocol> must be the top level tag"};
+                        "<protocol> must be a top level tag"};
                 }
 
                 ProtocolNode node{tree._nodes.size()};
                 static_cast<ProtocolRawTag &>(node) = raw_proto;
                 tree._nodes.push_back(Node{node});
-                tree._unfinished_stack.push_back(node);
+                tree._active_tags.push_back(node);
             }
         };
 
-        constexpr void begin(RawTagVariant raw_tag)
+        constexpr void tag_start(RawTagVariant raw_tag)
         {
-            std::visit(begin_visitor{*this}, raw_tag);
+            std::visit(tag_start_visitor{*this}, raw_tag);
         }
 
-        friend struct finish_visitor;
-        struct finish_visitor
+        constexpr void tag_end(RawTagVariant raw_tag)
         {
-            ProtocolTree &tree;
-            template <typename RawTagT>
-            void operator()(RawTagT &)
-            {
-                tree.finish(std::type_identity<RawTagT>{});
-            }
-        };
-
-        constexpr void finish(RawTagVariant raw_tag)
-        {
-            std::visit(finish_visitor{*this}, raw_tag);
+            auto visitor = [&]<typename RawTagT>(RawTagT &) {
+                tag_end(std::type_identity<RawTagT>{});
+            };
+            std::visit(visitor, raw_tag);
         }
 
-        constexpr Index unfinished_tag()
+        constexpr Index active_tag_index()
         {
-            if (_unfinished_stack.empty()) {
+            if (_active_tags.empty()) {
                 throw std::out_of_range{"unfinished_tag: empty stack"};
             }
-            return _unfinished_stack.back();
+            return _active_tags.back();
         }
 
       private:
         std::vector<Node> _nodes;
-        std::vector<Index> _unfinished_stack;
+        std::vector<Index> _active_tags;
     };
 
     constexpr void process()
