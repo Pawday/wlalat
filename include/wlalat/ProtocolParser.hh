@@ -122,8 +122,8 @@ struct RawTagVariant : std::variant<
             RawTagVariant{Alternatives{}}...};
     }
 
-    static constexpr auto
-        from_tag_name(std::string_view tag_name) -> std::optional<RawTagVariant>
+    static constexpr auto from_tag_name(std::string_view tag_name)
+        -> std::optional<RawTagVariant>
     {
         auto name_match = [tag_name](RawTagVariant &v) {
             return v.tag_name() == tag_name;
@@ -218,6 +218,23 @@ struct CopyrightNode : IndexChainNode<CopyrightNode>, CopyrightRawTag
 {
     using RawTagT = CopyrightRawTag;
 };
+
+// clang-format off
+template<typename RawTagT> struct RawTagToNodeMap;
+
+template<> struct RawTagToNodeMap<ProtocolRawTag>    : std::type_identity<ProtocolNode> {};
+template<> struct RawTagToNodeMap<InterfaceRawTag>   : std::type_identity<InterfaceNode> {};
+template<> struct RawTagToNodeMap<RequestRawTag>     : std::type_identity<RequestNode> {};
+template<> struct RawTagToNodeMap<EventRawTag>       : std::type_identity<EventNode> {};
+template<> struct RawTagToNodeMap<ArgRawTag>         : std::type_identity<ArgNode> {};
+template<> struct RawTagToNodeMap<EnumRawTag>        : std::type_identity<EnumNode> {};
+template<> struct RawTagToNodeMap<EntryRawTag>       : std::type_identity<EntryNode> {};
+template<> struct RawTagToNodeMap<DescriptionRawTag> : std::type_identity<DescriptionNode> {};
+template<> struct RawTagToNodeMap<CopyrightRawTag>   : std::type_identity<CopyrightNode> {};
+
+template<typename RawTagT>
+using RawTagToNodeMapT = typename RawTagToNodeMap<RawTagT>::type;
+// clang-format off
 
 struct Node : std::variant<
                   ProtocolNode,
@@ -529,14 +546,6 @@ struct ProtocolTreeBuilder
     }
 
     template <typename RawTagT>
-    constexpr void tag_end(std::type_identity<RawTagT>)
-    {
-        auto msg = std::format(
-            "[generic tag_end handler] Cannot end tag [{}]", RawTagT::tag_name);
-        throw std::runtime_error{std::move(msg)};
-    }
-
-    template <typename RawTagT>
     constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<ProtocolNode>)
     {
         if not consteval {
@@ -549,10 +558,6 @@ struct ProtocolTreeBuilder
     constexpr void bind(CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
     {
         t_bind_stack_only<CopyrightNode>(raw_tag);
-    }
-    constexpr void tag_end(std::type_identity<CopyrightRawTag>)
-    {
-        tag_end_delete_check_alt<CopyrightNode>();
     }
 
     template <typename DestNodeT>
@@ -567,21 +572,11 @@ struct ProtocolTreeBuilder
         t_bind_stack_only<DescriptionNode>(raw_tag);
     }
 
-    constexpr void tag_end(std::type_identity<DescriptionRawTag>)
-    {
-        tag_end_delete_check_alt<DescriptionNode>();
-    }
-
     constexpr void bind(
         InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &target_node_idx)
     {
         t_bind<InterfaceNode>(
             raw_tag, target_node_idx, &ProtocolNode::interfaces);
-    }
-
-    constexpr void tag_end(std::type_identity<InterfaceRawTag>)
-    {
-        tag_end_delete_check_alt<InterfaceNode>();
     }
 
     constexpr void
@@ -590,20 +585,10 @@ struct ProtocolTreeBuilder
         t_bind<EnumNode>(raw_tag, iface_idx, &InterfaceNode::enums);
     }
 
-    constexpr void tag_end(std::type_identity<EnumRawTag>)
-    {
-        tag_end_delete_check_alt<EnumNode>();
-    }
-
     constexpr void
         bind(EntryRawTag &raw_tag, TypedNodeIndex<EnumNode> &enum_idx)
     {
         t_bind<EntryNode>(raw_tag, enum_idx, &EnumNode::entries);
-    }
-
-    constexpr void tag_end(std::type_identity<EntryRawTag>)
-    {
-        tag_end_delete_check_alt<EntryNode>();
     }
 
     constexpr void bind(ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
@@ -616,36 +601,16 @@ struct ProtocolTreeBuilder
         t_bind<ArgNode>(raw_tag, ev, &EventNode::args);
     }
 
-    constexpr void tag_end(std::type_identity<ArgRawTag>)
-    {
-        tag_end_delete_check_alt<ArgNode>();
-    }
-
     constexpr void
         bind(RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
     {
         t_bind<RequestNode>(raw_tag, iface_idx, &InterfaceNode::requests);
     }
 
-    constexpr void tag_end(std::type_identity<RequestRawTag>)
-    {
-        tag_end_delete_check_alt<RequestNode>();
-    }
-
     constexpr void
         bind(EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
     {
         t_bind<EventNode>(raw_tag, iface_idx, &InterfaceNode::events);
-    }
-
-    constexpr void tag_end(std::type_identity<EventRawTag>)
-    {
-        tag_end_delete_check_alt<EventNode>();
-    }
-
-    constexpr void tag_end(std::type_identity<ProtocolRawTag>)
-    {
-        tag_end_delete_check_alt<ProtocolNode>();
     }
 
     friend struct tag_start_visitor;
@@ -694,7 +659,7 @@ struct ProtocolTreeBuilder
     constexpr void tag_end(RawTagVariant raw_tag)
     {
         auto visitor = [&]<typename RawTagT>(RawTagT &) {
-            tag_end(std::type_identity<RawTagT>{});
+            tag_end_delete_check_alt<RawTagToNodeMapT<RawTagT>>();
         };
         std::visit(visitor, raw_tag);
     }
