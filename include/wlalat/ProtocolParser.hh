@@ -451,6 +451,14 @@ struct ProtocolTreeView
     std::span<const Node> _nodes;
 };
 
+struct ProtocolTree : std::vector<Node>
+{
+    ProtocolTreeView view() const
+    {
+        return ProtocolTreeView{*this};
+    }
+};
+
 struct ProtocolTreeBuilder
 {
     constexpr void push(RawTagVariant raw_tag)
@@ -463,12 +471,17 @@ struct ProtocolTreeBuilder
         tag_end(raw_tag);
     }
 
-    ProtocolTreeView view() const
+    constexpr ProtocolTree build() const
     {
-        return ProtocolTreeView{_nodes};
+        return _tree;
     }
 
   private:
+    ProtocolTreeView view() const
+    {
+        return ProtocolTreeView{_tree};
+    }
+
     template <typename NodeT>
     constexpr IndexChainNode<NodeT> chain_end(IndexChainNode<NodeT> node)
     {
@@ -503,13 +516,13 @@ struct ProtocolTreeBuilder
         TypedNodeIndex<DstNodeT> &target_node_idx,
         std::optional<IndexChainNode<NodeT>> DstNodeT::*proj)
     {
-        NodeT node{_nodes.size()};
+        NodeT node{_tree.size()};
         static_cast<NodeT::RawTagT &>(node) = tag;
 
-        _nodes.push_back(Node{node});
+        _tree.push_back(Node{node});
         _active_tags.push_back(node);
 
-        DstNodeT &target_node = target_node_idx.get(_nodes);
+        DstNodeT &target_node = target_node_idx.get(_tree);
 
         std::optional<IndexChainNode<NodeT>> &dst_chain =
             std::invoke(proj, target_node);
@@ -519,7 +532,7 @@ struct ProtocolTreeBuilder
         }
 
         auto end_idx = chain_end(dst_chain.value());
-        Node &end = end_idx.get(std::span{_nodes});
+        Node &end = end_idx.get(std::span{_tree});
         NodeT &end_t = std::get<NodeT>(end);
         end_t.next = node;
     }
@@ -527,9 +540,9 @@ struct ProtocolTreeBuilder
     template <typename NodeT>
     constexpr void t_bind_stack_only(NodeT::RawTagT &tag)
     {
-        NodeT node{_nodes.size()};
+        NodeT node{_tree.size()};
         static_cast<NodeT::RawTagT &>(node) = tag;
-        _nodes.push_back(Node{node});
+        _tree.push_back(Node{node});
         _active_tags.push_back(node);
     }
 
@@ -540,7 +553,7 @@ struct ProtocolTreeBuilder
             throw std::runtime_error{"Premature tag_end"};
         }
 
-        Node &node = _active_tags.back().get(std::span{_nodes});
+        Node &node = _active_tags.back().get(std::span{_tree});
 
         if (!std::holds_alternative<NodeT>(node)) {
             auto msg = std::format(
@@ -687,37 +700,38 @@ struct ProtocolTreeBuilder
     friend struct tag_start_visitor;
     struct tag_start_visitor
     {
-        ProtocolTreeBuilder &tree;
+        ProtocolTreeBuilder &B;
 
         template <typename RawTagT>
         constexpr void operator()(RawTagT &raw_tag)
         {
-            if (tree._active_tags.empty()) {
+            auto &active_tags = B._active_tags;
+            if (active_tags.empty()) {
                 auto msg = std::format(
                     "<{}> must not be a top level tag", RawTagT::tag_name);
                 throw std::runtime_error{std::move(msg)};
             }
 
-            Index active_tag = tree.active_tag_index();
+            Index active_tag = B.active_tag_index();
             auto visitor = [&]<typename NodeT>(NodeT &) {
                 TypedNodeIndex<NodeT> node_idx{active_tag.index()};
-                tree.bind(raw_tag, node_idx);
+                B.bind(raw_tag, node_idx);
             };
 
-            Node &node = active_tag.get(std::span{tree._nodes});
+            Node &node = active_tag.get(std::span{B._tree});
             std::visit(visitor, node);
         }
 
         constexpr void operator()(ProtocolRawTag &raw_proto)
         {
-            if (!tree._active_tags.empty()) {
+            if (!B._active_tags.empty()) {
                 throw std::runtime_error{"<protocol> must be a top level tag"};
             }
 
-            ProtocolNode node{tree._nodes.size()};
+            ProtocolNode node{B._tree.size()};
             static_cast<ProtocolRawTag &>(node) = raw_proto;
-            tree._nodes.push_back(Node{node});
-            tree._active_tags.push_back(node);
+            B._tree.push_back(Node{node});
+            B._active_tags.push_back(node);
         }
     };
 
@@ -743,7 +757,7 @@ struct ProtocolTreeBuilder
     }
 
   private:
-    std::vector<Node> _nodes;
+    ProtocolTree _tree;
     std::vector<Index> _active_tags;
 };
 
