@@ -13,7 +13,8 @@
 constexpr auto test(std::string_view str)
 {
     wlalat::ProtocolParsing::ProtocolParser p{str};
-    return p.test_n_tags();
+    auto tree = p.parse();
+    return tree.size();
 }
 
 static_assert(test("<protocol>") == 1);
@@ -29,11 +30,6 @@ try {
         std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>()};
 
     wlalat::ProtocolParsing::ProtocolParser p{content};
-
-    auto tags = p.test_tags();
-    for (auto &t : tags) {
-        std::println("{}", t);
-    }
 
 } catch (std::exception &e) {
     std::println("std::exception::what() [{}]", e.what());

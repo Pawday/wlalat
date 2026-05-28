@@ -765,43 +765,20 @@ struct ProtocolParser
 {
     constexpr ProtocolParser(std::string_view string) : _s{string}
     {
+    }
+
+    constexpr ProtocolTree parse()
+    {
         while (!_s.empty()) {
             auto err = process();
             if (err) {
                 throw std::runtime_error{err.value()};
             }
         }
-    }
-
-    [[deprecated]] std::vector<std::string> test_tags() const
-    {
-        std::vector<std::string> o;
-        for (auto &t : tags) {
-            std::string str = std::format(
-                "<{}> name_attr=[{}]",
-                t.tag_name(),
-                t.name_attr().value_or("<NULL>"));
-            o.push_back(std::move(str));
-        }
-        return o;
-    }
-
-    [[deprecated]] constexpr size_t test_n_tags() const
-    {
-        return tags.size();
+        return tree.build();
     }
 
   private:
-    struct [[deprecated]] TypedTagVariant : RawTagVariant
-    {
-        constexpr TypedTagVariant(RawTagVariant raw_tag, TagParser::Type type)
-            : RawTagVariant{raw_tag}, type{type}
-        {
-        }
-
-        TagParser::Type type;
-    };
-
     struct BindAttrVisitor
     {
         static constexpr std::optional<BindAttrVisitor>
@@ -996,10 +973,6 @@ struct ProtocolParser
         TagVariantAttrBinder b{raw_tag};
         p.attribs(b);
 
-        TypedTagVariant typed_tag{raw_tag, tag_type};
-
-        tags.push_back(typed_tag);
-
         switch (tag_type) {
             case TagParser::UNPAIRED:
                 tree.push(raw_tag);
@@ -1015,8 +988,6 @@ struct ProtocolParser
 
         return {};
     }
-
-    [[deprecated]] std::vector<TypedTagVariant> tags;
 
     [[nodiscard("Possible error message")]] constexpr std::optional<std::string>
         process()
