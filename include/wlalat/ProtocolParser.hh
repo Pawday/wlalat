@@ -8,7 +8,6 @@
 #include <functional>
 #include <iterator>
 #include <optional>
-#include <print>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -291,6 +290,12 @@ struct Node : std::variant<
     {
         return std::visit(node_index_visitor{}, *this);
     }
+
+    constexpr std::optional<Index> node_index_next() const
+    {
+        auto v = []<typename AltT>(const AltT &alt) { return alt.next; };
+        return std::visit(v, *this);
+    }
 };
 
 struct TagParser
@@ -421,6 +426,31 @@ struct TagParser
     std::string_view _s;
 };
 
+struct ProtocolTreeView
+{
+    constexpr ProtocolTreeView(std::span<const Node> nodes) : _nodes{nodes}
+    {
+    }
+
+    template <typename SinkT>
+    constexpr void chain_iterate(Index start, SinkT &sink)
+    {
+        Index curr = start;
+        while (true) {
+            const Node &curr_node = curr.get(_nodes);
+            sink(curr_node);
+            auto next = curr_node.node_index_next();
+            if (!next) {
+                break;
+            }
+            curr = next.value();
+        }
+    }
+
+  private:
+    std::span<const Node> _nodes;
+};
+
 struct ProtocolTreeBuilder
 {
     constexpr void push(RawTagVariant raw_tag)
@@ -433,48 +463,24 @@ struct ProtocolTreeBuilder
         tag_end(raw_tag);
     }
 
+    ProtocolTreeView view() const
+    {
+        return ProtocolTreeView{_nodes};
+    }
+
   private:
     template <typename NodeT>
     constexpr IndexChainNode<NodeT> chain_end(IndexChainNode<NodeT> node)
     {
-        IndexChainNode<NodeT> curr = node;
-
-        while (true) {
-            Node &curr_node = curr.get(std::span{_nodes});
-            NodeT &curr_node_alt = std::get<NodeT>(curr_node);
-            if (!curr_node_alt.next) {
-                return curr;
+        std::optional<Index> last;
+        auto sink = [&last](const Node &n) {
+            last = n.node_index();
+            if (!std::holds_alternative<NodeT>(n)) {
+                throw std::runtime_error{"Bad alternative in chain"};
             }
-
-            Node &next_node = curr_node_alt.next->get(std::span{_nodes});
-            IndexChainNode<NodeT> next{next_node.node_index()};
-            curr = next;
-        }
-
-        return curr;
-    }
-
-    template <typename NodeT>
-    constexpr std::vector<std::reference_wrapper<NodeT>>
-        chain_nodes(IndexChainNode<NodeT> node)
-    {
-        std::vector<std::reference_wrapper<NodeT>> O;
-        IndexChainNode<NodeT> curr = node;
-
-        while (true) {
-            Node &curr_node = curr.get(std::span{_nodes});
-            NodeT &curr_node_alt = std::get<NodeT>(curr_node);
-            O.push_back(std::ref(curr_node_alt));
-            if (!curr_node_alt.next) {
-                break;
-            }
-
-            Node &next_node = curr_node_alt.next->get(std::span{_nodes});
-            IndexChainNode<NodeT> next{next_node.node_index()};
-            curr = next;
-        }
-
-        return O;
+        };
+        view().chain_iterate(node.index(), sink);
+        return IndexChainNode<NodeT>{last.value()};
     }
 
     template <typename T>
@@ -675,67 +681,6 @@ struct ProtocolTreeBuilder
 
     constexpr void tag_end(std::type_identity<ProtocolRawTag>)
     {
-        Node &node = _active_tags.back().get(std::span{_nodes});
-        ProtocolNode &proto = std::get<ProtocolNode>(node);
-
-        if not consteval {
-            auto interfaces = chain_nodes(proto.interfaces.value());
-            for (InterfaceNode &el : interfaces) {
-                std::println("__AA__ [{}]", el.name.value_or("?"));
-                if (el.requests) {
-                    auto reqs = chain_nodes(el.requests.value());
-                    for (RequestNode &req : reqs) {
-                        std::println(
-                            "__AA__     req [{}]", req.name.value_or("?"));
-
-                        if (req.args) {
-                            auto args = chain_nodes(req.args.value());
-                            for (ArgNode &arg : args) {
-                                std::println(
-                                    "__AA__         arg [{}]",
-                                    arg.name.value_or("?"));
-                            }
-                        }
-                    }
-                }
-
-                if (el.events) {
-                    auto evs = chain_nodes(el.events.value());
-                    for (EventNode &ev : evs) {
-                        std::println(
-                            "__AA__     ev [{}]", ev.name.value_or("?"));
-
-                        if (ev.args) {
-                            auto args = chain_nodes(ev.args.value());
-                            for (ArgNode &arg : args) {
-                                std::println(
-                                    "__AA__         arg [{}]",
-                                    arg.name.value_or("?"));
-                            }
-                        }
-                    }
-                }
-
-                if (el.enums) {
-                    auto ens = chain_nodes(el.enums.value());
-                    for (EnumNode &en : ens) {
-                        std::println(
-                            "__AA__     en [{}]", en.name.value_or("?"));
-
-                        if (en.entries) {
-                            auto ens = chain_nodes(en.entries.value());
-                            for (EntryNode &ent : ens) {
-                                std::println(
-                                    "__AA__         enr [{}] [{}]",
-                                    ent.name.value_or("?"),
-                                    ent.value.value_or("?"));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         tag_end_delete_check_alt<ProtocolNode>();
     }
 
