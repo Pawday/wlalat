@@ -119,33 +119,6 @@ struct RawTagVariant : std::variant<
         return std::visit(tag_name_visitor{}, *this);
     }
 
-    struct name_attr_visitor
-    {
-        template <typename Alternative>
-        constexpr std::optional<std::string_view>
-            operator()(const Alternative &a)
-        {
-            return a.name;
-        }
-
-        constexpr std::optional<std::string_view>
-            operator()(const CopyrightRawTag &a)
-        {
-            return {};
-        }
-
-        constexpr std::optional<std::string_view>
-            operator()(const DescriptionRawTag &a)
-        {
-            return {};
-        }
-    };
-
-    constexpr std::optional<std::string_view> name_attr() const
-    {
-        return std::visit(name_attr_visitor{}, *this);
-    }
-
     template <typename... Alternatives>
     static constexpr auto
         make_alternatives_array(const std::variant<Alternatives...> &arg)
