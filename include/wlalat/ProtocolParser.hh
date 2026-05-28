@@ -106,17 +106,10 @@ struct RawTagVariant : std::variant<
                            DescriptionRawTag,
                            CopyrightRawTag>
 {
-    struct tag_name_visitor
-    {
-        template <typename Alternative>
-        constexpr std::string_view operator()(const Alternative &)
-        {
-            return Alternative::tag_name;
-        }
-    };
     constexpr std::string_view tag_name() const
     {
-        return std::visit(tag_name_visitor{}, *this);
+        auto vis = []<typename Alt>(const Alt &) { return Alt::tag_name; };
+        return std::visit(vis, *this);
     }
 
     template <typename... Alternatives>
@@ -237,31 +230,16 @@ struct Node : std::variant<
                   DescriptionNode,
                   CopyrightNode>
 {
-    struct tag_name_visitor
-    {
-        template <typename Alternative>
-        constexpr std::string_view operator()(const Alternative &)
-        {
-            return Alternative::tag_name;
-        }
-    };
     constexpr std::string_view tag_name() const
     {
-        return std::visit(tag_name_visitor{}, *this);
+        auto vis = []<typename Alt>(const Alt &) { return Alt::tag_name; };
+        return std::visit(vis, *this);
     }
-
-    struct node_index_visitor
-    {
-        template <typename AltT>
-        constexpr Index operator()(const AltT &alt)
-        {
-            return alt.index();
-        }
-    };
 
     constexpr Index node_index() const
     {
-        return std::visit(node_index_visitor{}, *this);
+        auto vis = []<typename Alt>(const Alt &alt) { return alt.index(); };
+        return std::visit(vis, *this);
     }
 
     constexpr std::optional<Index> node_index_next() const
