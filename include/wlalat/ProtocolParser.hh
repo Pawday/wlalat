@@ -421,8 +421,19 @@ struct TagParser
     std::string_view _s;
 };
 
-struct ProtocolTree
+struct ProtocolTreeBuilder
 {
+    constexpr void push(RawTagVariant raw_tag)
+    {
+        tag_start(raw_tag);
+    }
+
+    constexpr void pop(RawTagVariant raw_tag)
+    {
+        tag_end(raw_tag);
+    }
+
+  private:
     template <typename NodeT>
     constexpr IndexChainNode<NodeT> chain_end(IndexChainNode<NodeT> node)
     {
@@ -731,7 +742,7 @@ struct ProtocolTree
     friend struct tag_start_visitor;
     struct tag_start_visitor
     {
-        ProtocolTree &tree;
+        ProtocolTreeBuilder &tree;
 
         template <typename RawTagT>
         constexpr void operator()(RawTagT &raw_tag)
@@ -1032,14 +1043,14 @@ struct ProtocolParser
 
         switch (tag_type) {
             case TagParser::UNPAIRED:
-                tree.tag_start(raw_tag);
-                tree.tag_end(raw_tag);
+                tree.push(raw_tag);
+                tree.pop(raw_tag);
                 break;
             case TagParser::PAIR_START:
-                tree.tag_start(raw_tag);
+                tree.push(raw_tag);
                 break;
             case TagParser::PAIR_END:
-                tree.tag_end(raw_tag);
+                tree.pop(raw_tag);
                 break;
         }
 
@@ -1096,7 +1107,7 @@ struct ProtocolParser
     }
 
     std::string_view _s;
-    ProtocolTree tree;
+    ProtocolTreeBuilder tree;
 };
 
 }; // namespace ProtocolParsing
