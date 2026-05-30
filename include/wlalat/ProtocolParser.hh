@@ -415,6 +415,18 @@ struct ProtocolTreeView
         }
     }
 
+    template <typename SinkT>
+    constexpr void protos_iterate(SinkT &sink)
+    {
+        for (auto &node : _nodes) {
+            auto *proto_p =
+                std::get_if<wlalat::ProtocolParsing::ProtocolNode>(&node);
+            if (proto_p) {
+                sink(*proto_p);
+            }
+        }
+    }
+
   private:
     std::span<const Node> _nodes;
 };
