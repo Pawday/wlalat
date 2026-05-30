@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
+#include <span>
 #include <string_view>
 
 namespace wlalat
@@ -69,6 +71,10 @@ struct Fixed : Numeric
         down /= 255;
         return up + down;
     };
+};
+
+struct Array : std::span<const std::byte>
+{
 };
 
 } // namespace wlalat
