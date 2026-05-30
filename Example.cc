@@ -56,8 +56,7 @@ std::string hexdump(std::span<const std::byte> data)
 
 int main()
 try {
-    auto addr = wlalat::Unix::Socket::make_address(1000, 1);
-    wlalat::Unix::Socket s{addr, std::pmr::get_default_resource()};
+    wlalat::Unix::Socket s;
 
     wayland::wl_display::message::get_registry m{};
     m.registry = wlalat::UInt{2};
