@@ -8,6 +8,7 @@
 
 #include <optional>
 #include <span>
+#include <stdexcept>
 
 namespace wlalat
 {
@@ -35,6 +36,13 @@ struct Parser
         return parsed_op.has_value();
     }
 
+    template <>
+    bool has<Array>() const
+    {
+        // TODO: Figure out array structure
+        return false;
+    }
+
     template <typename T>
     T next() = delete;
     template <>
@@ -59,6 +67,12 @@ struct Parser
         String O = parsed.string().value();
         _data = _data.subspan(parsed.message_size());
         return O;
+    }
+
+    template <>
+    Array next()
+    {
+        throw std::runtime_error{"Array Parser::next() is not implemented"};
     }
 
   private:
