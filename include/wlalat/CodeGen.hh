@@ -72,6 +72,7 @@ struct Generator
         O += "#include <cstddef>";
         O += "";
         O += "#include <optional>";
+        O += "#include <type_traits>";
         O += "";
 
         bool f = true;
@@ -271,8 +272,8 @@ struct Generator
                 B += "/* Ignore fd";
             }
 
-            B += std::format("if (!P.has<decltype(O.{})>()) return {{}};", N);
-            B += std::format("O.{} = P.next<decltype(O.{})>();", N, N);
+            B += std::format("if (!P.has(std::type_identity<decltype(O.{})>{{}})) return {{}};", N);
+            B += std::format("O.{} = P.next(std::type_identity<decltype(O.{})>{{}});", N, N);
 
             if (is_fd) {
                 B += "*/";

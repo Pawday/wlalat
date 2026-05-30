@@ -9,6 +9,7 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <type_traits>
 
 namespace wlalat
 {
@@ -19,34 +20,27 @@ struct Parser
     {
     }
 
-    template <typename T>
-    bool has() const = delete;
     // clang-format off
-    template <> bool has<Numeric>()  const { return _data.size() >= 4; }
-    template <> bool has<Int>()      const { return has<Numeric>(); }
-    template <> bool has<UInt>()     const { return has<Numeric>(); }
-    template <> bool has<Fixed>()    const { return has<Numeric>(); }
+    bool has(std::type_identity<Numeric>)  const { return _data.size() >= 4; }
+    bool has(std::type_identity<Int>)      const { return has(std::type_identity<Numeric>{}); }
+    bool has(std::type_identity<UInt>)     const { return has(std::type_identity<Numeric>{}); }
+    bool has(std::type_identity<Fixed>)    const { return has(std::type_identity<Numeric>{}); }
     // clang-format on
 
-    template <>
-    bool has<String>() const
+    bool has(std::type_identity<String>) const
     {
         StringParser p{_data};
         std::optional<StringParser::Layout> parsed_op = p.parse();
         return parsed_op.has_value();
     }
 
-    template <>
-    bool has<Array>() const
+    bool has(std::type_identity<Array>) const
     {
         // TODO: Figure out array structure
         return false;
     }
 
-    template <typename T>
-    T next() = delete;
-    template <>
-    Numeric next()
+    Numeric next(std::type_identity<Numeric>)
     {
         std::span<const std::byte, 4> d = _data.subspan<0, 4>();
         _data = _data.subspan(4);
@@ -54,13 +48,12 @@ struct Parser
     }
 
     // clang-format off
-    template <> Int   next() { return Int   { next<Numeric>()}; };
-    template <> UInt  next() { return UInt  { next<Numeric>()}; };
-    template <> Fixed next() { return Fixed { next<Numeric>()}; };
+    Int   next(std::type_identity<Int>)   { return Int   { next(std::type_identity<Numeric>{})}; };
+    UInt  next(std::type_identity<UInt>)  { return UInt  { next(std::type_identity<Numeric>{})}; };
+    Fixed next(std::type_identity<Fixed>) { return Fixed { next(std::type_identity<Numeric>{})}; };
     // clang-format on
 
-    template <>
-    String next()
+    String next(std::type_identity<String>)
     {
         StringParser p{_data};
         StringParser::Layout parsed = p.parse().value();
@@ -69,8 +62,7 @@ struct Parser
         return O;
     }
 
-    template <>
-    Array next()
+    Array next(std::type_identity<Array>)
     {
         throw std::runtime_error{"Array Parser::next() is not implemented"};
     }
