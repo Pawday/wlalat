@@ -3,6 +3,7 @@
 #include <wlalat/Message.hh>
 #include <wlalat/Parser.hh>
 #include <wlalat/Types.hh>
+#include <wlalat/Writer.hh>
 
 #include <optional>
 
@@ -42,6 +43,14 @@ inline std::optional<global> as_global(wlalat::Message M)
     O.version = p.next<decltype(O.version)>();
 
     return O;
+}
+
+template<typename OIterT>
+inline void write_global(global &M, wlalat::Writer<OIterT> W)
+{
+    W.write(M.name);
+    W.write(M.interface);
+    W.write(M.version);
 }
 
 } // namespace message

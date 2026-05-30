@@ -1,5 +1,7 @@
 #include "GeneratedTests.hh"
 
+#include <iterator>
+#include <string>
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
 #include <wlalat/Message.hh>
@@ -9,6 +11,7 @@
 #include <wlalat/StringParser.hh>
 #include <wlalat/Types.hh>
 #include <wlalat/Unix/Socket.hh>
+#include <wlalat/Writer.hh>
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -33,6 +36,23 @@ constexpr std::chrono::seconds message_timeout{1};
 
 constexpr uint32_t wl_display_object_id = 1;
 constexpr uint32_t wl_display_get_registry_request_id = 1;
+
+std::string hexdump(std::span<const std::byte> data)
+{
+    std::string O;
+    O += '[';
+    auto f = true;
+    for (auto b : data) {
+        if (!f) {
+            O += ',';
+        }
+        f = false;
+        uint16_t bi = std::to_integer<uint16_t>(b);
+        std::format_to(std::back_inserter(O), "{:02x}", bi);
+    }
+    O += ']';
+    return O;
+}
 
 int main()
 try {
@@ -70,6 +90,12 @@ try {
             static_cast<uint32_t>(global_msg.name),
             static_cast<std::string_view>(global_msg.interface),
             static_cast<uint32_t>(global_msg.version));
+
+        std::vector<std::byte> reencoded_payload;
+        wlalat::Writer w{std::back_inserter(reencoded_payload)};
+        Generated::wl_registry::message::write_global(global_msg, w);
+        std::println("{}", hexdump(msg.payload));
+        std::println("{}", hexdump(reencoded_payload));
     }
 
 } catch (std::exception &e) {
