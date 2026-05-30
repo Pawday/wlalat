@@ -1,7 +1,5 @@
-#include "GeneratedTests.hh"
+#include "wayland.xml.hh"
 
-#include <iterator>
-#include <string>
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
 #include <wlalat/Message.hh>
@@ -25,9 +23,12 @@
 #include <chrono>
 #include <exception>
 #include <format>
+#include <iterator>
+#include <memory_resource>
 #include <optional>
 #include <print>
 #include <span>
+#include <string>
 #include <string_view>
 #include <thread>
 #include <vector>
@@ -35,7 +36,6 @@
 constexpr std::chrono::seconds message_timeout{1};
 
 constexpr uint32_t wl_display_object_id = 1;
-constexpr uint32_t wl_display_get_registry_request_id = 1;
 
 std::string hexdump(std::span<const std::byte> data)
 {
@@ -56,16 +56,21 @@ std::string hexdump(std::span<const std::byte> data)
 
 int main()
 try {
-    wlalat::Unix::Socket s;
+    auto addr = wlalat::Unix::Socket::make_address(1000, 1);
+    wlalat::Unix::Socket s{addr, std::pmr::get_default_resource()};
 
-    wlalat::Message m;
-    m.object_id = wl_display_object_id;
-    m.opcode = wl_display_get_registry_request_id;
-    uint32_t wl_registry_id = wl_display_object_id + 1;
-    auto wl_registry_id_data = wlalat::tole32(wl_registry_id);
-    m.payload = wl_registry_id_data;
+    wayland::wl_display::message::get_registry m{};
+    m.registry = wlalat::UInt{2};
+    std::vector<std::byte> payload;
+    wlalat::Writer w{std::back_inserter(payload)};
+    wayland::wl_display::message::write_get_registry(m, w);
 
-    s.send(m);
+    wlalat::Message raw_m;
+    raw_m.object_id = wl_display_object_id;
+    raw_m.opcode = m.opcode;
+    raw_m.payload = payload;
+    std::println("{}", hexdump(payload));
+    s.send(raw_m);
 
     auto last_message = std::chrono::steady_clock::now();
 
@@ -82,7 +87,7 @@ try {
         wlalat::Message msg = message_op.value();
         last_message = decltype(last_message)::clock::now();
 
-        auto global_msg_op = Generated::wl_registry::message::as_global(msg);
+        auto global_msg_op = wayland::wl_registry::message::read_global(msg);
         auto &global_msg = global_msg_op.value();
 
         std::println(
@@ -93,7 +98,7 @@ try {
 
         std::vector<std::byte> reencoded_payload;
         wlalat::Writer w{std::back_inserter(reencoded_payload)};
-        Generated::wl_registry::message::write_global(global_msg, w);
+        wayland::wl_registry::message::write_global(global_msg, w);
         std::println("{}", hexdump(msg.payload));
         std::println("{}", hexdump(reencoded_payload));
     }
