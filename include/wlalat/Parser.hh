@@ -32,10 +32,6 @@ struct Parser
     {
         StringParser p{_data};
         std::optional<StringParser::Layout> parsed_op = p.parse();
-        if (!parsed_op) {
-            return false;
-        }
-        StringParser::Layout parsed = parsed_op.value();
         return parsed_op.has_value();
     }
 
