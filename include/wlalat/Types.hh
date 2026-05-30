@@ -19,7 +19,7 @@ struct Numeric
         return _v;
     }
 
-protected:
+  protected:
     uint_fast32_t _v;
 };
 
@@ -56,8 +56,9 @@ struct Fixed : Numeric
     operator double() { return d(); }
     // clang-format on
 
-private:
-    template <typename F> F to_floating() const
+  private:
+    template <typename F>
+    F to_floating() const
     {
         uint_fast32_t up = _v;
         up >>= 8;
