@@ -18,7 +18,8 @@ struct Parser
     {
     }
 
-    template <typename T> bool has() const = delete;
+    template <typename T>
+    bool has() const = delete;
     // clang-format off
     template <> bool has<Numeric>()  const { return _data.size() >= 4; }
     template <> bool has<Int>()      const { return has<Numeric>(); }
@@ -26,7 +27,8 @@ struct Parser
     template <> bool has<Fixed>()    const { return has<Numeric>(); }
     // clang-format on
 
-    template <> bool has<String>() const
+    template <>
+    bool has<String>() const
     {
         StringParser p{_data};
         std::optional<StringParser::Layout> parsed_op = p.parse();
@@ -37,8 +39,10 @@ struct Parser
         return parsed_op.has_value();
     }
 
-    template <typename T> T next() = delete;
-    template <> Numeric next()
+    template <typename T>
+    T next() = delete;
+    template <>
+    Numeric next()
     {
         std::span<const std::byte, 4> d = _data.subspan<0, 4>();
         _data = _data.subspan(4);
@@ -51,7 +55,8 @@ struct Parser
     template <> Fixed next() { return Fixed { next<Numeric>()}; };
     // clang-format on
 
-    template <> String next()
+    template <>
+    String next()
     {
         StringParser p{_data};
         StringParser::Layout parsed = p.parse().value();
@@ -60,7 +65,7 @@ struct Parser
         return O;
     }
 
-private:
+  private:
     std::span<const std::byte> _data;
 };
 
