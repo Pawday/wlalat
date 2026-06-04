@@ -25,10 +25,18 @@ namespace ProtocolParsing
 
 using AttrString = std::optional<std::string_view>;
 
+template <typename RawTagT>
+using MappingType = std::pair<std::string_view, AttrString RawTagT::*>;
+
 struct ProtocolRawTag
 {
     static constexpr std::string_view tag_name = "protocol";
     AttrString name;
+
+    using T = ProtocolRawTag;
+    static constexpr const MappingType<T> mappings[]{
+        {"name", &T::name},
+    };
 };
 
 struct InterfaceRawTag
@@ -37,6 +45,13 @@ struct InterfaceRawTag
     AttrString name;
     AttrString version;
     AttrString frozen;
+
+    using T = InterfaceRawTag;
+    static constexpr const MappingType<T> mappings[]{
+        {"name", &T::name},
+        {"version", &T::version},
+        {"frozen", &T::frozen},
+    };
 };
 
 struct RequestRawTag
@@ -45,6 +60,13 @@ struct RequestRawTag
     AttrString name;
     AttrString type;
     AttrString since;
+
+    using T = RequestRawTag;
+    static constexpr const MappingType<T> mappings[]{
+        {"name", &T::name},
+        {"type", &T::type},
+        {"since", &T::since},
+    };
 };
 
 struct EventRawTag
@@ -54,6 +76,14 @@ struct EventRawTag
     AttrString since;
     AttrString type;
     AttrString deprecated_since;
+
+    using T = EventRawTag;
+    static constexpr const MappingType<T> mappings[]{
+        {"name", &T::name},
+        {"since", &T::since},
+        {"type", &T::type},
+        {"deprecated-since", &T::deprecated_since},
+    };
 };
 
 struct ArgRawTag
@@ -65,6 +95,16 @@ struct ArgRawTag
     AttrString summary;
     AttrString allow_null;
     AttrString enum_name;
+
+    using T = ArgRawTag;
+    static constexpr const MappingType<T> mappings[]{
+        {"name", &T::name},
+        {"type", &T::type},
+        {"interface", &T::interface},
+        {"summary", &T::summary},
+        {"allow-null", &T::allow_null},
+        {"enum", &T::enum_name},
+    };
 };
 
 struct EnumRawTag
@@ -73,6 +113,13 @@ struct EnumRawTag
     AttrString name;
     AttrString since;
     AttrString bitfield;
+
+    using T = EnumRawTag;
+    static constexpr const MappingType<T> mappings[]{
+        {"name", &T::name},
+        {"since", &T::since},
+        {"bitfield", &T::bitfield},
+    };
 };
 
 struct EntryRawTag
@@ -82,17 +129,31 @@ struct EntryRawTag
     AttrString value;
     AttrString summary;
     AttrString since;
+
+    using T = EntryRawTag;
+    static constexpr const MappingType<T> mappings[]{
+        {"name", &T::name},
+        {"value", &T::value},
+        {"summary", &T::summary},
+        {"since", &T::since},
+    };
 };
 
 struct DescriptionRawTag
 {
     static constexpr std::string_view tag_name = "description";
     AttrString summary;
+
+    using T = DescriptionRawTag;
+    static constexpr const MappingType<T> mappings[]{
+        {"summary", &T::summary},
+    };
 };
 
 struct CopyrightRawTag
 {
     static constexpr std::string_view tag_name = "copyright";
+    static constexpr const MappingType<CopyrightRawTag> mappings[]{{}};
 };
 
 struct RawTagVariant : std::variant<
@@ -734,12 +795,9 @@ struct ProtocolParser
         }
 
         template <typename RawTagT>
-        using MappingType = std::pair<std::string_view, AttrString RawTagT::*>;
-
-        template <typename RawTagT, size_t N>
-        constexpr void
-            try_bind(MappingType<RawTagT> (&mappings)[N], RawTagT &tag)
+        constexpr void bind(RawTagT &tag)
         {
+            auto &mappings = RawTagT::mappings;
             auto same_key = [this](auto &mapping) {
                 return mapping.first == key;
             };
@@ -763,99 +821,6 @@ struct ProtocolParser
                 throw std::runtime_error{std::move(msg)};
             }
             val = value;
-        }
-
-        constexpr void bind(ProtocolRawTag &t)
-        {
-            using T = std::remove_cvref_t<decltype(t)>;
-            MappingType<T> mappings[]{
-                {"name", &T::name},
-            };
-            try_bind(mappings, t);
-        }
-
-        constexpr void bind(InterfaceRawTag &t)
-        {
-            using T = std::remove_cvref_t<decltype(t)>;
-            MappingType<T> mappings[]{
-                {"name", &T::name},
-                {"version", &T::version},
-                {"frozen", &T::frozen},
-            };
-            try_bind(mappings, t);
-        }
-
-        constexpr void bind(RequestRawTag &t)
-        {
-            using T = std::remove_cvref_t<decltype(t)>;
-            MappingType<T> mappings[]{
-                {"name", &T::name},
-                {"type", &T::type},
-                {"since", &T::since},
-            };
-            try_bind(mappings, t);
-        }
-
-        constexpr void bind(EventRawTag &t)
-        {
-            using T = std::remove_cvref_t<decltype(t)>;
-            MappingType<T> mappings[]{
-                {"name", &T::name},
-                {"since", &T::since},
-                {"type", &T::type},
-                {"deprecated-since", &T::deprecated_since},
-            };
-            try_bind(mappings, t);
-        }
-
-        constexpr void bind(ArgRawTag &t)
-        {
-            using T = std::remove_cvref_t<decltype(t)>;
-            MappingType<T> mappings[]{
-                {"name", &T::name},
-                {"type", &T::type},
-                {"interface", &T::interface},
-                {"summary", &T::summary},
-                {"allow-null", &T::allow_null},
-                {"enum", &T::enum_name},
-            };
-            try_bind(mappings, t);
-        }
-
-        constexpr void bind(EnumRawTag &t)
-        {
-            using T = std::remove_cvref_t<decltype(t)>;
-            MappingType<T> mappings[]{
-                {"name", &T::name},
-                {"since", &T::since},
-                {"bitfield", &T::bitfield},
-            };
-            try_bind(mappings, t);
-        }
-
-        constexpr void bind(EntryRawTag &t)
-        {
-            using T = std::remove_cvref_t<decltype(t)>;
-            MappingType<T> mappings[]{
-                {"name", &T::name},
-                {"value", &T::value},
-                {"summary", &T::summary},
-                {"since", &T::since},
-            };
-            try_bind(mappings, t);
-        }
-
-        constexpr void bind(DescriptionRawTag &t)
-        {
-            using T = std::remove_cvref_t<decltype(t)>;
-            MappingType<T> mappings[]{
-                {"summary", &T::summary},
-            };
-            try_bind(mappings, t);
-        }
-
-        constexpr void bind(CopyrightRawTag &t)
-        {
         }
 
         template <typename T>
