@@ -30,64 +30,70 @@ using MappingType = std::pair<std::string_view, AttrString RawTagT::*>;
 
 struct ProtocolRawTag
 {
+    using RawTagT = ProtocolRawTag;
     static constexpr std::string_view tag_name = "protocol";
+
     AttrString name;
 
-    using T = ProtocolRawTag;
-    static constexpr const MappingType<T> mappings[]{
-        {"name", &T::name},
+    static constexpr const MappingType<RawTagT> mappings[]{
+        {"name", &RawTagT::name},
     };
 };
 
 struct InterfaceRawTag
 {
+    using RawTagT = InterfaceRawTag;
     static constexpr std::string_view tag_name = "interface";
+
     AttrString name;
     AttrString version;
     AttrString frozen;
 
-    using T = InterfaceRawTag;
-    static constexpr const MappingType<T> mappings[]{
-        {"name", &T::name},
-        {"version", &T::version},
-        {"frozen", &T::frozen},
+    static constexpr const MappingType<RawTagT> mappings[]{
+        {"name", &RawTagT::name},
+        {"version", &RawTagT::version},
+        {"frozen", &RawTagT::frozen},
     };
 };
 
 struct RequestRawTag
 {
+    using RawTagT = RequestRawTag;
     static constexpr std::string_view tag_name = "request";
+
     AttrString name;
     AttrString type;
     AttrString since;
 
-    using T = RequestRawTag;
-    static constexpr const MappingType<T> mappings[]{
-        {"name", &T::name},
-        {"type", &T::type},
-        {"since", &T::since},
+    static constexpr const MappingType<RawTagT> mappings[]{
+        {"name", &RawTagT::name},
+        {"type", &RawTagT::type},
+        {"since", &RawTagT::since},
     };
 };
 
 struct EventRawTag
 {
+    using RawTagT = EventRawTag;
     static constexpr std::string_view tag_name = "event";
+
     AttrString name;
     AttrString since;
     AttrString type;
     AttrString deprecated_since;
 
-    using T = EventRawTag;
-    static constexpr const MappingType<T> mappings[]{
-        {"name", &T::name},
-        {"since", &T::since},
-        {"type", &T::type},
-        {"deprecated-since", &T::deprecated_since},
+    static constexpr const MappingType<RawTagT> mappings[]{
+        {"name", &RawTagT::name},
+        {"since", &RawTagT::since},
+        {"type", &RawTagT::type},
+        {"deprecated-since", &RawTagT::deprecated_since},
     };
 };
 
 struct ArgRawTag
 {
+    using RawTagT = ArgRawTag;
+
     static constexpr std::string_view tag_name = "arg";
     AttrString name;
     AttrString type;
@@ -96,64 +102,68 @@ struct ArgRawTag
     AttrString allow_null;
     AttrString enum_name;
 
-    using T = ArgRawTag;
-    static constexpr const MappingType<T> mappings[]{
-        {"name", &T::name},
-        {"type", &T::type},
-        {"interface", &T::interface},
-        {"summary", &T::summary},
-        {"allow-null", &T::allow_null},
-        {"enum", &T::enum_name},
+    static constexpr const MappingType<RawTagT> mappings[]{
+        {"name", &RawTagT::name},
+        {"type", &RawTagT::type},
+        {"interface", &RawTagT::interface},
+        {"summary", &RawTagT::summary},
+        {"allow-null", &RawTagT::allow_null},
+        {"enum", &RawTagT::enum_name},
     };
 };
 
 struct EnumRawTag
 {
+    using RawTagT = EnumRawTag;
+
     static constexpr std::string_view tag_name = "enum";
     AttrString name;
     AttrString since;
     AttrString bitfield;
 
-    using T = EnumRawTag;
-    static constexpr const MappingType<T> mappings[]{
-        {"name", &T::name},
-        {"since", &T::since},
-        {"bitfield", &T::bitfield},
+    static constexpr const MappingType<RawTagT> mappings[]{
+        {"name", &RawTagT::name},
+        {"since", &RawTagT::since},
+        {"bitfield", &RawTagT::bitfield},
     };
 };
 
 struct EntryRawTag
 {
+    using RawTagT = EntryRawTag;
+
     static constexpr std::string_view tag_name = "entry";
     AttrString name;
     AttrString value;
     AttrString summary;
     AttrString since;
 
-    using T = EntryRawTag;
-    static constexpr const MappingType<T> mappings[]{
-        {"name", &T::name},
-        {"value", &T::value},
-        {"summary", &T::summary},
-        {"since", &T::since},
+    static constexpr const MappingType<RawTagT> mappings[]{
+        {"name", &RawTagT::name},
+        {"value", &RawTagT::value},
+        {"summary", &RawTagT::summary},
+        {"since", &RawTagT::since},
     };
 };
 
 struct DescriptionRawTag
 {
+    using RawTagT = DescriptionRawTag;
+
     static constexpr std::string_view tag_name = "description";
     AttrString summary;
 
-    using T = DescriptionRawTag;
-    static constexpr const MappingType<T> mappings[]{
-        {"summary", &T::summary},
+    static constexpr const MappingType<RawTagT> mappings[]{
+        {"summary", &RawTagT::summary},
     };
 };
 
 struct CopyrightRawTag
 {
+    using RawTagT = CopyrightRawTag;
+
     static constexpr std::string_view tag_name = "copyright";
-    static constexpr const MappingType<CopyrightRawTag> mappings[]{{}};
+    static constexpr const MappingType<RawTagT> mappings[]{{}};
 };
 
 struct RawTagVariant : std::variant<
@@ -230,35 +240,29 @@ struct IndexChainNode : Index
 
 struct EntryNode : IndexChainNode<EntryNode>, EntryRawTag
 {
-    using RawTagT = EntryRawTag;
 };
 
 struct EnumNode : IndexChainNode<EnumNode>, EnumRawTag
 {
-    using RawTagT = EnumRawTag;
     std::optional<IndexChainNode<EntryNode>> entries;
 };
 
 struct ArgNode : IndexChainNode<ArgNode>, ArgRawTag
 {
-    using RawTagT = ArgRawTag;
 };
 
 struct EventNode : IndexChainNode<EventNode>, EventRawTag
 {
-    using RawTagT = EventRawTag;
     std::optional<IndexChainNode<ArgNode>> args;
 };
 
 struct RequestNode : IndexChainNode<RequestNode>, RequestRawTag
 {
-    using RawTagT = RequestRawTag;
     std::optional<IndexChainNode<ArgNode>> args;
 };
 
 struct InterfaceNode : IndexChainNode<InterfaceNode>, InterfaceRawTag
 {
-    using RawTagT = InterfaceRawTag;
     std::optional<IndexChainNode<RequestNode>> requests;
     std::optional<IndexChainNode<EventNode>> events;
     std::optional<IndexChainNode<EnumNode>> enums;
@@ -266,18 +270,15 @@ struct InterfaceNode : IndexChainNode<InterfaceNode>, InterfaceRawTag
 
 struct ProtocolNode : IndexChainNode<ProtocolNode>, ProtocolRawTag
 {
-    using RawTagT = ProtocolRawTag;
     std::optional<IndexChainNode<InterfaceNode>> interfaces;
 };
 
 struct DescriptionNode : IndexChainNode<DescriptionNode>, DescriptionRawTag
 {
-    using RawTagT = DescriptionRawTag;
 };
 
 struct CopyrightNode : IndexChainNode<CopyrightNode>, CopyrightRawTag
 {
-    using RawTagT = CopyrightRawTag;
 };
 
 // clang-format off
