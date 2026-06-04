@@ -122,8 +122,8 @@ struct RawTagVariant : std::variant<
             RawTagVariant{Alternatives{}}...};
     }
 
-    static constexpr auto from_tag_name(std::string_view tag_name)
-        -> std::optional<RawTagVariant>
+    static constexpr auto
+        from_tag_name(std::string_view tag_name) -> std::optional<RawTagVariant>
     {
         auto name_match = [tag_name](RawTagVariant &v) {
             return v.tag_name() == tag_name;
@@ -733,11 +733,12 @@ struct ProtocolParser
             return o;
         }
 
-        using MappingType =
-            std::pair<std::string_view, std::optional<std::string_view> *>;
+        template <typename RawTagT>
+        using MappingType = std::pair<std::string_view, AttrString RawTagT::*>;
 
+        template <typename RawTagT, size_t N>
         constexpr void
-            try_bind(std::span<MappingType> mappings, std::string_view tag_name)
+            try_bind(MappingType<RawTagT> (&mappings)[N], RawTagT &tag)
         {
             auto same_key = [this](auto &mapping) {
                 return mapping.first == key;
@@ -746,17 +747,16 @@ struct ProtocolParser
             if (mapping_it == std::end(mappings)) {
                 auto msg = std::format(
                     "Tag [{}]: Unknown attribute [{}]=[{}]",
-                    tag_name,
+                    RawTagT::tag_name,
                     key,
                     value);
                 throw std::runtime_error{std::move(msg)};
             }
-
-            std::optional<std::string_view> &val = *mapping_it->second;
+            AttrString &val = tag.*(mapping_it->second);
             if (val) {
                 auto msg = std::format(
                     "Tag [{}]: Duplicate attribute [{}]=[{}] (prev is [{}])",
-                    tag_name,
+                    RawTagT::tag_name,
                     key,
                     value,
                     val.value());
@@ -767,83 +767,91 @@ struct ProtocolParser
 
         constexpr void bind(ProtocolRawTag &t)
         {
-            MappingType mappings[]{
-                {"name", &t.name},
+            using T = std::remove_cvref_t<decltype(t)>;
+            MappingType<T> mappings[]{
+                {"name", &T::name},
             };
-            try_bind(mappings, t.tag_name);
+            try_bind(mappings, t);
         }
 
         constexpr void bind(InterfaceRawTag &t)
         {
-            MappingType mappings[]{
-                {"name", &t.name},
-                {"version", &t.version},
-                {"frozen", &t.frozen},
+            using T = std::remove_cvref_t<decltype(t)>;
+            MappingType<T> mappings[]{
+                {"name", &T::name},
+                {"version", &T::version},
+                {"frozen", &T::frozen},
             };
-            try_bind(mappings, t.tag_name);
+            try_bind(mappings, t);
         }
 
         constexpr void bind(RequestRawTag &t)
         {
-            MappingType mappings[]{
-                {"name", &t.name},
-                {"type", &t.type},
-                {"since", &t.since},
+            using T = std::remove_cvref_t<decltype(t)>;
+            MappingType<T> mappings[]{
+                {"name", &T::name},
+                {"type", &T::type},
+                {"since", &T::since},
             };
-            try_bind(mappings, t.tag_name);
+            try_bind(mappings, t);
         }
 
         constexpr void bind(EventRawTag &t)
         {
-            MappingType mappings[]{
-                {"name", &t.name},
-                {"since", &t.since},
-                {"type", &t.type},
-                {"deprecated-since", &t.deprecated_since},
+            using T = std::remove_cvref_t<decltype(t)>;
+            MappingType<T> mappings[]{
+                {"name", &T::name},
+                {"since", &T::since},
+                {"type", &T::type},
+                {"deprecated-since", &T::deprecated_since},
             };
-            try_bind(mappings, t.tag_name);
+            try_bind(mappings, t);
         }
 
         constexpr void bind(ArgRawTag &t)
         {
-            MappingType mappings[]{
-                {"name", &t.name},
-                {"type", &t.type},
-                {"interface", &t.interface},
-                {"summary", &t.summary},
-                {"allow-null", &t.allow_null},
-                {"enum", &t.enum_name},
+            using T = std::remove_cvref_t<decltype(t)>;
+            MappingType<T> mappings[]{
+                {"name", &T::name},
+                {"type", &T::type},
+                {"interface", &T::interface},
+                {"summary", &T::summary},
+                {"allow-null", &T::allow_null},
+                {"enum", &T::enum_name},
             };
-            try_bind(mappings, t.tag_name);
+            try_bind(mappings, t);
         }
 
         constexpr void bind(EnumRawTag &t)
         {
-            MappingType mappings[]{
-                {"name", &t.name},
-                {"since", &t.since},
-                {"bitfield", &t.bitfield},
+            using T = std::remove_cvref_t<decltype(t)>;
+            MappingType<T> mappings[]{
+                {"name", &T::name},
+                {"since", &T::since},
+                {"bitfield", &T::bitfield},
             };
-            try_bind(mappings, t.tag_name);
+            try_bind(mappings, t);
         }
 
         constexpr void bind(EntryRawTag &t)
         {
-            MappingType mappings[]{
-                {"name", &t.name},
-                {"value", &t.value},
-                {"summary", &t.summary},
-                {"since", &t.since},
+            using T = std::remove_cvref_t<decltype(t)>;
+            MappingType<T> mappings[]{
+                {"name", &T::name},
+                {"value", &T::value},
+                {"summary", &T::summary},
+                {"since", &T::since},
             };
-            try_bind(mappings, t.tag_name);
+            try_bind(mappings, t);
         }
 
         constexpr void bind(DescriptionRawTag &t)
         {
-            MappingType mappings[]{
-                {"summary", &t.summary},
+            using T = std::remove_cvref_t<decltype(t)>;
+            MappingType<T> mappings[]{
+                {"summary", &T::summary},
             };
-            try_bind(mappings, t.tag_name);
+            try_bind(mappings, t);
         }
 
         constexpr void bind(CopyrightRawTag &t)
