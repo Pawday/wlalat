@@ -4,8 +4,8 @@
 #include "Types.hh"
 
 #include <cstddef>
-
 #include <cstdint>
+
 #include <optional>
 #include <span>
 #include <string_view>
@@ -21,43 +21,46 @@ struct StringParser
 
     struct Layout
     {
-        std::span<const std::byte> string_data;
-        std::span<const std::byte> undefined_padding;
-
-        uint_least64_t message_size() const
+        constexpr Layout(std::span<const std::byte> data, uint_least32_t strlen)
+            : _data{data}, _strlen{strlen}
         {
-            return 4 + string_data.size() + undefined_padding.size();
-        };
+        }
 
-        auto string_data_zero_term() const
-            -> std::optional<std::span<const std::byte>>
+        const char *c_string_or_nullptr() const
         {
-            auto O = string_data;
-            if (O.empty()) {
-                return {};
+            if (_data.size() < _strlen + 1) {
+                return nullptr;
             }
-
-            if (O.back() != std::byte{0}) {
-                return {};
+            if (_data[_strlen] != std::byte{0}) {
+                return nullptr;
             }
-
-            return O;
+            return reinterpret_cast<const char *>(_data.data());
         }
 
         auto string() const -> std::optional<String>
         {
-            auto data_zterm_op = string_data_zero_term();
-            if (!data_zterm_op) {
+            const char *cstr = c_string_or_nullptr();
+            if (cstr == nullptr) {
                 return {};
             }
-            auto data_zterm = data_zterm_op.value();
-            data_zterm = data_zterm.subspan(0, data_zterm.size() - 1);
-
-            const char *start =
-                reinterpret_cast<const char *>(data_zterm.data());
-            const char *end = start + data_zterm.size();
+            const char *start = cstr;
+            const char *end = start + _strlen;
             return std::basic_string_view<char>{start, end};
         }
+
+        std::span<const std::byte> data() const
+        {
+            return _data;
+        }
+
+        auto skip_size() const
+        {
+            return 4 + _data.size();
+        }
+
+      private:
+        std::span<const std::byte> _data;
+        uint_least32_t _strlen;
     };
 
     std::optional<Layout> parse() const
@@ -67,27 +70,22 @@ struct StringParser
         }
         auto head = _data.subspan(4);
         uint_least32_t string_size_with_zeroterm = fle32(_data.subspan<0, 4>());
-
-        if (head.size() < string_size_with_zeroterm) {
+        if (string_size_with_zeroterm < 1) {
             return {};
         }
-        Layout O{};
-        O.string_data = head.subspan(0, string_size_with_zeroterm);
-        head = head.subspan(string_size_with_zeroterm);
-
-        uint_least8_t undefined_padding_size = 0;
+        uint_least32_t strlen = string_size_with_zeroterm - 1;
+        uint_least32_t padded_size = string_size_with_zeroterm;
         if (string_size_with_zeroterm % 4 != 0) {
-            undefined_padding_size = 4 - (string_size_with_zeroterm % 4);
+            padded_size += 4 - padded_size % 4;
         }
-
-        if (head.size() < undefined_padding_size) {
+        if (head.size() < padded_size) {
             return {};
         }
-        O.undefined_padding = head.subspan(0, undefined_padding_size);
-        return O;
+
+        return Layout{head.subspan(0, padded_size), strlen};
     }
 
-private:
+  private:
     std::span<const std::byte> _data;
 };
 } // namespace wlalat

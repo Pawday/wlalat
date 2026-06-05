@@ -31,7 +31,10 @@ struct Parser
     {
         StringParser p{_data};
         std::optional<StringParser::Layout> parsed_op = p.parse();
-        return parsed_op.has_value();
+        if (!parsed_op) {
+            return false;
+        }
+        return parsed_op.value().c_string_or_nullptr() != nullptr;
     }
 
     bool has(std::type_identity<Array>) const
@@ -58,7 +61,7 @@ struct Parser
         StringParser p{_data};
         StringParser::Layout parsed = p.parse().value();
         String O = parsed.string().value();
-        _data = _data.subspan(parsed.message_size());
+        _data = _data.subspan(parsed.skip_size());
         return O;
     }
 
