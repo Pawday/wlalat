@@ -107,7 +107,7 @@ struct Display : wayland::wl_display::EventDispatcher
     {
         _raw_msg().object_id = hardcoded_display_id;
         _raw_msg().opcode = m.opcode;
-        wayland::wl_display::message::write_get_registry(m, _raw_msg.writer());
+        wayland::wl_display::message::write(m, _raw_msg.writer());
         _raw_msg.update_payload();
     }
 
@@ -142,7 +142,7 @@ struct Registry : wayland::wl_registry::EventDispatcher
     {
         _raw_msg().object_id = id();
         _raw_msg().opcode = m.opcode;
-        wayland::wl_registry::message::write_bind(m, _raw_msg.writer());
+        wayland::wl_registry::message::write(m, _raw_msg.writer());
         _raw_msg.update_payload();
     }
 

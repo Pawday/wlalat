@@ -348,7 +348,7 @@ struct Generator
         O += "";
         O += "template<typename OIterT>";
         O += std::format(
-            "void write_{}(const {} &M, wlalat::Writer<OIterT> W)", name, name);
+            "void write(const {} &M, wlalat::Writer<OIterT> W)", name, name);
         O += "{";
 
         auto write_body = [&](const ProtocolParsing::Node &node) {
