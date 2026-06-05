@@ -26,6 +26,7 @@ struct ClosableFD : private std::optional<int>
             return;
         }
         ::close(value());
+        reset();
     }
 
     ClosableFD(ClosableFD &&o) noexcept
