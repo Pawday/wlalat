@@ -31,6 +31,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <variant>
 #include <vector>
 
 constexpr std::chrono::seconds message_timeout{1};
@@ -94,7 +95,7 @@ struct MessageOwner
     std::vector<std::byte> _payload;
 };
 
-struct Display : wayland::wl_display::EventDispatcher
+struct Display
 {
     static constexpr const wlalat::UInt hardcoded_display_id{1};
 
@@ -112,7 +113,22 @@ struct Display : wayland::wl_display::EventDispatcher
         _raw_msg.update_payload();
     }
 
-    void on(const wayland::wl_display::message::error &m) override
+    void dispatch(wlalat::MessageView M)
+    {
+        if (M.object_id != hardcoded_display_id) {
+            return;
+        }
+
+        auto ev_op = wayland::wl_display::Event::parse(M);
+        if (!ev_op) {
+            return;
+        }
+
+        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
+        std::visit(vis, ev_op.value());
+    }
+
+    void on(const wayland::wl_display::message::error &m)
     {
         uint32_t object_id = m.object_id;
         uint32_t code = m.code;
@@ -124,7 +140,7 @@ struct Display : wayland::wl_display::EventDispatcher
             message);
     }
 
-    void on(const wayland::wl_display::message::delete_id &) override
+    void on(const wayland::wl_display::message::delete_id &)
     {
     }
 
@@ -132,7 +148,7 @@ struct Display : wayland::wl_display::EventDispatcher
     MessageOwner _raw_msg;
 };
 
-struct Registry : wayland::wl_registry::EventDispatcher
+struct Registry
 {
     wlalat::MessageView active_message()
     {
@@ -148,7 +164,21 @@ struct Registry : wayland::wl_registry::EventDispatcher
         _raw_msg.update_payload();
     }
 
-    void on(const wayland::wl_registry::message::global &msg) override
+    void dispatch(wlalat::MessageView M)
+    {
+        if (M.object_id != id()) {
+            return;
+        }
+        auto ev_op = wayland::wl_registry::Event::parse(M);
+        if (!ev_op) {
+            return;
+        }
+
+        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
+        std::visit(vis, ev_op.value());
+    }
+
+    void on(const wayland::wl_registry::message::global &msg)
     {
         std::println(
             "{} {} {}",
@@ -157,7 +187,7 @@ struct Registry : wayland::wl_registry::EventDispatcher
             static_cast<uint32_t>(msg.version));
     }
 
-    void on(const wayland::wl_registry::message::global_remove &) override
+    void on(const wayland::wl_registry::message::global_remove &)
     {
     }
 

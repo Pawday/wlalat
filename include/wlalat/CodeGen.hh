@@ -73,6 +73,7 @@ struct Generator
         O += "";
         O += "#include <optional>";
         O += "#include <type_traits>";
+        O += "#include <variant>";
         O += "";
 
         bool f = true;
@@ -207,21 +208,48 @@ struct Generator
         O += std::format("}} // namespace message");
 
         O += "";
-        O += gen_event_dispatcher(events);
+        O += gen_event_variant(events);
         O += std::format("}} // namespace {}", name);
 
         return O;
     }
 
-    LineList gen_event_dispatcher(
+    LineList gen_event_variant(
         const std::vector<
             std::reference_wrapper<const ProtocolParsing::EventNode>> &events)
     {
         LineList O;
-        O += "struct EventDispatcher";
-        O += "{";
 
-        LineList dispatch_b;
+        if (events.empty()) {
+            O += "// no events";
+            return O;
+        }
+
+        O += std::format("struct Event : std::variant<");
+
+        LineList B0;
+        std::optional<std::string_view> prev;
+        for (const ProtocolParsing::EventNode &ev : events) {
+            if (prev) {
+                B0 += std::format("message::{},", prev.value());
+            }
+            prev = ev.name.value();
+        }
+        if (prev) {
+            B0 += std::format("message::{}", prev.value());
+        }
+        B0.indent();
+        O += std::move(B0);
+
+        LineList B1;
+
+        O += ">";
+        O += "{";
+        B0.clear();
+        B0 += std::format(
+            "static std::optional<Event> parse(wlalat::MessageView M)");
+        B0 += "{";
+
         for (const ProtocolParsing::EventNode &ev : events) {
             auto &name = ev.name.value();
             std::string opcode_ref = std::format("message::{}::opcode", name);
@@ -229,31 +257,22 @@ struct Generator
             LineList if_body;
 
             if_body += std::format("auto op = message::read_{}(M);", name);
-            if_body += "if (!op) return;";
-            if_body += "on(op.value());";
+            if_body += "if (!op) return {};";
+            if_body += "return Event{op.value()};";
 
-            dispatch_b += std::format("if (M.opcode == {}) {{", opcode_ref);
+            B1 += std::format("if (M.opcode == {}) {{", opcode_ref);
             if_body.indent();
-            dispatch_b += std::move(if_body);
-            dispatch_b += std::format("}}");
+            B1 += std::move(if_body);
+            B1 += std::format("}}");
         }
 
-        LineList b;
-        b += "void dispatch(const wlalat::MessageView &M)";
-        b += "{";
-        dispatch_b.indent();
-        b += std::move(dispatch_b);
-        b += "}";
+        B1 += "return {};";
 
-        b += "";
-
-        for (const ProtocolParsing::EventNode &ev : events) {
-            auto &name = ev.name.value();
-            b += std::format("virtual void on(const message::{} &) = 0;", name);
-        }
-
-        b.indent();
-        O += std::move(b);
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += "}";
+        B0.indent();
+        O += std::move(B0);
         O += "};";
         return O;
     }
