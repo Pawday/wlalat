@@ -103,7 +103,8 @@ struct Display : wayland::wl_display::EventDispatcher
         return _raw_msg();
     }
 
-    void encode(wayland::wl_display::message::get_registry &m)
+    template <typename MsgT>
+    void encode(MsgT &m)
     {
         _raw_msg().object_id = hardcoded_display_id;
         _raw_msg().opcode = m.opcode;
@@ -138,7 +139,8 @@ struct Registry : wayland::wl_registry::EventDispatcher
         return _raw_msg();
     }
 
-    void encode(wayland::wl_registry::message::bind &m)
+    template <typename MsgT>
+    void encode(MsgT &m)
     {
         _raw_msg().object_id = id();
         _raw_msg().opcode = m.opcode;
