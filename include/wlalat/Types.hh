@@ -12,7 +12,7 @@ namespace wlalat
 struct Numeric
 {
     Numeric() = default;
-    Numeric(uint_fast32_t v) : _v{v}
+    constexpr Numeric(uint_fast32_t v) : _v{v}
     {
     }
 
