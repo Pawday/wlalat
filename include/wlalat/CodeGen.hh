@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <format>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -166,29 +167,22 @@ struct Generator
         O += std::format("namespace message");
         O += "{";
 
-        bool f = true;
-
-        size_t n_events = 0;
-        size_t n_requests = 0;
+        std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
+            requests;
+        std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
+            events;
 
         auto sink = [&](const ProtocolParsing::Node &node) {
-            if (!f) {
-                O += "";
-            }
-            f = false;
-
             const auto *req_node =
                 std::get_if<ProtocolParsing::RequestNode>(&node);
             if (req_node) {
-                O += gen_request(*req_node, n_requests);
-                n_requests++;
+                requests.push_back(*req_node);
             }
 
             const auto *ev_node =
                 std::get_if<ProtocolParsing::EventNode>(&node);
             if (ev_node) {
-                O += gen_event(*ev_node, n_events);
-                n_events++;
+                events.push_back(*ev_node);
             }
         };
         if (iface_node.requests) {
@@ -199,9 +193,69 @@ struct Generator
             _view.chain_iterate(iface_node.events.value(), sink);
         }
 
+        for (size_t i = 0; i != requests.size(); ++i) {
+            auto opcode = i;
+            auto &req = requests[i];
+            O += gen_request(req, opcode);
+        }
+
+        for (size_t i = 0; i != events.size(); ++i) {
+            auto opcode = i;
+            auto &ev = events[i];
+            O += gen_event(ev, opcode);
+        }
+
         O += std::format("}} // namespace message");
+
+        O += "";
+        O += gen_event_dispatcher(events);
         O += std::format("}} // namespace {}", name);
 
+        return O;
+    }
+
+    LineList gen_event_dispatcher(
+        const std::vector<
+            std::reference_wrapper<const ProtocolParsing::EventNode>> &events)
+    {
+        LineList O;
+        O += "struct EventDispatcher";
+        O += "{";
+
+        LineList dispatch_b;
+        for (const ProtocolParsing::EventNode &ev : events) {
+            auto &name = ev.name.value();
+            std::string opcode_ref = std::format("message::{}::opcode", name);
+
+            LineList if_body;
+
+            if_body += std::format("auto op = message::read_{}(M);", name);
+            if_body += "if (!op) return;";
+            if_body += "on(op.value());";
+
+            dispatch_b += std::format("if (M.opcode == {}) {{", opcode_ref);
+            if_body.indent();
+            dispatch_b += std::move(if_body);
+            dispatch_b += std::format("}}");
+        }
+
+        LineList b;
+        b += "void dispatch(const wlalat::Message &M)";
+        b += "{";
+        dispatch_b.indent();
+        b += std::move(dispatch_b);
+        b += "}";
+
+        b += "";
+
+        for (const ProtocolParsing::EventNode &ev : events) {
+            auto &name = ev.name.value();
+            b += std::format("virtual void on(const message::{} &) = 0;", name);
+        }
+
+        b.indent();
+        O += std::move(b);
+        O += "};";
         return O;
     }
 
@@ -272,8 +326,12 @@ struct Generator
                 B += "/* Ignore fd";
             }
 
-            B += std::format("if (!P.has(std::type_identity<decltype(O.{})>{{}})) return {{}};", N);
-            B += std::format("O.{} = P.next(std::type_identity<decltype(O.{})>{{}});", N, N);
+            B += std::format(
+                "if (!P.has(std::type_identity<decltype(O.{})>{{}})) return "
+                "{{}};",
+                N);
+            B += std::format(
+                "O.{} = P.next(std::type_identity<decltype(O.{})>{{}});", N, N);
 
             if (is_fd) {
                 B += "*/";
