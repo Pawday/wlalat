@@ -67,12 +67,12 @@ struct ObjectIDManager
 
 struct MessageOwner
 {
-    const wlalat::Message &operator()() const
+    const wlalat::MessageView &operator()() const
     {
         return _msg;
     }
 
-    wlalat::Message &operator()()
+    wlalat::MessageView &operator()()
     {
         return _msg;
     }
@@ -90,7 +90,7 @@ struct MessageOwner
     }
 
   private:
-    wlalat::Message _msg;
+    wlalat::MessageView _msg;
     std::vector<std::byte> _payload;
 };
 
@@ -98,7 +98,7 @@ struct Display : wayland::wl_display::EventDispatcher
 {
     static constexpr const wlalat::UInt hardcoded_display_id{1};
 
-    wlalat::Message active_message()
+    wlalat::MessageView active_message()
     {
         return _raw_msg();
     }
@@ -134,7 +134,7 @@ struct Display : wayland::wl_display::EventDispatcher
 
 struct Registry : wayland::wl_registry::EventDispatcher
 {
-    wlalat::Message active_message()
+    wlalat::MessageView active_message()
     {
         return _raw_msg();
     }
@@ -176,7 +176,7 @@ struct Registry : wayland::wl_registry::EventDispatcher
     MessageOwner _raw_msg;
 };
 
-std::string dump_message(const wlalat::Message &msg)
+std::string dump_message(const wlalat::MessageView &msg)
 {
     return std::format(
         "MSG: obj=[{}], opcode=[{}], {}",
@@ -199,7 +199,7 @@ try {
     m.registry = registry.id();
 
     display.encode(m);
-    wlalat::Message raw_m = display.active_message();
+    wlalat::MessageView raw_m = display.active_message();
     std::println("{}", dump_message(raw_m));
     s.send(raw_m);
 
@@ -210,12 +210,12 @@ try {
         if (elapsed > message_timeout) {
             break;
         }
-        std::optional<wlalat::Message> message_op = s.recv();
+        std::optional<wlalat::MessageView> message_op = s.recv();
         if (!message_op) {
             std::this_thread::yield();
             continue;
         }
-        wlalat::Message msg = message_op.value();
+        wlalat::MessageView msg = message_op.value();
         last_message = decltype(last_message)::clock::now();
         std::println("{}", dump_message(msg));
 

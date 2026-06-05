@@ -22,7 +22,7 @@ struct MessageSerializer
     {
     }
 
-    std::span<const std::byte> operator()(Message msg)
+    std::span<const std::byte> operator()(MessageView msg)
     {
         uint16_t message_size = msg.payload.size() + 8;
         if (message_size > std::numeric_limits<uint16_t>::max()) {

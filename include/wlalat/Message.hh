@@ -7,7 +7,7 @@
 
 namespace wlalat {
 
-struct Message
+struct MessageView
 {
     uint32_t object_id;
     uint16_t opcode;

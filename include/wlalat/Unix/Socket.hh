@@ -77,7 +77,7 @@ struct Socket
     {
     }
 
-    void send(Message msg)
+    void send(MessageView msg)
     {
         auto to_send = _send_serializer(msg);
         int status = ::send(_fd(), to_send.data(), to_send.size(), 0);
@@ -93,13 +93,13 @@ struct Socket
         }
     }
 
-    std::optional<Message> recv()
+    std::optional<MessageView> recv()
     {
         return recv_at(_recv_buffer);
     }
 
   private:
-    std::optional<Message> recv_at(std::pmr::vector<std::byte> &buf)
+    std::optional<MessageView> recv_at(std::pmr::vector<std::byte> &buf)
     {
         std::array<std::byte, 8> header{};
         int status = ::recv(

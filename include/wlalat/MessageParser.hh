@@ -67,7 +67,7 @@ struct MessageParser
         return payload_span;
     }
 
-    std::optional<Message> try_parse()
+    std::optional<MessageView> try_parse()
     {
         auto object_id_op = object_id();
         if (!object_id_op) {
@@ -84,7 +84,7 @@ struct MessageParser
             return {};
         }
 
-        Message O{};
+        MessageView O{};
         O.object_id = object_id_op.value();
         O.opcode = opcode_op.value();
         O.payload = payload_op.value();

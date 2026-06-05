@@ -239,7 +239,7 @@ struct Generator
         }
 
         LineList b;
-        b += "void dispatch(const wlalat::Message &M)";
+        b += "void dispatch(const wlalat::MessageView &M)";
         b += "{";
         dispatch_b.indent();
         b += std::move(dispatch_b);
@@ -305,7 +305,9 @@ struct Generator
         O += "";
 
         O += std::format(
-            "inline std::optional<{}> read_{}(wlalat::Message M)", name, name);
+            "inline std::optional<{}> read_{}(wlalat::MessageView M)",
+            name,
+            name);
         O += "{";
         LineList body;
         body += std::format("wlalat::Parser P{{M.payload}};");
