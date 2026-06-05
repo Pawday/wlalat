@@ -35,8 +35,6 @@
 
 constexpr std::chrono::seconds message_timeout{1};
 
-constexpr uint32_t wl_display_object_id = 1;
-
 std::string hexdump(std::span<const std::byte> data)
 {
     std::string O;
@@ -54,21 +52,153 @@ std::string hexdump(std::span<const std::byte> data)
     return O;
 }
 
+struct ObjectIDManager
+{
+    wlalat::UInt allocate()
+    {
+        auto O = _next_free;
+        _next_free = wlalat::UInt{O.raw() + 1};
+        return O;
+    }
+
+  private:
+    wlalat::UInt _next_free{2};
+};
+
+struct MessageOwner
+{
+    const wlalat::Message &operator()() const
+    {
+        return _msg;
+    }
+
+    wlalat::Message &operator()()
+    {
+        return _msg;
+    }
+
+    auto writer()
+    {
+        _payload.clear();
+        wlalat::Writer w{std::back_inserter(_payload)};
+        return w;
+    }
+
+    auto update_payload()
+    {
+        _msg.payload = _payload;
+    }
+
+  private:
+    wlalat::Message _msg;
+    std::vector<std::byte> _payload;
+};
+
+struct Display : wayland::wl_display::EventDispatcher
+{
+    static constexpr const wlalat::UInt hardcoded_display_id{1};
+
+    wlalat::Message active_message()
+    {
+        return _raw_msg();
+    }
+
+    void encode(wayland::wl_display::message::get_registry &m)
+    {
+        _raw_msg().object_id = hardcoded_display_id;
+        _raw_msg().opcode = m.opcode;
+        wayland::wl_display::message::write_get_registry(m, _raw_msg.writer());
+        _raw_msg.update_payload();
+    }
+
+    void on(const wayland::wl_display::message::error &m) override
+    {
+        uint32_t object_id = m.object_id;
+        uint32_t code = m.code;
+        std::string_view message = m.message;
+        std::println(
+            "Display error MSG: object_id=[{}] code=[{}], message=[{}]",
+            object_id,
+            code,
+            message);
+    }
+
+    void on(const wayland::wl_display::message::delete_id &) override
+    {
+    }
+
+  private:
+    MessageOwner _raw_msg;
+};
+
+struct Registry : wayland::wl_registry::EventDispatcher
+{
+    wlalat::Message active_message()
+    {
+        return _raw_msg();
+    }
+
+    void encode(wayland::wl_registry::message::bind &m)
+    {
+        _raw_msg().object_id = id();
+        _raw_msg().opcode = m.opcode;
+        wayland::wl_registry::message::write_bind(m, _raw_msg.writer());
+        _raw_msg.update_payload();
+    }
+
+    void on(const wayland::wl_registry::message::global &msg) override
+    {
+        std::println(
+            "{} {} {}",
+            static_cast<uint32_t>(msg.name),
+            static_cast<std::string_view>(msg.interface),
+            static_cast<uint32_t>(msg.version));
+    }
+
+    void on(const wayland::wl_registry::message::global_remove &) override
+    {
+    }
+
+    wlalat::UInt &id()
+    {
+        return _id;
+    };
+
+    const wlalat::UInt &id() const
+    {
+        return _id;
+    };
+
+  private:
+    wlalat::UInt _id;
+    MessageOwner _raw_msg;
+};
+
+std::string dump_message(const wlalat::Message &msg)
+{
+    return std::format(
+        "MSG: obj=[{}], opcode=[{}], {}",
+        msg.object_id,
+        msg.opcode,
+        hexdump(msg.payload));
+}
+
 int main()
 try {
     wlalat::Unix::Socket s;
+    Display display;
+
+    ObjectIDManager id_manager;
+
+    Registry registry;
+    registry.id() = id_manager.allocate();
 
     wayland::wl_display::message::get_registry m{};
-    m.registry = wlalat::UInt{2};
-    std::vector<std::byte> payload;
-    wlalat::Writer w{std::back_inserter(payload)};
-    wayland::wl_display::message::write_get_registry(m, w);
+    m.registry = registry.id();
 
-    wlalat::Message raw_m;
-    raw_m.object_id = wl_display_object_id;
-    raw_m.opcode = m.opcode;
-    raw_m.payload = payload;
-    std::println("{}", hexdump(payload));
+    display.encode(m);
+    wlalat::Message raw_m = display.active_message();
+    std::println("{}", dump_message(raw_m));
     s.send(raw_m);
 
     auto last_message = std::chrono::steady_clock::now();
@@ -85,21 +215,10 @@ try {
         }
         wlalat::Message msg = message_op.value();
         last_message = decltype(last_message)::clock::now();
+        std::println("{}", dump_message(msg));
 
-        auto global_msg_op = wayland::wl_registry::message::read_global(msg);
-        auto &global_msg = global_msg_op.value();
-
-        std::println(
-            "{} {} {}",
-            static_cast<uint32_t>(global_msg.name),
-            static_cast<std::string_view>(global_msg.interface),
-            static_cast<uint32_t>(global_msg.version));
-
-        std::vector<std::byte> reencoded_payload;
-        wlalat::Writer w{std::back_inserter(reencoded_payload)};
-        wayland::wl_registry::message::write_global(global_msg, w);
-        std::println("{}", hexdump(msg.payload));
-        std::println("{}", hexdump(reencoded_payload));
+        display.dispatch(msg);
+        registry.dispatch(msg);
     }
 
 } catch (std::exception &e) {
