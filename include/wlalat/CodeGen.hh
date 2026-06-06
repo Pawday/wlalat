@@ -208,32 +208,33 @@ struct Generator
         O += std::format("}} // namespace message");
 
         O += "";
-        O += gen_event_variant(events);
+        O += gen_variant(events, "Event");
+        O += gen_variant(requests, "Request");
         O += std::format("}} // namespace {}", name);
 
         return O;
     }
 
-    LineList gen_event_variant(
-        const std::vector<
-            std::reference_wrapper<const ProtocolParsing::EventNode>> &events)
+    template <typename MessageNodeT>
+    LineList gen_variant(
+        const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs,
+        std::string_view class_name)
     {
         LineList O;
 
-        if (events.empty()) {
-            O += "// no events";
+        if (msgs.empty()) {
             return O;
         }
 
-        O += std::format("struct Event : std::variant<");
+        O += std::format("struct {} : std::variant<", class_name);
 
         LineList B0;
         std::optional<std::string_view> prev;
-        for (const ProtocolParsing::EventNode &ev : events) {
+        for (const MessageNodeT &msg : msgs) {
             if (prev) {
                 B0 += std::format("message::{},", prev.value());
             }
-            prev = ev.name.value();
+            prev = msg.name.value();
         }
         if (prev) {
             B0 += std::format("message::{}", prev.value());
@@ -247,14 +248,15 @@ struct Generator
         O += "{";
         B0.clear();
         B0 += std::format(
-            "static std::optional<Event> parse(wlalat::MessageView M)");
+            "static std::optional<{}> parse(wlalat::MessageView M)",
+            class_name);
         B0 += "{";
         B1 += std::format("wlalat::Parser P{{M.payload}};");
 
         std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
             args;
-        for (const ProtocolParsing::EventNode &ev : events) {
-            auto &name = ev.name.value();
+        for (const MessageNodeT &msg : msgs) {
+            auto &name = msg.name.value();
             std::string opcode_ref = std::format("message::{}::opcode", name);
 
             auto sink = [&](const ProtocolParsing::Node &node) {
@@ -263,14 +265,14 @@ struct Generator
             };
 
             args.clear();
-            if (ev.args) {
-                _view.chain_iterate(ev.args.value(), sink);
+            if (msg.args) {
+                _view.chain_iterate(msg.args.value(), sink);
             }
 
             LineList if_body;
             if_body += std::format("message::{} O;", name);
             if_body += gen_read_body(args);
-            if_body += "return Event{O};";
+            if_body += std::format("return {}{{O}};", class_name);
 
             B1 += std::format("if (M.opcode == {}) {{", opcode_ref);
             if_body.indent();
@@ -287,7 +289,7 @@ struct Generator
         O += std::move(B0);
 
         B0.clear();
-        B0 += gen_variant_write_with_visitor(events);
+        B0 += gen_variant_write_with_visitor(msgs);
         B0.indent();
         O += "";
         O += std::move(B0);
