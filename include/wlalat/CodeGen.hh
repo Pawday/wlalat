@@ -249,16 +249,28 @@ struct Generator
         B0 += std::format(
             "static std::optional<Event> parse(wlalat::MessageView M)");
         B0 += "{";
+        B1 += std::format("wlalat::Parser P{{M.payload}};");
 
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
+            args;
         for (const ProtocolParsing::EventNode &ev : events) {
             auto &name = ev.name.value();
             std::string opcode_ref = std::format("message::{}::opcode", name);
 
-            LineList if_body;
+            auto sink = [&](const ProtocolParsing::Node &node) {
+                auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
+                args.push_back(std::ref(arg_node));
+            };
 
-            if_body += std::format("auto op = message::read_{}(M);", name);
-            if_body += "if (!op) return {};";
-            if_body += "return Event{op.value()};";
+            args.clear();
+            if (ev.args) {
+                _view.chain_iterate(ev.args.value(), sink);
+            }
+
+            LineList if_body;
+            if_body += std::format("message::{} O;", name);
+            if_body += gen_read_body(args);
+            if_body += "return Event{O};";
 
             B1 += std::format("if (M.opcode == {}) {{", opcode_ref);
             if_body.indent();
