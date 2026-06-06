@@ -164,7 +164,7 @@ struct Generator
         O += std::format("namespace {}", name);
         O += "{";
 
-        O += std::format("namespace message");
+        O += std::format("namespace [[deprecated]] message");
         O += "{";
 
         std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
@@ -196,13 +196,13 @@ struct Generator
         for (size_t i = 0; i != requests.size(); ++i) {
             auto opcode = i;
             auto &req = requests[i];
-            O += gen_request(req, opcode);
+            O += gen_deprecated_request(req, opcode);
         }
 
         for (size_t i = 0; i != events.size(); ++i) {
             auto opcode = i;
             auto &ev = events[i];
-            O += gen_event(ev, opcode);
+            O += gen_deprecated_event(ev, opcode);
         }
 
         O += std::format("}} // namespace message");
@@ -311,14 +311,16 @@ struct Generator
         return O;
     }
 
-    LineList gen_request(const ProtocolParsing::RequestNode &req, size_t opcode)
+    [[deprecated]] LineList gen_deprecated_request(
+        const ProtocolParsing::RequestNode &req, size_t opcode)
     {
-        return gen_message(req.name, req.args, opcode);
+        return gen_message(req.name, req.args, opcode, true);
     }
 
-    LineList gen_event(const ProtocolParsing::EventNode &ev, size_t opcode)
+    [[deprecated]] LineList gen_deprecated_event(
+        const ProtocolParsing::EventNode &ev, size_t opcode)
     {
-        return gen_message(ev.name, ev.args, opcode);
+        return gen_message(ev.name, ev.args, opcode, true);
     }
 
     template <typename MessageNodeT>
@@ -401,13 +403,18 @@ struct Generator
         const ProtocolParsing::AttrString &name_op,
         const std::optional<
             ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode>> &args,
-        size_t opcode)
+        size_t opcode,
+        bool deprecated_style)
     {
         LineList O;
 
         auto name = name_op.value();
 
-        O += std::format("struct {}", name);
+        if (deprecated_style) {
+            O += std::format("struct [[deprecated]] {}", name);
+        } else {
+            O += std::format("struct {}_message", name);
+        }
         O += "{";
         LineList B;
         B += std::format("static constexpr const size_t opcode = {};", opcode);
