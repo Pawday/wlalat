@@ -421,7 +421,7 @@ struct Generator
         O += "";
 
         O += std::format(
-            "inline std::optional<{}> read_{}(wlalat::MessageView M)",
+            "[[deprecated]] inline std::optional<{}> read_{}(wlalat::MessageView M)",
             name,
             name);
         O += "{";
@@ -450,7 +450,7 @@ struct Generator
         O += "";
         O += "template<typename OIterT>";
         O += std::format(
-            "void write(const {} &M, wlalat::Writer<OIterT> W)", name, name);
+            "[[deprecated]] void write(const {} &M, wlalat::Writer<OIterT> W)", name, name);
         O += "{";
 
         body.clear();
