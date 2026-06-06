@@ -113,12 +113,12 @@ struct Display
         return _raw_msg();
     }
 
-    template <typename MsgT>
-    void encode(MsgT &m)
+    void encode(wayland::wl_display::Request m)
     {
         _raw_msg().object_id = hardcoded_display_id;
-        _raw_msg().opcode = m.opcode;
-        wayland::wl_display::message::write(m, _raw_msg.writer());
+        _raw_msg().opcode = m.opcode();
+        auto w = _raw_msg.writer();
+        m.write(w);
         _raw_msg.update_payload();
     }
 
@@ -162,15 +162,6 @@ struct Registry
     wlalat::MessageView active_message()
     {
         return _raw_msg();
-    }
-
-    template <typename MsgT>
-    void encode(MsgT &m)
-    {
-        _raw_msg().object_id = id();
-        _raw_msg().opcode = m.opcode;
-        wayland::wl_registry::message::write(m, _raw_msg.writer());
-        _raw_msg.update_payload();
     }
 
     void dispatch(wlalat::MessageView M)
@@ -235,7 +226,7 @@ try {
     wayland::wl_display::message::get_registry m{};
     m.registry = registry.id();
 
-    display.encode(m);
+    display.encode({m});
     wlalat::MessageView raw_m = display.active_message();
     std::println("{}", dump_message(raw_m));
     s.send(raw_m);

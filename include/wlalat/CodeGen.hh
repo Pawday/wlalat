@@ -294,6 +294,19 @@ struct Generator
         O += "";
         O += std::move(B0);
 
+        B0.clear();
+        B0 += "auto opcode() const";
+        B0 += "{";
+        B1.clear();
+        B1 += "auto V = []<typename MsgT>(const MsgT &){return MsgT::opcode;};";
+        B1 += "return std::visit(V, *this);";
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += "}";
+        B0.indent();
+        O += "";
+        O += std::move(B0);
+
         O += "};";
         return O;
     }
@@ -316,10 +329,10 @@ struct Generator
         O += gen_write_visitor(msgs);
         O += "";
         O += "template<typename OIterT>";
-        O += "void write(wlalat::Writer<OIterT> &W)";
+        O += "void write(wlalat::Writer<OIterT> &W) const";
         O += "{";
         LineList B0;
-        B0 += "std::visit(WriteVisitor<OIterT>{W},*this);";
+        B0 += "std::visit(WriteVisitor<OIterT>{W}, *this);";
         B0.indent();
         O += std::move(B0);
         O += "}";
@@ -421,7 +434,8 @@ struct Generator
         O += "";
 
         O += std::format(
-            "[[deprecated]] inline std::optional<{}> read_{}(wlalat::MessageView M)",
+            "[[deprecated]] inline std::optional<{}> "
+            "read_{}(wlalat::MessageView M)",
             name,
             name);
         O += "{";
@@ -450,7 +464,9 @@ struct Generator
         O += "";
         O += "template<typename OIterT>";
         O += std::format(
-            "[[deprecated]] void write(const {} &M, wlalat::Writer<OIterT> W)", name, name);
+            "[[deprecated]] void write(const {} &M, wlalat::Writer<OIterT> W)",
+            name,
+            name);
         O += "{";
 
         body.clear();
