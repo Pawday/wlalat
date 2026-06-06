@@ -331,9 +331,47 @@ struct Generator
         LineList body;
         body += std::format("wlalat::Parser P{{M.payload}};");
         body += std::format("{} O;", name);
-        auto read_body = [&](const ProtocolParsing::Node &node) {
-            const auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
 
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
+            arg_nodes;
+        auto arg_node_sink = [&](const ProtocolParsing::Node &node) {
+            const auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
+            arg_nodes.push_back(std::ref(arg_node));
+        };
+        if (args) {
+            _view.chain_iterate(args.value(), arg_node_sink);
+        }
+
+        body += gen_read_body(arg_nodes);
+
+        body += "return O;";
+        body.indent();
+        O += std::move(body);
+        O += "}";
+
+        body.clear();
+        O += "";
+        O += "template<typename OIterT>";
+        O += std::format(
+            "void write(const {} &M, wlalat::Writer<OIterT> W)", name, name);
+        O += "{";
+
+        body.clear();
+        body = gen_write_body(arg_nodes);
+        body.indent();
+        O += std::move(body);
+        O += "}";
+
+        return O;
+    }
+
+    LineList gen_read_body(
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
+            arg_nodes)
+    {
+        LineList body;
+
+        for (const ProtocolParsing::ArgNode &arg_node : arg_nodes) {
             auto &B = body;
             auto N = arg_node.name.value();
 
@@ -356,25 +394,16 @@ struct Generator
             if (is_fd) {
                 B += "*/";
             }
-        };
-        if (args) {
-            _view.chain_iterate(args.value(), read_body);
         }
-        body += "return O;";
-        body.indent();
-        O += std::move(body);
-        O += "}";
+        return body;
+    }
 
-        body.clear();
-        O += "";
-        O += "template<typename OIterT>";
-        O += std::format(
-            "void write(const {} &M, wlalat::Writer<OIterT> W)", name, name);
-        O += "{";
-
-        auto write_body = [&](const ProtocolParsing::Node &node) {
-            const auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
-
+    LineList gen_write_body(
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
+            arg_nodes)
+    {
+        LineList body;
+        for (const ProtocolParsing::ArgNode &arg_node : arg_nodes) {
             auto &B = body;
             auto N = arg_node.name.value();
 
@@ -392,16 +421,8 @@ struct Generator
             if (is_fd) {
                 B += "*/";
             }
-        };
-
-        if (args) {
-            _view.chain_iterate(args.value(), write_body);
         }
-        body.indent();
-        O += std::move(body);
-        O += "}";
-
-        return O;
+        return body;
     }
 
     LineList define_arg(const ProtocolParsing::ArgNode &arg)
