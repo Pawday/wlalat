@@ -44,9 +44,9 @@ struct Writer
         std::array<std::byte, 4> zterm_pad{};
 
 #if 1
-        zterm_pad[1] = std::byte{0xab};
-        zterm_pad[2] = std::byte{0xcd};
-        zterm_pad[3] = std::byte{0xef};
+        zterm_pad[1] = std::byte{0x2l};
+        zterm_pad[2] = std::byte{0xa1};
+        zterm_pad[3] = std::byte{0xad};
 #endif
         std::ranges::copy(tail, zterm_pad.begin());
         zterm_pad[tsz] = std::byte{0};
