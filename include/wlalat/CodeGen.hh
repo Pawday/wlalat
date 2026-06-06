@@ -431,50 +431,6 @@ struct Generator
         O += std::move(B);
 
         O += "};";
-        O += "";
-
-        O += std::format(
-            "[[deprecated]] inline std::optional<{}> "
-            "read_{}(wlalat::MessageView M)",
-            name,
-            name);
-        O += "{";
-        LineList body;
-        body += std::format("wlalat::Parser P{{M.payload}};");
-        body += std::format("{} O;", name);
-
-        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
-            arg_nodes;
-        auto arg_node_sink = [&](const ProtocolParsing::Node &node) {
-            const auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
-            arg_nodes.push_back(std::ref(arg_node));
-        };
-        if (args) {
-            _view.chain_iterate(args.value(), arg_node_sink);
-        }
-
-        body += gen_read_body(arg_nodes);
-
-        body += "return O;";
-        body.indent();
-        O += std::move(body);
-        O += "}";
-
-        body.clear();
-        O += "";
-        O += "template<typename OIterT>";
-        O += std::format(
-            "[[deprecated]] void write(const {} &M, wlalat::Writer<OIterT> W)",
-            name,
-            name);
-        O += "{";
-
-        body.clear();
-        body = gen_write_body(arg_nodes);
-        body.indent();
-        O += std::move(body);
-        O += "}";
-
         return O;
     }
 
