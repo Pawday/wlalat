@@ -285,6 +285,13 @@ struct Generator
         B0 += "}";
         B0.indent();
         O += std::move(B0);
+
+        B0.clear();
+        B0 += gen_variant_write_with_visitor(events);
+        B0.indent();
+        O += "";
+        O += std::move(B0);
+
         O += "};";
         return O;
     }
@@ -297,6 +304,82 @@ struct Generator
     LineList gen_event(const ProtocolParsing::EventNode &ev, size_t opcode)
     {
         return gen_message(ev.name, ev.args, opcode);
+    }
+
+    template <typename MessageNodeT>
+    LineList gen_variant_write_with_visitor(
+        const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs)
+    {
+        LineList O;
+        O += gen_write_visitor(msgs);
+        O += "";
+        O += "template<typename OIterT>";
+        O += "void write(wlalat::Writer<OIterT> &W)";
+        O += "{";
+        LineList B0;
+        B0 += "std::visit(WriteVisitor<OIterT>{W},*this);";
+        B0.indent();
+        O += std::move(B0);
+        O += "}";
+        return O;
+    }
+
+    template <typename MessageNodeT>
+    LineList gen_write_visitor(
+        const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs)
+    {
+        LineList O;
+        O += "template<typename OIterT>";
+        O += "struct WriteVisitor";
+        O += "{";
+
+        LineList B0;
+        B0 += "wlalat::Writer<OIterT> &W;";
+        B0 += "";
+
+        bool f = true;
+        for (const MessageNodeT &msg : msgs) {
+            auto name = msg.name.value();
+            if (!f) {
+                B0 += "";
+            }
+            f = false;
+            B0 += gen_write_visitor_overload(name, msg.args);
+        }
+
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
+    }
+
+    LineList gen_write_visitor_overload(
+        const ProtocolParsing::AttrString &name_op,
+        const std::optional<
+            ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode>>
+            &args_chain_start)
+    {
+        LineList O;
+        auto name = name_op.value();
+
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
+            args;
+
+        auto sink = [&](const ProtocolParsing::Node &node) {
+            auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
+            args.push_back(std::ref(arg_node));
+        };
+        if (args_chain_start) {
+            _view.chain_iterate(args_chain_start.value(), sink);
+        }
+
+        O += std::format("void operator()(const message::{} &M)", name);
+        O += "{";
+        LineList B0 = gen_write_body(args);
+        B0.indent();
+        O += std::move(B0);
+        O += "}";
+        return O;
     }
 
     LineList gen_message(

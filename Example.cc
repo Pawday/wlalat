@@ -53,6 +53,15 @@ std::string hexdump(std::span<const std::byte> data)
     return O;
 }
 
+std::string dump_message(const wlalat::MessageView &msg)
+{
+    return std::format(
+        "MSG: obj=[{}], opcode=[{}], {}",
+        msg.object_id,
+        msg.opcode,
+        hexdump(msg.payload));
+}
+
 struct ObjectIDManager
 {
     wlalat::UInt allocate()
@@ -174,8 +183,15 @@ struct Registry
             return;
         }
 
+        auto &ev = ev_op.value();
+
+        std::vector<std::byte> p2;
+        wlalat::Writer W{std::back_inserter(p2)};
+        ev.write(W);
+
         auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
         std::visit(vis, ev_op.value());
+        std::println("                          {}", hexdump(p2));
     }
 
     void on(const wayland::wl_registry::message::global &msg)
@@ -205,15 +221,6 @@ struct Registry
     wlalat::UInt _id;
     MessageOwner _raw_msg;
 };
-
-std::string dump_message(const wlalat::MessageView &msg)
-{
-    return std::format(
-        "MSG: obj=[{}], opcode=[{}], {}",
-        msg.object_id,
-        msg.opcode,
-        hexdump(msg.payload));
-}
 
 int main()
 try {
