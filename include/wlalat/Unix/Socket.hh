@@ -2,6 +2,7 @@
 
 #include "ClosableFD.hh"
 
+#include <cstdlib>
 #include <wlalat/Error.hh>
 #include <wlalat/Message.hh>
 #include <wlalat/MessageParser.hh>
@@ -23,9 +24,11 @@
 #include <utility>
 #include <vector>
 
-namespace wlalat {
+namespace wlalat
+{
 
-namespace Unix {
+namespace Unix
+{
 
 struct Socket
 {
@@ -44,10 +47,39 @@ struct Socket
         return o;
     }
 
+    static std::optional<sockaddr_un> try_make_address_default()
+    {
+        sockaddr_un o{};
+        o.sun_family = PF_UNIX;
+        std::span<char> path{o.sun_path};
+        path = path.subspan(0, path.size() - 1);
+
+        const char *XDG_RUNTIME_DIR = getenv("XDG_RUNTIME_DIR");
+        if (!XDG_RUNTIME_DIR) {
+            throw Error::from_cstring("Missing XDG_RUNTIME_DIR env");
+        }
+
+        const char *WAYLAND_DISPLAY = getenv("WAYLAND_DISPLAY");
+        if (!WAYLAND_DISPLAY) {
+            throw Error::from_cstring("Missing WAYLAND_DISPLAY env");
+        }
+
+        size_t size =
+            std::formatted_size("{}/{}", XDG_RUNTIME_DIR, WAYLAND_DISPLAY);
+
+        if (size > path.size() - 1) {
+            const char *msg = "Bad XDG_RUNTIME_DIR and WAYLAND_DISPLAY"
+                              " (doesn't fit to sockaddr_un::sun_family)";
+            throw Error::from_cstring(msg);
+        }
+
+        std::format_to(path.begin(), "{}/{}", XDG_RUNTIME_DIR, WAYLAND_DISPLAY);
+        return o;
+    }
+
     static sockaddr_un make_address_default()
     {
-        uid_t uid = getuid();
-        return make_address(uid, 0);
+        return try_make_address_default().value();
     }
 
     Socket(sockaddr_un addr, std::pmr::memory_resource *res)
