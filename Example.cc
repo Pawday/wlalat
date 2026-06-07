@@ -24,10 +24,10 @@
 #include <exception>
 #include <format>
 #include <iterator>
-#include <memory_resource>
 #include <optional>
 #include <print>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -64,11 +64,17 @@ std::string dump_message(const wlalat::MessageView &msg)
 
 struct ObjectIDManager
 {
-    wlalat::UInt allocate()
+    template <typename TagT>
+    struct ID : wlalat::UInt
+    {
+    };
+
+    template <typename TagT>
+    ID<TagT> allocate()
     {
         auto O = _next_free;
         _next_free = wlalat::UInt{O.raw() + 1};
-        return O;
+        return ID<TagT>{O};
     }
 
   private:
@@ -77,30 +83,20 @@ struct ObjectIDManager
 
 struct MessageOwner
 {
-    const wlalat::MessageView &operator()() const
-    {
-        return _msg;
-    }
-
-    wlalat::MessageView &operator()()
-    {
-        return _msg;
-    }
-
-    auto writer()
+    template <typename MsgPayloadT>
+    wlalat::MessageView prepare(wlalat::UInt object_id, const MsgPayloadT &P)
     {
         _payload.clear();
         wlalat::Writer w{std::back_inserter(_payload)};
-        return w;
-    }
-
-    auto update_payload()
-    {
-        _msg.payload = _payload;
+        P.write(w);
+        wlalat::MessageView O;
+        O.object_id = object_id;
+        O.opcode = P.opcode();
+        O.payload = _payload;
+        return O;
     }
 
   private:
-    wlalat::MessageView _msg;
     std::vector<std::byte> _payload;
 };
 
@@ -108,18 +104,9 @@ struct Display
 {
     static constexpr const wlalat::UInt hardcoded_display_id{1};
 
-    wlalat::MessageView active_message()
+    wlalat::MessageView encode(wayland::wl_display::Request m)
     {
-        return _raw_msg();
-    }
-
-    void encode(wayland::wl_display::Request m)
-    {
-        _raw_msg().object_id = hardcoded_display_id;
-        _raw_msg().opcode = m.opcode();
-        auto w = _raw_msg.writer();
-        m.write(w);
-        _raw_msg.update_payload();
+        return _raw_msg.prepare(hardcoded_display_id, m);
     }
 
     void dispatch(wlalat::MessageView M)
@@ -157,16 +144,25 @@ struct Display
     MessageOwner _raw_msg;
 };
 
-struct Registry
+struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
 {
-    wlalat::MessageView active_message()
+    using Tag = wayland::wl_shm::Tag;
+};
+
+struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
+{
+    Registry(
+        wlalat::Unix::Socket &s,
+        ObjectIDManager::ID<wayland::wl_registry::Tag> id,
+        ObjectIDManager &id_manager)
+        : ObjectIDManager::ID<wayland::wl_registry::Tag>{id}, _s{s},
+          _id_manager{id_manager}
     {
-        return _raw_msg();
     }
 
     void dispatch(wlalat::MessageView M)
     {
-        if (M.object_id != id()) {
+        if (M.object_id != *this) {
             return;
         }
         auto ev_op = wayland::wl_registry::Event::parse(M);
@@ -192,42 +188,52 @@ struct Registry
             static_cast<uint32_t>(msg.name),
             static_cast<std::string_view>(msg.interface),
             static_cast<uint32_t>(msg.version));
+
+        if (msg.interface == "wl_shm") {
+            if (shm) {
+                throw std::runtime_error{"Duplicate wl_shm global interface"};
+            }
+
+            Shm shm{_id_manager.allocate<Shm::Tag>()};
+
+            wayland::wl_registry::message_bind bind_msg;
+            bind_msg.name = msg.name;
+            bind_msg.id_interface_name_amogus_arg = msg.interface;
+            bind_msg.id_interface_version_amogus_arg = msg.version;
+            bind_msg.id = shm;
+            wayland::wl_registry::Request req{bind_msg};
+            wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
+            std::println("Req shm {}", dump_message(req_msg));
+            _s.send(req_msg);
+        }
     }
 
     void on(const wayland::wl_registry::message_global_remove &)
     {
     }
 
-    wlalat::UInt &id()
-    {
-        return _id;
-    };
-
-    const wlalat::UInt &id() const
-    {
-        return _id;
-    };
+    std::optional<Shm> shm;
 
   private:
-    wlalat::UInt _id;
+    wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
+    ObjectIDManager &_id_manager;
 };
 
 int main()
 try {
+    ObjectIDManager id_manager;
     wlalat::Unix::Socket s;
+
     Display display;
 
-    ObjectIDManager id_manager;
-
-    Registry registry;
-    registry.id() = id_manager.allocate();
+    auto registry_tag = id_manager.allocate<wayland::wl_registry::Tag>();
+    Registry registry{s, registry_tag, id_manager};
 
     wayland::wl_display::message_get_registry m{};
-    m.registry = registry.id();
+    m.registry = registry_tag;
 
-    display.encode({m});
-    wlalat::MessageView raw_m = display.active_message();
+    wlalat::MessageView raw_m = display.encode({m});
     std::println("{}", dump_message(raw_m));
     s.send(raw_m);
 
