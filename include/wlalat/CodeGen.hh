@@ -67,7 +67,6 @@ struct Generator
         O += "#include <wlalat/Message.hh>";
         O += "#include <wlalat/Parser.hh>";
         O += "#include <wlalat/Types.hh>";
-        O += "#include <wlalat/Writer.hh>";
         O += "";
         O += "#include <cstddef>";
         O += "";
@@ -323,11 +322,11 @@ struct Generator
         LineList O;
         O += gen_write_visitor(msgs);
         O += "";
-        O += "template<typename OIterT>";
-        O += "void write(wlalat::Writer<OIterT> &W) const";
+        O += "template<typename WriterT>";
+        O += "void write(WriterT &W) const";
         O += "{";
         LineList B0;
-        B0 += "std::visit(WriteVisitor<OIterT>{W}, *this);";
+        B0 += "std::visit(WriteVisitor<WriterT>{W}, *this);";
         B0.indent();
         O += std::move(B0);
         O += "}";
@@ -339,12 +338,12 @@ struct Generator
         const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs)
     {
         LineList O;
-        O += "template<typename OIterT>";
+        O += "template<typename WriterT>";
         O += "struct WriteVisitor";
         O += "{";
 
         LineList B0;
-        B0 += "wlalat::Writer<OIterT> &W;";
+        B0 += "WriterT &W;";
         B0 += "";
 
         bool f = true;
