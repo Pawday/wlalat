@@ -163,6 +163,8 @@ struct Generator
         O += std::format("namespace {}", name);
         O += "{";
 
+        O += "struct Tag {};";
+
         std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
             requests;
         std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
