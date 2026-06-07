@@ -164,9 +164,6 @@ struct Generator
         O += std::format("namespace {}", name);
         O += "{";
 
-        O += std::format("namespace [[deprecated]] message");
-        O += "{";
-
         std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
             requests;
         std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
@@ -196,16 +193,14 @@ struct Generator
         for (size_t i = 0; i != requests.size(); ++i) {
             auto opcode = i;
             auto &req = requests[i];
-            O += gen_deprecated_request(req, opcode);
+            O += gen_request(req, opcode);
         }
 
         for (size_t i = 0; i != events.size(); ++i) {
             auto opcode = i;
             auto &ev = events[i];
-            O += gen_deprecated_event(ev, opcode);
+            O += gen_event(ev, opcode);
         }
-
-        O += std::format("}} // namespace message");
 
         O += "";
         O += gen_variant(events, "Event");
@@ -232,12 +227,12 @@ struct Generator
         std::optional<std::string_view> prev;
         for (const MessageNodeT &msg : msgs) {
             if (prev) {
-                B0 += std::format("message::{},", prev.value());
+                B0 += std::format("message_{},", prev.value());
             }
             prev = msg.name.value();
         }
         if (prev) {
-            B0 += std::format("message::{}", prev.value());
+            B0 += std::format("message_{}", prev.value());
         }
         B0.indent();
         O += std::move(B0);
@@ -257,7 +252,7 @@ struct Generator
             args;
         for (const MessageNodeT &msg : msgs) {
             auto &name = msg.name.value();
-            std::string opcode_ref = std::format("message::{}::opcode", name);
+            std::string opcode_ref = std::format("message_{}::opcode", name);
 
             auto sink = [&](const ProtocolParsing::Node &node) {
                 auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
@@ -270,7 +265,7 @@ struct Generator
             }
 
             LineList if_body;
-            if_body += std::format("message::{} O;", name);
+            if_body += std::format("message_{} O;", name);
             if_body += gen_read_body(args);
             if_body += std::format("return {}{{O}};", class_name);
 
@@ -311,16 +306,14 @@ struct Generator
         return O;
     }
 
-    [[deprecated]] LineList gen_deprecated_request(
-        const ProtocolParsing::RequestNode &req, size_t opcode)
+    LineList gen_request(const ProtocolParsing::RequestNode &req, size_t opcode)
     {
-        return gen_message(req.name, req.args, opcode, true);
+        return gen_message(req.name, req.args, opcode);
     }
 
-    [[deprecated]] LineList gen_deprecated_event(
-        const ProtocolParsing::EventNode &ev, size_t opcode)
+    LineList gen_event(const ProtocolParsing::EventNode &ev, size_t opcode)
     {
-        return gen_message(ev.name, ev.args, opcode, true);
+        return gen_message(ev.name, ev.args, opcode);
     }
 
     template <typename MessageNodeT>
@@ -390,7 +383,7 @@ struct Generator
             _view.chain_iterate(args_chain_start.value(), sink);
         }
 
-        O += std::format("void operator()(const message::{} &M)", name);
+        O += std::format("void operator()(const message_{} &M)", name);
         O += "{";
         LineList B0 = gen_write_body(args);
         B0.indent();
@@ -403,18 +396,13 @@ struct Generator
         const ProtocolParsing::AttrString &name_op,
         const std::optional<
             ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode>> &args,
-        size_t opcode,
-        bool deprecated_style)
+        size_t opcode)
     {
         LineList O;
 
         auto name = name_op.value();
 
-        if (deprecated_style) {
-            O += std::format("struct [[deprecated]] {}", name);
-        } else {
-            O += std::format("struct {}_message", name);
-        }
+        O += std::format("struct message_{}", name);
         O += "{";
         LineList B;
         B += std::format("static constexpr const size_t opcode = {};", opcode);

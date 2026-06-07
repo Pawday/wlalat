@@ -137,7 +137,7 @@ struct Display
         std::visit(vis, ev_op.value());
     }
 
-    void on(const wayland::wl_display::message::error &m)
+    void on(const wayland::wl_display::message_error &m)
     {
         uint32_t object_id = m.object_id;
         uint32_t code = m.code;
@@ -149,7 +149,7 @@ struct Display
             message);
     }
 
-    void on(const wayland::wl_display::message::delete_id &)
+    void on(const wayland::wl_display::message_delete_id &)
     {
     }
 
@@ -185,7 +185,7 @@ struct Registry
         std::println("                          {}", hexdump(p2));
     }
 
-    void on(const wayland::wl_registry::message::global &msg)
+    void on(const wayland::wl_registry::message_global &msg)
     {
         std::println(
             "{} {} {}",
@@ -194,7 +194,7 @@ struct Registry
             static_cast<uint32_t>(msg.version));
     }
 
-    void on(const wayland::wl_registry::message::global_remove &)
+    void on(const wayland::wl_registry::message_global_remove &)
     {
     }
 
@@ -223,7 +223,7 @@ try {
     Registry registry;
     registry.id() = id_manager.allocate();
 
-    wayland::wl_display::message::get_registry m{};
+    wayland::wl_display::message_get_registry m{};
     m.registry = registry.id();
 
     display.encode({m});
