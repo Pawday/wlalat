@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <format>
 #include <functional>
+#include <list>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -249,20 +250,20 @@ struct Generator
         B0 += "{";
         B1 += std::format("wlalat::Parser P{{M.payload}};");
 
-        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
             args;
         for (const MessageNodeT &msg : msgs) {
             auto &name = msg.name.value();
             std::string opcode_ref = std::format("message_{}::opcode", name);
 
-            auto sink = [&](const ProtocolParsing::Node &node) {
-                auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
-                args.push_back(std::ref(arg_node));
-            };
-
+            std::list<AmogusArg> am_args;
             args.clear();
             if (msg.args) {
-                _view.chain_iterate(msg.args.value(), sink);
+                am_args =
+                    AmogusArg::collect_amogusified(msg.args.value(), _view);
+                for (auto &arg : am_args) {
+                    args.push_back(std::ref(arg));
+                }
             }
 
             LineList if_body;
@@ -373,15 +374,20 @@ struct Generator
         LineList O;
         auto name = name_op.value();
 
-        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
+        std::list<AmogusArg> amogus_args;
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
             args;
 
-        auto sink = [&](const ProtocolParsing::Node &node) {
-            auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
-            args.push_back(std::ref(arg_node));
+        auto sink = [&](const ProtocolParsing::ArgRawTag &arg) {
+            amogus_args.emplace_back(arg);
         };
         if (args_chain_start) {
-            _view.chain_iterate(args_chain_start.value(), sink);
+            amogus_args =
+                AmogusArg::collect_amogusified(args_chain_start.value(), _view);
+        }
+
+        for (auto &am_arg : amogus_args) {
+            args.push_back(std::ref(am_arg));
         }
 
         O += std::format("void operator()(const message_{} &M)", name);
@@ -392,6 +398,65 @@ struct Generator
         O += "}";
         return O;
     }
+
+    // https://gitlab.freedesktop.org/wayland/wayland/-/commit/85a6a470873357089ffb968a176d5074fddd1756
+    struct AmogusArg : ProtocolParsing::ArgRawTag
+    {
+        AmogusArg(ProtocolParsing::ArgRawTag raw)
+            : ProtocolParsing::ArgRawTag{raw}
+        {
+            if (name) {
+                _name = name.value();
+                name = _name;
+            }
+
+            if (type) {
+                _type = type.value();
+                type = _type;
+            }
+        }
+        std::string _name;
+        std::string _type;
+
+        static std::list<AmogusArg> collect_amogusified(
+            ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode>
+                args_start,
+            ProtocolParsing::ProtocolTreeView view)
+        {
+            std::list<AmogusArg> O;
+            auto my_sink = [&](const ProtocolParsing::Node &node) {
+                auto &arg = std::get<ProtocolParsing::ArgNode>(node);
+                auto name = arg.name.value();
+                auto type = arg.type.value();
+
+                bool is_amogus_new_id =
+                    type == "new_id" && !arg.interface.has_value();
+                if (is_amogus_new_id) {
+
+                    ProtocolParsing::ArgRawTag am_tag{};
+                    std::string am_name;
+                    am_name = std::format("{}_interface_name_amogus_arg", name);
+                    am_tag.name = am_name;
+                    am_tag.type = "string";
+                    O.emplace_back(am_tag);
+
+                    am_name =
+                        std::format("{}_interface_version_amogus_arg", name);
+                    am_tag.name = am_name;
+                    am_tag.type = "uint";
+                    O.emplace_back(am_tag);
+                }
+                O.emplace_back(arg);
+            };
+            view.chain_iterate(args_start, my_sink);
+            return O;
+        }
+
+        AmogusArg(const AmogusArg &) = delete;
+        AmogusArg(AmogusArg &&) = delete;
+        AmogusArg &operator=(const AmogusArg &) = delete;
+        AmogusArg &operator=(AmogusArg &&) = delete;
+    };
 
     LineList gen_message(
         const ProtocolParsing::AttrString &name_op,
@@ -408,19 +473,16 @@ struct Generator
         LineList B;
         B += std::format("static constexpr const size_t opcode = {};", opcode);
 
-        bool f = true;
-        auto define_sink = [&](const ProtocolParsing::Node &node) {
-            if (!f) {
-                B += "";
-            }
-            f = false;
-
-            const auto &arg_node = std::get<ProtocolParsing::ArgNode>(node);
-            B += define_arg(arg_node);
-        };
-
         if (args) {
-            _view.chain_iterate(args.value(), define_sink);
+            auto am_args = AmogusArg::collect_amogusified(args.value(), _view);
+            bool f = true;
+            for (auto &arg : am_args) {
+                if (!f) {
+                    B += "";
+                }
+                f = false;
+                B += define_arg(arg);
+            }
         }
 
         B.indent();
@@ -431,17 +493,17 @@ struct Generator
     }
 
     LineList gen_read_body(
-        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
-            arg_nodes)
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
+            args)
     {
         LineList body;
 
-        for (const ProtocolParsing::ArgNode &arg_node : arg_nodes) {
+        for (const ProtocolParsing::ArgRawTag &arg : args) {
             auto &B = body;
-            auto N = arg_node.name.value();
+            auto N = arg.name.value();
 
             bool is_fd = false;
-            if (arg_node.type && arg_node.type.value() == "fd") {
+            if (arg.type && arg.type.value() == "fd") {
                 is_fd = true;
             }
 
@@ -464,16 +526,16 @@ struct Generator
     }
 
     LineList gen_write_body(
-        std::vector<std::reference_wrapper<const ProtocolParsing::ArgNode>>
-            arg_nodes)
+        std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
+            args)
     {
         LineList body;
-        for (const ProtocolParsing::ArgNode &arg_node : arg_nodes) {
+        for (const ProtocolParsing::ArgRawTag &arg : args) {
             auto &B = body;
-            auto N = arg_node.name.value();
+            auto N = arg.name.value();
 
             bool is_fd = false;
-            if (arg_node.type && arg_node.type.value() == "fd") {
+            if (arg.type && arg.type.value() == "fd") {
                 is_fd = true;
             }
 
@@ -490,7 +552,7 @@ struct Generator
         return body;
     }
 
-    LineList define_arg(const ProtocolParsing::ArgNode &arg)
+    LineList define_arg(const ProtocolParsing::ArgRawTag &arg)
     {
         LineList O;
 
