@@ -45,8 +45,8 @@ struct ClosableFD : private std::optional<int>
         close();
     }
 
-    ClosableFD(const ClosableFD &) = default;
-    ClosableFD &operator=(const ClosableFD &) = default;
+    ClosableFD(const ClosableFD &) = delete;
+    ClosableFD &operator=(const ClosableFD &) = delete;
 };
 
 } // namespace Unix
