@@ -72,7 +72,6 @@ struct Generator
         O += "#include <cstddef>";
         O += "";
         O += "#include <optional>";
-        O += "#include <type_traits>";
         O += "#include <variant>";
         O += "";
 
@@ -511,12 +510,7 @@ struct Generator
                 B += "/* Ignore fd";
             }
 
-            B += std::format(
-                "if (!P.has(std::type_identity<decltype(O.{})>{{}})) return "
-                "{{}};",
-                N);
-            B += std::format(
-                "O.{} = P.next(std::type_identity<decltype(O.{})>{{}});", N, N);
+            B += std::format("if (!P.try_next(O.{})) return {{}};", N);
 
             if (is_fd) {
                 B += "*/";

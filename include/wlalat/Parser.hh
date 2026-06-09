@@ -70,6 +70,17 @@ struct Parser
         throw std::runtime_error{"Array Parser::next() is not implemented"};
     }
 
+    template <typename T>
+    bool try_next(T &o)
+    {
+        std::type_identity<T> tid{};
+        if (!has(tid)) {
+            return false;
+        }
+        o = next(tid);
+        return true;
+    }
+
   private:
     std::span<const std::byte> _data;
 };
