@@ -65,11 +65,10 @@ struct Generator
 
         O += "#pragma once";
         O += "";
-        O += "#include <wlalat/Message.hh>";
-        O += "#include <wlalat/Parser.hh>";
         O += "#include <wlalat/Types.hh>";
         O += "";
         O += "#include <cstddef>";
+        O += "#include <cstdint>";
         O += "";
         O += "#include <optional>";
         O += "#include <variant>";
@@ -243,11 +242,11 @@ struct Generator
         O += ">";
         O += "{";
         B0.clear();
+        B0 += std::format("template<typename ParserT>");
         B0 += std::format(
-            "static std::optional<{}> parse(wlalat::MessageView M)",
+            "static std::optional<{}> parse(ParserT &P, uint_least16_t opcode)",
             class_name);
         B0 += "{";
-        B1 += std::format("wlalat::Parser P{{M.payload}};");
 
         std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
             args;
@@ -270,7 +269,7 @@ struct Generator
             if_body += gen_read_body(args);
             if_body += std::format("return {}{{O}};", class_name);
 
-            B1 += std::format("if (M.opcode == {}) {{", opcode_ref);
+            B1 += std::format("if (opcode == {}) {{", opcode_ref);
             if_body.indent();
             B1 += std::move(if_body);
             B1 += std::format("}}");

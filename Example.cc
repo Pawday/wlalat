@@ -115,7 +115,9 @@ struct Display
             return;
         }
 
-        auto ev_op = wayland::wl_display::Event::parse(M);
+        wlalat::Parser P{M.payload};
+
+        auto ev_op = wayland::wl_display::Event::parse(P, M.opcode);
         if (!ev_op) {
             return;
         }
@@ -165,7 +167,8 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
         if (M.object_id != *this) {
             return;
         }
-        auto ev_op = wayland::wl_registry::Event::parse(M);
+        wlalat::Parser P{M.payload};
+        auto ev_op = wayland::wl_registry::Event::parse(P, M.opcode);
         if (!ev_op) {
             return;
         }
