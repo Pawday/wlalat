@@ -509,7 +509,7 @@ struct Generator
                 B += "/* Ignore fd";
             }
 
-            B += std::format("if (!P.try_next(O.{})) return {{}};", N);
+            B += std::format("if (!P(O.{})) return {{}};", N);
 
             if (is_fd) {
                 B += "*/";
@@ -536,7 +536,7 @@ struct Generator
                 B += "/* Ignore fd";
             }
 
-            B += std::format("W.write(M.{});", N);
+            B += std::format("W(M.{});", N);
 
             if (is_fd) {
                 B += "*/";

@@ -71,7 +71,7 @@ struct Parser
     }
 
     template <typename T>
-    bool try_next(T &o)
+    bool operator()(T &o)
     {
         std::type_identity<T> tid{};
         if (!has(tid)) {

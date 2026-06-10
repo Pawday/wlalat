@@ -56,6 +56,12 @@ struct Writer
         std::ranges::copy(zterm_pad, _oiter);
     }
 
+    template <typename T>
+    constexpr void operator()(const T &v)
+    {
+        write(v);
+    }
+
   private:
     OIterT _oiter;
 };
