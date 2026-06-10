@@ -499,21 +499,7 @@ struct Generator
         for (const ProtocolParsing::ArgRawTag &arg : args) {
             auto &B = body;
             auto N = arg.name.value();
-
-            bool is_fd = false;
-            if (arg.type && arg.type.value() == "fd") {
-                is_fd = true;
-            }
-
-            if (is_fd) {
-                B += "/* Ignore fd";
-            }
-
             B += std::format("if (!P(O.{})) return {{}};", N);
-
-            if (is_fd) {
-                B += "*/";
-            }
         }
         return body;
     }
@@ -526,21 +512,7 @@ struct Generator
         for (const ProtocolParsing::ArgRawTag &arg : args) {
             auto &B = body;
             auto N = arg.name.value();
-
-            bool is_fd = false;
-            if (arg.type && arg.type.value() == "fd") {
-                is_fd = true;
-            }
-
-            if (is_fd) {
-                B += "/* Ignore fd";
-            }
-
             B += std::format("W(M.{});", N);
-
-            if (is_fd) {
-                B += "*/";
-            }
         }
         return body;
     }
