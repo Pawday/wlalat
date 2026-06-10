@@ -112,7 +112,7 @@ struct Socket
     void send(MessageView msg)
     {
         auto to_send = _send_serializer(msg);
-        int status = ::send(_fd(), to_send.data(), to_send.size(), 0);
+        int status = ::send(_fd(), to_send.data(), to_send.size(), MSG_NOSIGNAL);
         if (status < 0) {
             int err = errno;
             _fd.close();
