@@ -104,9 +104,22 @@ struct Display
 {
     static constexpr const wlalat::UInt hardcoded_display_id{1};
 
+    Display(wlalat::Unix::Socket &s, ObjectIDManager &id_manager)
+        : _s{s}, _id_manager{id_manager}
+    {
+    }
+
     wlalat::MessageView encode(wayland::wl_display::Request m)
     {
         return _raw_msg.prepare(hardcoded_display_id, m);
+    }
+
+    void sync()
+    {
+        wayland::wl_display::message_sync msg;
+        msg.callback = _id_manager.allocate<wayland::wl_callback::Tag>();
+        wayland::wl_display::Request req{msg};
+        _s.send(encode(req));
     }
 
     void dispatch(wlalat::MessageView M)
@@ -138,17 +151,70 @@ struct Display
             message);
     }
 
-    void on(const wayland::wl_display::message_delete_id &)
+    void on(const wayland::wl_display::message_delete_id &m)
+    {
+        uint32_t object_id = m.id;
+        std::println("Display delete_id MSG: object_id=[{}]", object_id);
+    }
+
+  private:
+    wlalat::Unix::Socket &_s;
+    ObjectIDManager &_id_manager;
+
+    MessageOwner _raw_msg;
+};
+
+struct ShmPool : ObjectIDManager::ID<wayland::wl_shm_pool::Tag>
+{
+    using Tag = wayland::wl_shm_pool::Tag;
+
+    ShmPool(wlalat::Unix::Socket &s, ObjectIDManager &id_manager)
+        : ObjectIDManager::ID<Tag>{id_manager.allocate<Tag>()}, _s{s},
+          _id_manager{id_manager}
     {
     }
 
   private:
+    wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
+    ObjectIDManager &_id_manager;
 };
 
 struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
 {
     using Tag = wayland::wl_shm::Tag;
+
+    Shm(wlalat::Unix::Socket &s, ObjectIDManager &id_manager)
+        : ObjectIDManager::ID<Tag>{id_manager.allocate<Tag>()}, _s{s},
+          _id_manager{id_manager}
+    {
+    }
+
+    void create_pool_once()
+    {
+        if (pool) {
+            return;
+        }
+
+        pool.emplace(_s, _id_manager);
+
+        wayland::wl_shm::message_create_pool<int> msg;
+        msg.fd = 0xAB0BA;
+        msg.id = pool.value();
+        msg.size = wlalat::Int{-1};
+
+        wayland::wl_shm::Request<int> req{msg};
+        wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
+        std::println("Req message_create_pool {}", dump_message(req_msg));
+        _s.send(req_msg);
+    }
+
+  private:
+    wlalat::Unix::Socket &_s;
+    ObjectIDManager &_id_manager;
+
+    MessageOwner _raw_msg;
+    std::optional<ShmPool> pool;
 };
 
 struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
@@ -197,13 +263,13 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
                 throw std::runtime_error{"Duplicate wl_shm global interface"};
             }
 
-            Shm shm{_id_manager.allocate<Shm::Tag>()};
+            shm.emplace(_s, _id_manager);
 
             wayland::wl_registry::message_bind bind_msg;
             bind_msg.name = msg.name;
             bind_msg.id_interface_name_amogus_arg = msg.interface;
             bind_msg.id_interface_version_amogus_arg = msg.version;
-            bind_msg.id = shm;
+            bind_msg.id = shm.value();
             wayland::wl_registry::Request req{bind_msg};
             wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
             std::println("Req shm {}", dump_message(req_msg));
@@ -228,7 +294,7 @@ try {
     ObjectIDManager id_manager;
     wlalat::Unix::Socket s;
 
-    Display display;
+    Display display{s, id_manager};
 
     auto registry_tag = id_manager.allocate<wayland::wl_registry::Tag>();
     Registry registry{s, registry_tag, id_manager};
@@ -258,6 +324,12 @@ try {
 
         display.dispatch(msg);
         registry.dispatch(msg);
+
+        if (registry.shm) {
+            auto &v = registry.shm.value();
+            v.create_pool_once();
+            display.sync();
+        }
     }
 
 } catch (std::exception &e) {
