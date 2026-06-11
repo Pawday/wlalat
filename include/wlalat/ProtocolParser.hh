@@ -137,12 +137,14 @@ struct EntryRawTag
     AttrString value;
     AttrString summary;
     AttrString since;
+    AttrString deprecated_since;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"name", &RawTagT::name},
         {"value", &RawTagT::value},
         {"summary", &RawTagT::summary},
         {"since", &RawTagT::since},
+        {"deprecated-since", &RawTagT::deprecated_since},
     };
 };
 
