@@ -2,19 +2,22 @@
 
 #include "ClosableFD.hh"
 
-#include <cstdlib>
 #include <wlalat/Error.hh>
 #include <wlalat/Message.hh>
 #include <wlalat/MessageParser.hh>
 #include <wlalat/MessageSerializer.hh>
+#include <wlalat/MessageViewFD.hh>
 
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <sys/un.h>
 #include <unistd.h>
 
 #include <cerrno>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 #include <array>
 #include <format>
@@ -83,7 +86,7 @@ struct Socket
     }
 
     Socket(sockaddr_un addr, std::pmr::memory_resource *res)
-        : _send_serializer{res}, _recv_buffer{res}
+        : _send_serializer{res}, _recv_buffer{res}, _ancillary_send_buffer{res}
     {
         ClosableFD fd;
         {
@@ -109,10 +112,40 @@ struct Socket
     {
     }
 
-    void send(MessageView msg)
+    void send(MessageViewFD<int> msg)
     {
+        auto ancillary_size = CMSG_SPACE(sizeof(int)) * msg.fds.size();
+        if (ancillary_size > _ancillary_send_buffer.size()) {
+            _ancillary_send_buffer.resize(ancillary_size);
+        }
+
         auto to_send = _send_serializer(msg);
-        int status = ::send(_fd(), to_send.data(), to_send.size(), MSG_NOSIGNAL);
+
+        msghdr sendmsg_arg{};
+
+        iovec to_send_iov{};
+        /* ୧༼ಠ益ಠ༽︻╦╤─ */
+        to_send_iov.iov_base = const_cast<std::byte *>(to_send.data());
+        to_send_iov.iov_len = to_send.size();
+        sendmsg_arg.msg_iovlen = 1;
+        sendmsg_arg.msg_iov = &to_send_iov;
+
+        sendmsg_arg.msg_controllen = ancillary_size;
+        sendmsg_arg.msg_control = _ancillary_send_buffer.data();
+
+        cmsghdr *cmsg_p = CMSG_FIRSTHDR(&sendmsg_arg);
+        for (auto &fd : msg.fds) {
+            cmsghdr &cmsg = *cmsg_p;
+            cmsg = cmsghdr{};
+            cmsg.cmsg_level = SOL_SOCKET;
+            cmsg.cmsg_type = SCM_RIGHTS;
+            cmsg.cmsg_len = CMSG_LEN(sizeof(fd));
+            void *cmsg_payload = CMSG_DATA(cmsg_p);
+            std::memcpy(cmsg_payload, &fd, sizeof(fd));
+            cmsg_p = CMSG_NXTHDR(&sendmsg_arg, cmsg_p);
+        }
+
+        int status = ::sendmsg(_fd(), &sendmsg_arg, MSG_NOSIGNAL);
         if (status < 0) {
             int err = errno;
             _fd.close();
@@ -188,6 +221,7 @@ struct Socket
     ClosableFD _fd;
     MessageSerializer _send_serializer;
     std::pmr::vector<std::byte> _recv_buffer;
+    std::pmr::vector<std::byte> _ancillary_send_buffer;
 };
 
 } // namespace Unix
