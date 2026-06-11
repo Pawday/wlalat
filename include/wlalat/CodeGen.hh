@@ -53,6 +53,62 @@ struct LineList : std::vector<std::string>
     }
 };
 
+// https://gitlab.freedesktop.org/wayland/wayland/-/commit/85a6a470873357089ffb968a176d5074fddd1756
+struct AmogusArg : ProtocolParsing::ArgRawTag
+{
+    AmogusArg(ProtocolParsing::ArgRawTag raw) : ProtocolParsing::ArgRawTag{raw}
+    {
+        if (name) {
+            _name = name.value();
+            name = _name;
+        }
+
+        if (type) {
+            _type = type.value();
+            type = _type;
+        }
+    }
+    std::string _name;
+    std::string _type;
+
+    static std::list<AmogusArg> collect_amogusified(
+        ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode> args_start,
+        ProtocolParsing::ProtocolTreeView view)
+    {
+        std::list<AmogusArg> O;
+        auto my_sink = [&](const ProtocolParsing::Node &node) {
+            auto &arg = std::get<ProtocolParsing::ArgNode>(node);
+            auto name = arg.name.value();
+            auto type = arg.type.value();
+
+            bool is_amogus_new_id =
+                type == "new_id" && !arg.interface.has_value();
+            if (is_amogus_new_id) {
+
+                ProtocolParsing::ArgRawTag am_tag{};
+                std::string am_name;
+                am_name = std::format("{}_interface_name_amogus_arg", name);
+                am_tag.name = am_name;
+                am_tag.type = "string";
+                O.emplace_back(am_tag);
+
+                am_name = std::format("{}_interface_version_amogus_arg", name);
+                am_tag.name = am_name;
+                am_tag.type = "uint";
+                O.emplace_back(am_tag);
+            }
+            O.emplace_back(arg);
+        };
+        view.chain_iterate(args_start, my_sink);
+        return O;
+    }
+
+    AmogusArg(const AmogusArg &) = delete;
+    AmogusArg(AmogusArg &&) = delete;
+    AmogusArg &operator=(const AmogusArg &) = delete;
+    AmogusArg &operator=(AmogusArg &&) = delete;
+};
+
 struct Generator
 {
     Generator(ProtocolParsing::ProtocolTreeView view) : _view{view}
@@ -396,65 +452,6 @@ struct Generator
         O += "}";
         return O;
     }
-
-    // https://gitlab.freedesktop.org/wayland/wayland/-/commit/85a6a470873357089ffb968a176d5074fddd1756
-    struct AmogusArg : ProtocolParsing::ArgRawTag
-    {
-        AmogusArg(ProtocolParsing::ArgRawTag raw)
-            : ProtocolParsing::ArgRawTag{raw}
-        {
-            if (name) {
-                _name = name.value();
-                name = _name;
-            }
-
-            if (type) {
-                _type = type.value();
-                type = _type;
-            }
-        }
-        std::string _name;
-        std::string _type;
-
-        static std::list<AmogusArg> collect_amogusified(
-            ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode>
-                args_start,
-            ProtocolParsing::ProtocolTreeView view)
-        {
-            std::list<AmogusArg> O;
-            auto my_sink = [&](const ProtocolParsing::Node &node) {
-                auto &arg = std::get<ProtocolParsing::ArgNode>(node);
-                auto name = arg.name.value();
-                auto type = arg.type.value();
-
-                bool is_amogus_new_id =
-                    type == "new_id" && !arg.interface.has_value();
-                if (is_amogus_new_id) {
-
-                    ProtocolParsing::ArgRawTag am_tag{};
-                    std::string am_name;
-                    am_name = std::format("{}_interface_name_amogus_arg", name);
-                    am_tag.name = am_name;
-                    am_tag.type = "string";
-                    O.emplace_back(am_tag);
-
-                    am_name =
-                        std::format("{}_interface_version_amogus_arg", name);
-                    am_tag.name = am_name;
-                    am_tag.type = "uint";
-                    O.emplace_back(am_tag);
-                }
-                O.emplace_back(arg);
-            };
-            view.chain_iterate(args_start, my_sink);
-            return O;
-        }
-
-        AmogusArg(const AmogusArg &) = delete;
-        AmogusArg(AmogusArg &&) = delete;
-        AmogusArg &operator=(const AmogusArg &) = delete;
-        AmogusArg &operator=(AmogusArg &&) = delete;
-    };
 
     LineList gen_message(
         const ProtocolParsing::AttrString &name_op,
