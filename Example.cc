@@ -5,14 +5,18 @@
 #include <wlalat/Message.hh>
 #include <wlalat/MessageParser.hh>
 #include <wlalat/MessageSerializer.hh>
+#include <wlalat/MessageViewFD.hh>
 #include <wlalat/Parser.hh>
 #include <wlalat/StringParser.hh>
 #include <wlalat/Types.hh>
 #include <wlalat/Unix/Socket.hh>
 #include <wlalat/Writer.hh>
 
+#include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <unistd.h>
 
 #include <cerrno>
 #include <cstddef>
@@ -84,19 +88,44 @@ struct ObjectIDManager
 struct MessageOwner
 {
     template <typename MsgPayloadT>
-    wlalat::MessageView prepare(wlalat::UInt object_id, const MsgPayloadT &P)
+    wlalat::MessageViewFD<int>
+        prepare(wlalat::UInt object_id, const MsgPayloadT &P)
     {
         _payload.clear();
+        _fd_payload.clear();
         wlalat::Writer w{std::back_inserter(_payload)};
-        P.write(w);
-        wlalat::MessageView O;
+
+        WriterFDInterceptor wfd{w, _fd_payload};
+        P.write(wfd);
+        wlalat::MessageViewFD<int> O;
         O.object_id = object_id;
         O.opcode = P.opcode();
         O.payload = _payload;
+        O.fds = _fd_payload;
         return O;
     }
 
   private:
+    template <typename UpstreamWriterT>
+    struct WriterFDInterceptor
+    {
+        UpstreamWriterT &_w;
+        std::vector<int> &_fds;
+
+        template <typename ArgT>
+        void operator()(const ArgT &arg)
+        {
+            _w(arg);
+        }
+
+        void operator()(int fd)
+        {
+            std::println("__AA__ fd=[{}]", fd);
+            _fds.push_back(fd);
+        }
+    };
+
+    std::vector<int> _fd_payload;
     std::vector<std::byte> _payload;
 };
 
@@ -119,7 +148,9 @@ struct Display
         wayland::wl_display::message_sync msg;
         msg.callback = _id_manager.allocate<wayland::wl_callback::Tag>();
         wayland::wl_display::Request req{msg};
-        _s.send(encode(req));
+        auto msg_view = encode(req);
+        std::println("-> Sync {}", dump_message(msg_view));
+        _s.send(msg_view);
     }
 
     void dispatch(wlalat::MessageView M)
@@ -190,22 +221,23 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
     {
     }
 
-    void create_pool_once()
+    void create_pool()
     {
-        if (pool) {
-            return;
-        }
-
         pool.emplace(_s, _id_manager);
 
         wayland::wl_shm::message_create_pool<int> msg;
-        msg.fd = 0xAB0BA;
+
+        size_t sz = 1024 * 1024;
+        int memfd = memfd_create("SHM", O_RDWR);
+        ftruncate(memfd, sz);
+        std::println("__AA__ mem=[{}]", memfd);
+        msg.fd = memfd;
         msg.id = pool.value();
-        msg.size = wlalat::Int{-1};
+        msg.size = wlalat::Int{sz};
 
         wayland::wl_shm::Request<int> req{msg};
-        wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
-        std::println("Req message_create_pool {}", dump_message(req_msg));
+        wlalat::MessageViewFD<int> req_msg = _raw_msg.prepare(*this, req);
+        std::println("-> Req message_create_pool {}", dump_message(req_msg));
         _s.send(req_msg);
     }
 
@@ -272,7 +304,7 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
             bind_msg.id = shm.value();
             wayland::wl_registry::Request req{bind_msg};
             wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
-            std::println("Req shm {}", dump_message(req_msg));
+            std::println("-> Req shm {}", dump_message(req_msg));
             _s.send(req_msg);
         }
     }
@@ -303,7 +335,7 @@ try {
     m.registry = registry_tag;
 
     wlalat::MessageView raw_m = display.encode({m});
-    std::println("{}", dump_message(raw_m));
+    std::println("-> {}", dump_message(raw_m));
     s.send(raw_m);
 
     auto last_message = std::chrono::steady_clock::now();
@@ -320,16 +352,36 @@ try {
         }
         wlalat::MessageView msg = message_op.value();
         last_message = decltype(last_message)::clock::now();
-        std::println("{}", dump_message(msg));
+        std::println("<- {}", dump_message(msg));
 
         display.dispatch(msg);
         registry.dispatch(msg);
+    }
 
-        if (registry.shm) {
-            auto &v = registry.shm.value();
-            v.create_pool_once();
-            display.sync();
-        }
+    if (registry.shm) {
+        auto &v = registry.shm.value();
+        v.create_pool();
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds{10});
+    display.sync();
+    std::optional<wlalat::MessageView> message_op = s.recv();
+    if (message_op) {
+        wlalat::MessageView msg = message_op.value();
+        std::println("<- {}", dump_message(msg));
+        display.dispatch(msg);
+        registry.dispatch(msg);
+    }
+    std::this_thread::sleep_for(std::chrono::seconds{10});
+
+    message_op = s.recv();
+    if (message_op) {
+        wlalat::MessageView msg = message_op.value();
+        std::println("<- {}", dump_message(msg));
+        display.dispatch(msg);
+        registry.dispatch(msg);
+    } else {
+        std::println("NO MSG");
     }
 
 } catch (std::exception &e) {
