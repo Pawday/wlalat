@@ -171,7 +171,7 @@ struct Generator
             {"string", "wlalat::String"},
             {"fixed", "wlalat::Fixed"},
             {"array", "wlalat::Array"},
-            {"fd", "void * /* fd */"},
+            {"fd", "FDT"},
         };
 
         auto matched = [&](const auto &s) { return type == s.first; };
@@ -246,21 +246,33 @@ struct Generator
             _view.chain_iterate(iface_node.events.value(), sink);
         }
 
+        bool req_has_fd = false;
         for (size_t i = 0; i != requests.size(); ++i) {
             auto opcode = i;
-            auto &req = requests[i];
-            O += gen_request(req, opcode);
+            std::list<AmogusArg> args;
+            const ProtocolParsing::RequestNode &req = requests[i];
+            if (req.args) {
+                args = AmogusArg::collect_amogusified(req.args.value(), _view);
+            }
+            req_has_fd = req_has_fd || has_fd(args);
+            O += gen_request(req, args, opcode);
         }
 
+        bool ev_has_fd = false;
         for (size_t i = 0; i != events.size(); ++i) {
             auto opcode = i;
-            auto &ev = events[i];
-            O += gen_event(ev, opcode);
+            const ProtocolParsing::EventNode &ev = events[i];
+            std::list<AmogusArg> args;
+            if (ev.args) {
+                args = AmogusArg::collect_amogusified(ev.args.value(), _view);
+            }
+            O += gen_event(ev, args, opcode);
+            ev_has_fd = ev_has_fd || has_fd(args);
         }
 
         O += "";
-        O += gen_variant(events, "Event");
-        O += gen_variant(requests, "Request");
+        O += gen_variant(events, ev_has_fd, "Event");
+        O += gen_variant(requests, req_has_fd, "Request");
         O += std::format("}} // namespace {}", name);
 
         return O;
@@ -269,6 +281,7 @@ struct Generator
     template <typename MessageNodeT>
     LineList gen_variant(
         const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs,
+        bool fd_templated,
         std::string_view class_name)
     {
         LineList O;
@@ -277,18 +290,29 @@ struct Generator
             return O;
         }
 
+        if (fd_templated) {
+            O += std::format("template<typename FDT>");
+        }
         O += std::format("struct {} : std::variant<", class_name);
 
         LineList B0;
         std::optional<std::string_view> prev;
+        bool prev_is_fd = false;
         for (const MessageNodeT &msg : msgs) {
             if (prev) {
-                B0 += std::format("message_{},", prev.value());
+                B0 += std::format(
+                    "message_{}{},", prev.value(), prev_is_fd ? "<FDT>" : "");
             }
+            std::list<AmogusArg> args;
+            if (msg.args) {
+                args = AmogusArg::collect_amogusified(msg.args.value(), _view);
+            }
+            prev_is_fd = has_fd(args);
             prev = msg.name.value();
         }
         if (prev) {
-            B0 += std::format("message_{}", prev.value());
+            B0 += std::format(
+                "message_{}{}", prev.value(), prev_is_fd ? "<FDT>" : "");
         }
         B0.indent();
         O += std::move(B0);
@@ -308,7 +332,6 @@ struct Generator
             args;
         for (const MessageNodeT &msg : msgs) {
             auto &name = msg.name.value();
-            std::string opcode_ref = std::format("message_{}::opcode", name);
 
             std::list<AmogusArg> am_args;
             args.clear();
@@ -320,8 +343,13 @@ struct Generator
                 }
             }
 
+            bool msg_fd_templated = has_fd(am_args);
+            std::string opcode_ref = std::format(
+                "message_{}{}::opcode", name, msg_fd_templated ? "<FDT>" : "");
+
             LineList if_body;
-            if_body += std::format("message_{} O;", name);
+            if_body += std::format(
+                "message_{}{} O;", name, msg_fd_templated ? "<FDT>" : "");
             if_body += gen_read_body(args);
             if_body += std::format("return {}{{O}};", class_name);
 
@@ -362,14 +390,20 @@ struct Generator
         return O;
     }
 
-    LineList gen_request(const ProtocolParsing::RequestNode &req, size_t opcode)
+    LineList gen_request(
+        const ProtocolParsing::RequestNode &req,
+        std::list<AmogusArg> &args,
+        size_t opcode)
     {
-        return gen_message(req.name, req.args, opcode);
+        return gen_message(req.name, args, opcode);
     }
 
-    LineList gen_event(const ProtocolParsing::EventNode &ev, size_t opcode)
+    LineList gen_event(
+        const ProtocolParsing::EventNode &ev,
+        std::list<AmogusArg> &args,
+        size_t opcode)
     {
-        return gen_message(ev.name, ev.args, opcode);
+        return gen_message(ev.name, args, opcode);
     }
 
     template <typename MessageNodeT>
@@ -444,7 +478,12 @@ struct Generator
             args.push_back(std::ref(am_arg));
         }
 
-        O += std::format("void operator()(const message_{} &M)", name);
+        bool fd_templated = has_fd(amogus_args);
+
+        O += std::format(
+            "void operator()(const message_{}{} &M)",
+            name,
+            fd_templated ? "<FDT>" : "");
         O += "{";
         LineList B0 = gen_write_body(args);
         B0.indent();
@@ -453,25 +492,39 @@ struct Generator
         return O;
     }
 
+    static bool has_fd(std::list<AmogusArg> &args)
+    {
+        bool has_fd = false;
+        auto &am_args = args;
+        auto is_fd = [](const AmogusArg &arg) {
+            if (!arg.type) {
+                return false;
+            }
+            return arg.type.value() == "fd";
+        };
+        return std::ranges::find_if(am_args, is_fd) != std::end(am_args);
+    }
+
     LineList gen_message(
         const ProtocolParsing::AttrString &name_op,
-        const std::optional<
-            ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode>> &args,
+        std::list<AmogusArg> &args,
         size_t opcode)
     {
         LineList O;
 
         auto name = name_op.value();
 
+        if (has_fd(args)) {
+            O += "template<typename FDT>";
+        }
         O += std::format("struct message_{}", name);
         O += "{";
         LineList B;
         B += std::format("static constexpr const size_t opcode = {};", opcode);
 
-        if (args) {
-            auto am_args = AmogusArg::collect_amogusified(args.value(), _view);
+        if (true) {
             bool f = true;
-            for (auto &arg : am_args) {
+            for (auto &arg : args) {
                 if (!f) {
                     B += "";
                 }
