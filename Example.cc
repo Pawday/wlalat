@@ -148,7 +148,7 @@ static constexpr std::string_view TagNameV = TagName<TagT>::value;
 
 struct Display
 {
-    static constexpr const wlalat::UInt hardcoded_display_id{1};
+    using Tag = wayland::wl_display::Tag;
 
     Display(wlalat::Unix::Socket &s, ObjectIDManager &id_manager)
         : _s{s}, _id_manager{id_manager}
@@ -157,7 +157,7 @@ struct Display
 
     wlalat::MessageView encode(wayland::wl_display::Request m)
     {
-        return _raw_msg.prepare(hardcoded_display_id, m);
+        return _raw_msg.prepare(_id, m);
     }
 
     void sync()
@@ -172,7 +172,7 @@ struct Display
 
     void dispatch(wlalat::MessageView M)
     {
-        if (M.object_id != hardcoded_display_id) {
+        if (M.object_id != _id) {
             return;
         }
 
@@ -205,32 +205,33 @@ struct Display
     }
 
   private:
+    static constexpr ObjectIDManager::ID<Tag> _id{1};
     wlalat::Unix::Socket &_s;
     ObjectIDManager &_id_manager;
 
     MessageOwner _raw_msg;
 };
 
-struct ShmPool : ObjectIDManager::ID<wayland::wl_shm_pool::Tag>
+struct ShmPool
 {
     using Tag = wayland::wl_shm_pool::Tag;
 
     ShmPool(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
-        : ObjectIDManager::ID<Tag>{id}, _s{s}
+        : _id{id}, _s{s}
     {
     }
 
   private:
+    ObjectIDManager::ID<Tag> _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
 
-struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
+struct Shm
 {
     using Tag = wayland::wl_shm::Tag;
 
-    Shm(wlalat::Unix::Socket &s, ObjectIDManager::ID<Tag> id)
-        : ObjectIDManager::ID<Tag>{id}, _s{s}
+    Shm(wlalat::Unix::Socket &s, ObjectIDManager::ID<Tag> id) : _id{id}, _s{s}
     {
     }
 
@@ -249,7 +250,7 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
         msg.size = wlalat::Int{sz};
 
         wayland::wl_shm::Request<int> req{msg};
-        wlalat::MessageViewFD<int> req_msg = _raw_msg.prepare(*this, req);
+        wlalat::MessageViewFD<int> req_msg = _raw_msg.prepare(_id, req);
         std::println("-> Req message_create_pool {}", dump_message(req_msg));
         _s.send(req_msg);
 
@@ -258,12 +259,13 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
 
     void on(wayland::wl_shm::message_format fmt)
     {
-        std::println("wl_shm@{}.format(format=[{}])", raw(), fmt.format.raw());
+        std::println(
+            "wl_shm@{}.format(format=[{}])", _id.raw(), fmt.format.raw());
     }
 
     void dispatch(wlalat::MessageView M)
     {
-        if (M.object_id != *this) {
+        if (M.object_id != _id) {
             return;
         }
 
@@ -279,24 +281,26 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
     }
 
   private:
+    ObjectIDManager::ID<Tag> _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
 
-struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
+struct Registry
 {
+    using Tag = wayland::wl_registry::Tag;
+
     Registry(
         wlalat::Unix::Socket &s,
         ObjectIDManager::ID<wayland::wl_registry::Tag> id,
         ObjectIDManager &id_manager)
-        : ObjectIDManager::ID<wayland::wl_registry::Tag>{id}, _s{s},
-          _id_manager{id_manager}
+        : _id{id}, _s{s}, _id_manager{id_manager}
     {
     }
 
     void dispatch(wlalat::MessageView M)
     {
-        if (M.object_id != *this) {
+        if (M.object_id != _id) {
             return;
         }
         wlalat::Parser P{M.payload};
@@ -322,7 +326,7 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
         uint32_t version = msg.version;
         std::println(
             "wl_registry@{}.global(name=[{}], interface=[{}], version=[{}])",
-            raw(),
+            _id.raw(),
             name,
             interface,
             version);
@@ -372,12 +376,12 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
         ObjectIDManager::ID<TagT> new_id = id_manager.allocate<TagT>();
         bind_msg.id = new_id;
         wayland::wl_registry::Request req{bind_msg};
-        wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
+        wlalat::MessageView req_msg = _raw_msg.prepare(_id, req);
         std::println(
             "-> wl_registry@{}.bind(name=[{}], "
             "id_interface_name_amogus_arg=[{}], "
             "id_interface_version_amogus_arg=[{}], id=[{}])",
-            wlalat::UInt{*this}.raw(),
+            _id.raw(),
             bind_msg.name.raw(),
             std::string_view{bind_msg.id_interface_name_amogus_arg},
             bind_msg.id_interface_version_amogus_arg.raw(),
@@ -389,10 +393,12 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
     void on(const wayland::wl_registry::message_global_remove &msg)
     {
         uint32_t name = msg.name;
-        std::println("wl_registry@{}.global_remove(name=[{}])", raw(), name);
+        std::println(
+            "wl_registry@{}.global_remove(name=[{}])", _id.raw(), name);
     }
 
   private:
+    ObjectIDManager::ID<Tag> _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
     ObjectIDManager &_id_manager;
