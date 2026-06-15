@@ -212,6 +212,40 @@ struct Display
     MessageOwner _raw_msg;
 };
 
+struct Buffer
+{
+    using Tag = wayland::wl_buffer::Tag;
+
+    Buffer(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+        : _id{id}, _s{s} {};
+
+    void dispatch(wlalat::MessageView &M)
+    {
+        if (M.object_id != _id) {
+            return;
+        }
+
+        wlalat::Parser P{M.payload};
+
+        auto ev_op = wayland::wl_buffer::Event::parse(P, M.opcode);
+        if (!ev_op) {
+            return;
+        }
+
+        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
+        std::visit(vis, ev_op.value());
+    }
+
+    void on(const wayland::wl_buffer::message_release &m)
+    {
+        std::println("wl_buffer@{}.release()", _id.raw());
+    }
+
+  private:
+    ObjectIDManager::ID<Tag> _id;
+    wlalat::Unix::Socket &_s;
+};
+
 struct ShmPool
 {
     using Tag = wayland::wl_shm_pool::Tag;
@@ -219,6 +253,26 @@ struct ShmPool
     ShmPool(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s}
     {
+    }
+
+    ObjectIDManager::ID<wayland::wl_buffer::Tag>
+        create_buffer(ObjectIDManager &id_manager)
+    {
+        auto O = id_manager.allocate<wayland::wl_buffer::Tag>();
+        wayland::wl_shm_pool::message_create_buffer msg{};
+        msg.id = O;
+        msg.offset = wlalat::Int{0};
+        msg.width = wlalat::Int{1024};
+        msg.height = wlalat::Int{1024};
+        msg.stride = wlalat::Int{1024 * 4};
+        msg.format = wlalat::UInt{0};
+        auto req = _raw_msg.prepare(_id, wayland::wl_shm_pool::Request{msg});
+        std::println(
+            "-> wl_shm_pool@{}.create_buffer({})",
+            _id.raw(),
+            dump_message(req));
+        _s.send(req);
+        return O;
     }
 
   private:
@@ -242,7 +296,7 @@ struct Shm
 
         wayland::wl_shm::message_create_pool<int> msg;
 
-        size_t sz = 1024 * 1024;
+        size_t sz = 1024 * 1024 * 4;
         int memfd = memfd_create("SHM", O_RDWR);
         ftruncate(memfd, sz);
         msg.fd = memfd;
@@ -422,6 +476,7 @@ try {
 
     std::optional<Shm> shm;
     std::optional<ShmPool> pool;
+    std::optional<Buffer> buffer;
 
     auto registry_tag = id_manager.allocate<wayland::wl_registry::Tag>();
     Registry registry{s, registry_tag, id_manager};
@@ -455,6 +510,10 @@ try {
             shm->dispatch(msg);
         }
 
+        if (buffer) {
+            buffer->dispatch(msg);
+        }
+
         if (!shm) {
             auto id_op = registry.try_bind(
                 id_manager, std::type_identity<Shm::Tag>{}, {});
@@ -466,6 +525,11 @@ try {
         if (shm && !pool) {
             auto pool_id = shm->create_pool(id_manager);
             pool.emplace(pool_id, s);
+        }
+
+        if (pool && !buffer) {
+            auto buffer_id = pool->create_buffer(id_manager);
+            buffer.emplace(buffer_id, s);
         }
     }
 
