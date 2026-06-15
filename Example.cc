@@ -1,4 +1,5 @@
 #include "wayland.xml.hh"
+#include "xdg-shell.xml.hh"
 
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
@@ -42,6 +43,9 @@
 #include <vector>
 
 constexpr std::chrono::seconds message_timeout{1};
+
+size_t w = 640;
+size_t h = 480;
 
 std::string hexdump(std::span<const std::byte> data)
 {
@@ -133,15 +137,11 @@ struct MessageOwner
 
 template <typename TagT>
 struct TagName;
-
-#define DEFINE_TAGNAME(NAME)                                                   \
-    template <>                                                                \
-    struct TagName<wayland::NAME::Tag>                                         \
-    {                                                                          \
-        static constexpr std::string_view value{#NAME};                        \
-    };
-
-DEFINE_TAGNAME(wl_shm);
+// clang-format off
+template <> struct TagName<wayland::wl_shm::Tag>         { static constexpr std::string_view value{"wl_shm"};};
+template <> struct TagName<wayland::wl_compositor::Tag>  { static constexpr std::string_view value{"wl_compositor"};};
+template <> struct TagName<xdg_shell::xdg_wm_base::Tag>  { static constexpr std::string_view value{"xdg_wm_base"};};
+// clang-format on
 
 template <typename TagT>
 static constexpr std::string_view TagNameV = TagName<TagT>::value;
@@ -212,6 +212,73 @@ struct Display
     MessageOwner _raw_msg;
 };
 
+struct Surface
+{
+    using Tag = wayland::wl_surface::Tag;
+
+    Surface(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+        : _id{id}, _s{s} {};
+
+    void attach(ObjectIDManager::ID<wayland::wl_buffer::Tag> buffer_id)
+    {
+        wayland::wl_surface::message_attach msg{};
+        msg.buffer = buffer_id;
+        auto req = _raw_msg.prepare(_id, wayland::wl_surface::Request{msg});
+        std::println(
+            "-> wl_surface@{}.attach(buffer=[{}])",
+            _id.raw(),
+            msg.buffer.raw());
+        _s.send(req);
+    }
+
+    void commit()
+    {
+        wayland::wl_surface::message_commit msg{};
+        auto req = _raw_msg.prepare(_id, wayland::wl_surface::Request{msg});
+        std::println("-> wl_surface@{}.commit()", _id.raw());
+        _s.send(req);
+    }
+
+    auto id() const
+    {
+        return _id;
+    }
+
+  private:
+    ObjectIDManager::ID<Tag> _id;
+    wlalat::Unix::Socket &_s;
+    MessageOwner _raw_msg;
+};
+
+struct Compositor
+{
+    using Tag = wayland::wl_compositor::Tag;
+
+    Compositor(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+        : _id{id}, _s{s} {};
+
+    auto create_surface(ObjectIDManager &id_manager)
+    {
+        auto O = id_manager.allocate<Surface::Tag>();
+
+        wayland::wl_compositor::message_create_surface msg{};
+        msg.id = O;
+
+        auto req = _raw_msg.prepare(_id, wayland::wl_compositor::Request{msg});
+        std::println(
+            "-> wl_compositor@{}.message_create_surface(id=[{}])",
+            _id.raw(),
+            msg.id.raw());
+        _s.send(req);
+        return O;
+    }
+
+  private:
+    ObjectIDManager::ID<Tag> _id;
+    wlalat::Unix::Socket &_s;
+    MessageOwner _raw_msg;
+};
+
 struct Buffer
 {
     using Tag = wayland::wl_buffer::Tag;
@@ -238,8 +305,16 @@ struct Buffer
 
     void on(const wayland::wl_buffer::message_release &m)
     {
+        released = true;
         std::println("wl_buffer@{}.release()", _id.raw());
     }
+
+    auto id() const
+    {
+        return _id;
+    }
+
+    bool released = true;
 
   private:
     ObjectIDManager::ID<Tag> _id;
@@ -262,9 +337,9 @@ struct ShmPool
         wayland::wl_shm_pool::message_create_buffer msg{};
         msg.id = O;
         msg.offset = wlalat::Int{0};
-        msg.width = wlalat::Int{1024};
-        msg.height = wlalat::Int{1024};
-        msg.stride = wlalat::Int{1024 * 4};
+        msg.width = wlalat::Int{w};
+        msg.height = wlalat::Int{h};
+        msg.stride = wlalat::Int{w * 4};
         msg.format = wlalat::UInt{0};
         auto req = _raw_msg.prepare(_id, wayland::wl_shm_pool::Request{msg});
         std::println(
@@ -296,12 +371,37 @@ struct Shm
 
         wayland::wl_shm::message_create_pool<int> msg;
 
-        size_t sz = 1024 * 1024 * 4;
+        size_t sz = w * h * 4;
         int memfd = memfd_create("SHM", O_RDWR);
         ftruncate(memfd, sz);
         msg.fd = memfd;
         msg.id = O;
         msg.size = wlalat::Int{sz};
+
+        auto mem =
+            mmap(nullptr, sz, PROT_WRITE | PROT_WRITE, MAP_SHARED, memfd, 0);
+        if (mem == MAP_FAILED) {
+            auto err = errno;
+            throw std::runtime_error{
+                std::format("Map failed {}", strerror(err))};
+        }
+
+        for (size_t y = 0; y != h; ++y) {
+            for (size_t x = 0; x != w; ++x) {
+                size_t offset = (y * w + x) * 4;
+                uint8_t *pixel_p = static_cast<uint8_t *>(mem);
+                pixel_p += offset;
+                auto &c0 = pixel_p[0];
+                auto &c1 = pixel_p[1];
+                auto &c2 = pixel_p[2];
+                auto &c3 = pixel_p[3];
+
+                c0 = 0;
+                c1 = float(y) / h * 255;
+                c2 = float(x) / w * 255;
+                c3 = 0xff;
+            }
+        }
 
         wayland::wl_shm::Request<int> req{msg};
         wlalat::MessageViewFD<int> req_msg = _raw_msg.prepare(_id, req);
@@ -332,6 +432,164 @@ struct Shm
 
         auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
         std::visit(vis, ev_op.value());
+    }
+
+  private:
+    ObjectIDManager::ID<Tag> _id;
+    wlalat::Unix::Socket &_s;
+    MessageOwner _raw_msg;
+};
+
+struct XDGTopLevel
+{
+    using Tag = xdg_shell::xdg_toplevel::Tag;
+    XDGTopLevel(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+        : _id{id}, _s{s}
+    {
+    }
+
+  private:
+    ObjectIDManager::ID<Tag> _id;
+    wlalat::Unix::Socket &_s;
+    MessageOwner _raw_msg;
+};
+
+struct XDGSurface
+{
+    using Tag = xdg_shell::xdg_surface::Tag;
+    XDGSurface(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+        : _id{id}, _s{s}
+    {
+    }
+
+    void dispatch(wlalat::MessageView M)
+    {
+        if (M.object_id != _id) {
+            return;
+        }
+        wlalat::Parser P{M.payload};
+        auto ev_op = xdg_shell::xdg_surface::Event::parse(P, M.opcode);
+        if (!ev_op) {
+            return;
+        }
+
+        auto &ev = ev_op.value();
+
+        std::vector<std::byte> p2;
+        wlalat::Writer W{std::back_inserter(p2)};
+        ev.write(W);
+
+        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
+        std::visit(vis, ev_op.value());
+    }
+
+    void on(const xdg_shell::xdg_surface::message_configure &M)
+    {
+        std::println(
+            "xdg_surface@{}.configure(serial=[{}])", _id.raw(), M.serial.raw());
+        ack_configure(M.serial);
+        configured = true;
+    }
+
+    void ack_configure(wlalat::UInt serial)
+    {
+        xdg_shell::xdg_surface::message_ack_configure msg{};
+        msg.serial = serial;
+        auto req = _raw_msg.prepare(_id, xdg_shell::xdg_surface::Request{msg});
+        std::println(
+            "-> xdg_surface@{}.ack_configure(serial=[{}])",
+            _id.raw(),
+            msg.serial.raw());
+        _s.send(req);
+    }
+
+    auto get_top_level(ObjectIDManager &id_manager)
+    {
+        auto O = id_manager.allocate<XDGTopLevel::Tag>();
+
+        xdg_shell::xdg_surface::message_get_toplevel msg{};
+        msg.id = O;
+
+        auto req = _raw_msg.prepare(_id, xdg_shell::xdg_surface::Request{msg});
+        std::println(
+            "-> xdg_surface@{}.get_top_level(id=[{}])",
+            _id.raw(),
+            msg.id.raw());
+        _s.send(req);
+        return O;
+    }
+
+    bool configured = false;
+
+  private:
+    ObjectIDManager::ID<Tag> _id;
+    wlalat::Unix::Socket &_s;
+    MessageOwner _raw_msg;
+};
+
+struct XDGBase
+{
+    using Tag = xdg_shell::xdg_wm_base::Tag;
+
+    XDGBase(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+        : _id{id}, _s{s}
+    {
+    }
+
+    void dispatch(wlalat::MessageView M)
+    {
+        if (M.object_id != _id) {
+            return;
+        }
+        wlalat::Parser P{M.payload};
+        auto ev_op = xdg_shell::xdg_wm_base::Event::parse(P, M.opcode);
+        if (!ev_op) {
+            return;
+        }
+
+        auto &ev = ev_op.value();
+
+        std::vector<std::byte> p2;
+        wlalat::Writer W{std::back_inserter(p2)};
+        ev.write(W);
+
+        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
+        std::visit(vis, ev_op.value());
+    }
+
+    void on(const xdg_shell::xdg_wm_base::message_ping &M)
+    {
+        std::println(
+            "xdg_wm_base@{}.ping(serial=[{}])", _id.raw(), M.serial.raw());
+        pong(M.serial);
+    }
+
+    void pong(wlalat::UInt serial)
+    {
+        xdg_shell::xdg_wm_base::message_pong msg{};
+        msg.serial = serial;
+        auto req = _raw_msg.prepare(_id, xdg_shell::xdg_wm_base::Request{msg});
+        std::println(
+            "-> xdg_wm_base@{}.pong(serial=[{}])", _id.raw(), msg.serial.raw());
+        _s.send(req);
+    }
+
+    ObjectIDManager::ID<XDGSurface::Tag> get_xdg_surface(
+        ObjectIDManager &id_manager,
+        ObjectIDManager::ID<Surface::Tag> surface_id)
+    {
+        auto O = id_manager.allocate<XDGSurface::Tag>();
+        xdg_shell::xdg_wm_base::message_get_xdg_surface msg{};
+        msg.id = O;
+        msg.surface = surface_id;
+        auto req = _raw_msg.prepare(_id, xdg_shell::xdg_wm_base::Request{msg});
+        std::println(
+            "-> xdg_wm_base@{}.get_xdg_surface(id=[{}],surface=[{}])",
+            _id.raw(),
+            msg.id.raw(),
+            msg.surface.raw());
+        _s.send(req);
+        return O;
     }
 
   private:
@@ -477,6 +735,16 @@ try {
     std::optional<Shm> shm;
     std::optional<ShmPool> pool;
     std::optional<Buffer> buffer;
+    std::optional<Compositor> compositor;
+    std::optional<Surface> surface;
+
+    bool surface_attached = false;
+
+    std::optional<XDGBase> xdg;
+    std::optional<XDGSurface> xdg_surface;
+    std::optional<XDGTopLevel> xdg_top_level;
+
+    bool initial_commit = false;
 
     auto registry_tag = id_manager.allocate<wayland::wl_registry::Tag>();
     Registry registry{s, registry_tag, id_manager};
@@ -514,12 +782,51 @@ try {
             buffer->dispatch(msg);
         }
 
+        if (xdg) {
+            xdg->dispatch(msg);
+        }
+
+        if (xdg_surface) {
+            xdg_surface->dispatch(msg);
+        }
+
         if (!shm) {
             auto id_op = registry.try_bind(
                 id_manager, std::type_identity<Shm::Tag>{}, {});
             if (id_op) {
                 shm.emplace(s, id_op.value());
             }
+        }
+
+        if (!compositor) {
+            auto compositor_id_op = registry.try_bind(
+                id_manager, std::type_identity<Compositor::Tag>(), {});
+            if (compositor_id_op) {
+                compositor.emplace(compositor_id_op.value(), s);
+            }
+        }
+
+        if (!xdg) {
+            auto id_op = registry.try_bind(
+                id_manager, std::type_identity<XDGBase::Tag>(), {});
+            if (id_op) {
+                xdg.emplace(id_op.value(), s);
+            }
+        }
+
+        if (!xdg_surface && surface && xdg) {
+            auto id = xdg->get_xdg_surface(id_manager, surface->id());
+            xdg_surface.emplace(id, s);
+        }
+
+        if (!xdg_top_level && xdg_surface) {
+            auto id = xdg_surface->get_top_level(id_manager);
+            xdg_top_level.emplace(id, s);
+        }
+
+        if (compositor && !surface) {
+            auto id = compositor->create_surface(id_manager);
+            surface.emplace(id, s);
         }
 
         if (shm && !pool) {
@@ -530,6 +837,27 @@ try {
         if (pool && !buffer) {
             auto buffer_id = pool->create_buffer(id_manager);
             buffer.emplace(buffer_id, s);
+        }
+
+        bool can_attach = xdg_surface && xdg_surface->configured;
+        can_attach = can_attach && surface && buffer;
+        can_attach = can_attach && !surface_attached;
+        if (can_attach) {
+            surface->attach(buffer->id());
+            surface_attached = true;
+        }
+
+        bool can_initial_commit = !initial_commit;
+        can_initial_commit = can_initial_commit && surface && xdg_surface;
+        can_initial_commit = can_initial_commit && !xdg_surface->configured;
+        if (can_initial_commit) {
+            surface->commit();
+            initial_commit = true;
+        }
+
+        if (xdg_surface && xdg_surface->configured && buffer->released) {
+            surface->commit();
+            buffer->released = false;
         }
     }
 
