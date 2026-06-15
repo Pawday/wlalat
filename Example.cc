@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <algorithm>
 #include <chrono>
 #include <exception>
 #include <format>
@@ -35,6 +36,8 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -128,6 +131,21 @@ struct MessageOwner
     std::vector<std::byte> _payload;
 };
 
+template <typename TagT>
+struct TagName;
+
+#define DEFINE_TAGNAME(NAME)                                                   \
+    template <>                                                                \
+    struct TagName<wayland::NAME::Tag>                                         \
+    {                                                                          \
+        static constexpr std::string_view value{#NAME};                        \
+    };
+
+DEFINE_TAGNAME(wl_shm);
+
+template <typename TagT>
+static constexpr std::string_view TagNameV = TagName<TagT>::value;
+
 struct Display
 {
     static constexpr const wlalat::UInt hardcoded_display_id{1};
@@ -213,13 +231,13 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
 {
     using Tag = wayland::wl_shm::Tag;
 
-    Shm(wlalat::Unix::Socket &s, ObjectIDManager &id_manager)
-        : ObjectIDManager::ID<Tag>{id_manager.allocate<Tag>()}, _s{s},
-          _id_manager{id_manager}
+    Shm(wlalat::Unix::Socket &s, ObjectIDManager::ID<Tag> id)
+        : ObjectIDManager::ID<Tag>{id}, _s{s}
     {
     }
 
-    void create_pool_at(std::optional<ShmPool> &pool)
+    void create_pool_at(
+        std::optional<ShmPool> &pool, ObjectIDManager &_id_manager)
     {
         pool.emplace(_s, _id_manager);
 
@@ -262,8 +280,6 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
 
   private:
     wlalat::Unix::Socket &_s;
-    ObjectIDManager &_id_manager;
-
     MessageOwner _raw_msg;
 };
 
@@ -272,10 +288,9 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
     Registry(
         wlalat::Unix::Socket &s,
         ObjectIDManager::ID<wayland::wl_registry::Tag> id,
-        ObjectIDManager &id_manager,
-        std::optional<Shm> &shm)
+        ObjectIDManager &id_manager)
         : ObjectIDManager::ID<wayland::wl_registry::Tag>{id}, _s{s},
-          _id_manager{id_manager}, _shm{shm}
+          _id_manager{id_manager}
     {
     }
 
@@ -312,23 +327,63 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
             interface,
             version);
 
-        if (msg.interface == "wl_shm") {
-            if (_shm) {
-                throw std::runtime_error{"Duplicate wl_shm global interface"};
+        Global new_global;
+        new_global.numeric_name = name;
+        new_global.interface = interface;
+        new_global.version = version;
+        globals.push_back(std::move(new_global));
+    }
+
+    template <typename TagT>
+    std::optional<ObjectIDManager::ID<TagT>> try_bind(
+        ObjectIDManager &id_manager,
+        std::type_identity<TagT> interface,
+        std::optional<uint32_t> version)
+    {
+        std::string_view interface_name = TagNameV<TagT>;
+
+        auto match = [&](const Global &g) {
+            if (g.interface != interface_name) {
+                return false;
             }
 
-            _shm.emplace(_s, _id_manager);
+            if (version && version.value() != g.version) {
+                return false;
+            }
 
-            wayland::wl_registry::message_bind bind_msg;
-            bind_msg.name = msg.name;
-            bind_msg.id_interface_name_amogus_arg = msg.interface;
-            bind_msg.id_interface_version_amogus_arg = msg.version;
-            bind_msg.id = _shm.value();
-            wayland::wl_registry::Request req{bind_msg};
-            wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
-            std::println("-> Req shm {}", dump_message(req_msg));
-            _s.send(req_msg);
+            return true;
+        };
+
+        auto global_it = std::ranges::find_if(globals, match);
+        if (global_it == std::end(globals)) {
+            return {};
         }
+
+        Global &global = *global_it;
+
+        wayland::wl_registry::message_bind bind_msg;
+        bind_msg.name = wlalat::UInt{global.numeric_name};
+        bind_msg.id_interface_name_amogus_arg = TagNameV<TagT>;
+        wlalat::UInt bind_version{global.version};
+        if (version) {
+            bind_version = wlalat::UInt{version.value()};
+        }
+        bind_msg.id_interface_version_amogus_arg = bind_version;
+        ObjectIDManager::ID<TagT> new_id = id_manager.allocate<TagT>();
+        bind_msg.id = new_id;
+        wayland::wl_registry::Request req{bind_msg};
+        wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
+        std::println(
+            "-> wl_registry@{}.bind(name=[{}], "
+            "id_interface_name_amogus_arg=[{}], "
+            "id_interface_version_amogus_arg=[{}], id=[{}])",
+            wlalat::UInt{*this}.raw(),
+            bind_msg.name.raw(),
+            std::string_view{bind_msg.id_interface_name_amogus_arg},
+            bind_msg.id_interface_version_amogus_arg.raw(),
+            bind_msg.id.raw());
+        _s.send(req_msg);
+        return new_id;
     }
 
     void on(const wayland::wl_registry::message_global_remove &msg)
@@ -342,7 +397,14 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
     MessageOwner _raw_msg;
     ObjectIDManager &_id_manager;
 
-    std::optional<Shm> &_shm;
+    struct Global
+    {
+        uint32_t numeric_name;
+        std::string interface;
+        uint32_t version;
+    };
+
+    std::vector<Global> globals;
 };
 
 int main()
@@ -356,7 +418,7 @@ try {
     std::optional<ShmPool> pool;
 
     auto registry_tag = id_manager.allocate<wayland::wl_registry::Tag>();
-    Registry registry{s, registry_tag, id_manager, shm};
+    Registry registry{s, registry_tag, id_manager};
 
     wayland::wl_display::message_get_registry m{};
     m.registry = registry_tag;
@@ -387,8 +449,16 @@ try {
             shm->dispatch(msg);
         }
 
+        if (!shm) {
+            auto id_op = registry.try_bind(
+                id_manager, std::type_identity<Shm::Tag>{}, {});
+            if (id_op) {
+                shm.emplace(s, id_op.value());
+            }
+        }
+
         if (shm && !pool) {
-            shm->create_pool_at(pool);
+            shm->create_pool_at(pool, id_manager);
         }
     }
 
