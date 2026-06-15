@@ -120,7 +120,6 @@ struct MessageOwner
 
         void operator()(int fd)
         {
-            std::println("__AA__ fd=[{}]", fd);
             _fds.push_back(fd);
         }
     };
@@ -230,7 +229,6 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
         size_t sz = 1024 * 1024;
         int memfd = memfd_create("SHM", O_RDWR);
         ftruncate(memfd, sz);
-        std::println("__AA__ mem=[{}]", memfd);
         msg.fd = memfd;
         msg.id = pool.value();
         msg.size = wlalat::Int{sz};
@@ -301,7 +299,6 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
 
         auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
         std::visit(vis, ev_op.value());
-        std::println("                          {}", hexdump(p2));
     }
 
     void on(const wayland::wl_registry::message_global &msg)
