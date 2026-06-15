@@ -221,7 +221,7 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
     {
     }
 
-    void create_pool()
+    void create_pool_at(std::optional<ShmPool> &pool)
     {
         pool.emplace(_s, _id_manager);
 
@@ -241,12 +241,33 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
         _s.send(req_msg);
     }
 
+    void on(wayland::wl_shm::message_format fmt)
+    {
+        std::println("wl_shm.format({:x})", fmt.format.raw());
+    }
+
+    void dispatch(wlalat::MessageView M)
+    {
+        if (M.object_id != *this) {
+            return;
+        }
+
+        wlalat::Parser P{M.payload};
+
+        auto ev_op = wayland::wl_shm::Event::parse(P, M.opcode);
+        if (!ev_op) {
+            return;
+        }
+
+        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
+        std::visit(vis, ev_op.value());
+    }
+
   private:
     wlalat::Unix::Socket &_s;
     ObjectIDManager &_id_manager;
 
     MessageOwner _raw_msg;
-    std::optional<ShmPool> pool;
 };
 
 struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
@@ -254,9 +275,10 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
     Registry(
         wlalat::Unix::Socket &s,
         ObjectIDManager::ID<wayland::wl_registry::Tag> id,
-        ObjectIDManager &id_manager)
+        ObjectIDManager &id_manager,
+        std::optional<Shm> &shm)
         : ObjectIDManager::ID<wayland::wl_registry::Tag>{id}, _s{s},
-          _id_manager{id_manager}
+          _id_manager{id_manager}, _shm{shm}
     {
     }
 
@@ -291,17 +313,17 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
             static_cast<uint32_t>(msg.version));
 
         if (msg.interface == "wl_shm") {
-            if (shm) {
+            if (_shm) {
                 throw std::runtime_error{"Duplicate wl_shm global interface"};
             }
 
-            shm.emplace(_s, _id_manager);
+            _shm.emplace(_s, _id_manager);
 
             wayland::wl_registry::message_bind bind_msg;
             bind_msg.name = msg.name;
             bind_msg.id_interface_name_amogus_arg = msg.interface;
             bind_msg.id_interface_version_amogus_arg = msg.version;
-            bind_msg.id = shm.value();
+            bind_msg.id = _shm.value();
             wayland::wl_registry::Request req{bind_msg};
             wlalat::MessageView req_msg = _raw_msg.prepare(*this, req);
             std::println("-> Req shm {}", dump_message(req_msg));
@@ -313,12 +335,12 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
     {
     }
 
-    std::optional<Shm> shm;
-
   private:
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
     ObjectIDManager &_id_manager;
+
+    std::optional<Shm> &_shm;
 };
 
 int main()
@@ -328,8 +350,11 @@ try {
 
     Display display{s, id_manager};
 
+    std::optional<Shm> shm;
+    std::optional<ShmPool> pool;
+
     auto registry_tag = id_manager.allocate<wayland::wl_registry::Tag>();
-    Registry registry{s, registry_tag, id_manager};
+    Registry registry{s, registry_tag, id_manager, shm};
 
     wayland::wl_display::message_get_registry m{};
     m.registry = registry_tag;
@@ -356,32 +381,13 @@ try {
 
         display.dispatch(msg);
         registry.dispatch(msg);
-    }
+        if (shm) {
+            shm->dispatch(msg);
+        }
 
-    if (registry.shm) {
-        auto &v = registry.shm.value();
-        v.create_pool();
-    }
-
-    std::this_thread::sleep_for(std::chrono::seconds{10});
-    display.sync();
-    std::optional<wlalat::MessageView> message_op = s.recv();
-    if (message_op) {
-        wlalat::MessageView msg = message_op.value();
-        std::println("<- {}", dump_message(msg));
-        display.dispatch(msg);
-        registry.dispatch(msg);
-    }
-    std::this_thread::sleep_for(std::chrono::seconds{10});
-
-    message_op = s.recv();
-    if (message_op) {
-        wlalat::MessageView msg = message_op.value();
-        std::println("<- {}", dump_message(msg));
-        display.dispatch(msg);
-        registry.dispatch(msg);
-    } else {
-        std::println("NO MSG");
+        if (shm && !pool) {
+            shm->create_pool_at(pool);
+        }
     }
 
 } catch (std::exception &e) {
