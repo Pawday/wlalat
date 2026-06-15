@@ -175,7 +175,7 @@ struct Display
         uint32_t code = m.code;
         std::string_view message = m.message;
         std::println(
-            "Display error MSG: object_id=[{}] code=[{}], message=[{}]",
+            "wl_display@1.error(object_id=[{}] code=[{}], message=[{}])",
             object_id,
             code,
             message);
@@ -183,8 +183,7 @@ struct Display
 
     void on(const wayland::wl_display::message_delete_id &m)
     {
-        uint32_t object_id = m.id;
-        std::println("Display delete_id MSG: object_id=[{}]", object_id);
+        std::println("wl_display@1.delete_id({:x})", m.id.raw());
     }
 
   private:
@@ -241,7 +240,7 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
 
     void on(wayland::wl_shm::message_format fmt)
     {
-        std::println("wl_shm.format({:x})", fmt.format.raw());
+        std::println("wl_shm@{}.format(format=[{}])", raw(), fmt.format.raw());
     }
 
     void dispatch(wlalat::MessageView M)
@@ -303,11 +302,15 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
 
     void on(const wayland::wl_registry::message_global &msg)
     {
+        uint32_t name = msg.name;
+        std::string_view interface{msg.interface};
+        uint32_t version = msg.version;
         std::println(
-            "{} {} {}",
-            static_cast<uint32_t>(msg.name),
-            static_cast<std::string_view>(msg.interface),
-            static_cast<uint32_t>(msg.version));
+            "wl_registry@{}.global(name=[{}], interface=[{}], version=[{}])",
+            raw(),
+            name,
+            interface,
+            version);
 
         if (msg.interface == "wl_shm") {
             if (_shm) {
@@ -328,8 +331,10 @@ struct Registry : ObjectIDManager::ID<wayland::wl_registry::Tag>
         }
     }
 
-    void on(const wayland::wl_registry::message_global_remove &)
+    void on(const wayland::wl_registry::message_global_remove &msg)
     {
+        uint32_t name = msg.name;
+        std::println("wl_registry@{}.global_remove(name=[{}])", raw(), name);
     }
 
   private:
