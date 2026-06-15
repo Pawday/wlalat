@@ -41,7 +41,7 @@ struct MessageSerializer
         write_head = write_head.subspan(msg_id_data.size());
 
         uint32_t size_opcode_pair = 0;
-        size_opcode_pair |= data.size();
+        size_opcode_pair |= message_size;
         size_opcode_pair <<= 16;
         size_opcode_pair |= msg.opcode;
         auto size_opcode_pair_data = tole32(size_opcode_pair);
