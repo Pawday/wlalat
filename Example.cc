@@ -215,16 +215,14 @@ struct ShmPool : ObjectIDManager::ID<wayland::wl_shm_pool::Tag>
 {
     using Tag = wayland::wl_shm_pool::Tag;
 
-    ShmPool(wlalat::Unix::Socket &s, ObjectIDManager &id_manager)
-        : ObjectIDManager::ID<Tag>{id_manager.allocate<Tag>()}, _s{s},
-          _id_manager{id_manager}
+    ShmPool(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+        : ObjectIDManager::ID<Tag>{id}, _s{s}
     {
     }
 
   private:
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
-    ObjectIDManager &_id_manager;
 };
 
 struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
@@ -236,10 +234,10 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
     {
     }
 
-    void create_pool_at(
-        std::optional<ShmPool> &pool, ObjectIDManager &_id_manager)
+    ObjectIDManager::ID<ShmPool::Tag> create_pool(ObjectIDManager &id_manager)
     {
-        pool.emplace(_s, _id_manager);
+        ObjectIDManager::ID<ShmPool::Tag> O =
+            id_manager.allocate<ShmPool::Tag>();
 
         wayland::wl_shm::message_create_pool<int> msg;
 
@@ -247,13 +245,15 @@ struct Shm : ObjectIDManager::ID<wayland::wl_shm::Tag>
         int memfd = memfd_create("SHM", O_RDWR);
         ftruncate(memfd, sz);
         msg.fd = memfd;
-        msg.id = pool.value();
+        msg.id = O;
         msg.size = wlalat::Int{sz};
 
         wayland::wl_shm::Request<int> req{msg};
         wlalat::MessageViewFD<int> req_msg = _raw_msg.prepare(*this, req);
         std::println("-> Req message_create_pool {}", dump_message(req_msg));
         _s.send(req_msg);
+
+        return O;
     }
 
     void on(wayland::wl_shm::message_format fmt)
@@ -458,7 +458,8 @@ try {
         }
 
         if (shm && !pool) {
-            shm->create_pool_at(pool, id_manager);
+            auto pool_id = shm->create_pool(id_manager);
+            pool.emplace(pool_id, s);
         }
     }
 
