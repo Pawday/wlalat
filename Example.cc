@@ -472,15 +472,9 @@ struct XDGSurface
         if (!ev_op) {
             return;
         }
-
         auto &ev = ev_op.value();
-
-        std::vector<std::byte> p2;
-        wlalat::Writer W{std::back_inserter(p2)};
-        ev.write(W);
-
         auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev_op.value());
+        std::visit(vis, ev);
     }
 
     void on(const xdg_shell::xdg_surface::message_configure &M)
@@ -546,15 +540,9 @@ struct XDGBase
         if (!ev_op) {
             return;
         }
-
         auto &ev = ev_op.value();
-
-        std::vector<std::byte> p2;
-        wlalat::Writer W{std::back_inserter(p2)};
-        ev.write(W);
-
         auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev_op.value());
+        std::visit(vis, ev);
     }
 
     void on(const xdg_shell::xdg_wm_base::message_ping &M)
@@ -620,15 +608,9 @@ struct Registry
         if (!ev_op) {
             return;
         }
-
         auto &ev = ev_op.value();
-
-        std::vector<std::byte> p2;
-        wlalat::Writer W{std::back_inserter(p2)};
-        ev.write(W);
-
         auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev_op.value());
+        std::visit(vis, ev);
     }
 
     void on(const wayland::wl_registry::message_global &msg)
