@@ -24,6 +24,7 @@ struct Parser
     bool has(std::type_identity<Numeric>)  const { return _data.size() >= 4; }
     bool has(std::type_identity<Int>)      const { return has(std::type_identity<Numeric>{}); }
     bool has(std::type_identity<UInt>)     const { return has(std::type_identity<Numeric>{}); }
+    bool has(std::type_identity<Object>)   const { return has(std::type_identity<Numeric>{}); }
     bool has(std::type_identity<Fixed>)    const { return has(std::type_identity<Numeric>{}); }
     // clang-format on
 
@@ -51,8 +52,10 @@ struct Parser
     }
 
     // clang-format off
+    using Obj = Object;
     Int   next(std::type_identity<Int>)   { return Int   { next(std::type_identity<Numeric>{})}; };
     UInt  next(std::type_identity<UInt>)  { return UInt  { next(std::type_identity<Numeric>{})}; };
+    Obj   next(std::type_identity<Obj>)   { return Object{ next(std::type_identity<Numeric>{})}; };
     Fixed next(std::type_identity<Fixed>) { return Fixed { next(std::type_identity<Numeric>{})}; };
     // clang-format on
 

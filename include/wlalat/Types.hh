@@ -77,4 +77,12 @@ struct Array : std::span<const std::byte>
 {
 };
 
+struct Object : Numeric
+{
+};
+
+struct NewID : Numeric
+{
+};
+
 } // namespace wlalat

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "wlalat/Types.hh"
 #include <cstddef>
 #include <cstdint>
 
@@ -9,7 +10,7 @@ namespace wlalat {
 
 struct MessageView
 {
-    uint32_t object_id;
+    Object object_id;
     uint16_t opcode;
     std::span<const std::byte> payload;
 };

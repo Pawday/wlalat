@@ -36,7 +36,7 @@ struct MessageSerializer
         std::span<std::byte> write_head{data};
         write_head = write_head.subspan(0, message_size);
 
-        auto msg_id_data = tole32(msg.object_id);
+        auto msg_id_data = tole32(msg.object_id.raw());
         std::ranges::copy(msg_id_data, write_head.begin());
         write_head = write_head.subspan(msg_id_data.size());
 

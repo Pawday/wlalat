@@ -68,35 +68,42 @@ std::string dump_message(const wlalat::MessageView &msg)
 {
     return std::format(
         "MSG: obj=[{}], opcode=[{}], {}",
-        msg.object_id,
+        msg.object_id.raw(),
         msg.opcode,
         hexdump(msg.payload));
 }
 
 struct ObjectIDManager
 {
-    template <typename TagT>
-    struct ID : wlalat::UInt
+    struct ID : wlalat::NewID
     {
+        operator wlalat::Object()
+        {
+            return wlalat::Object{raw()};
+        }
     };
 
-    template <typename TagT>
-    ID<TagT> allocate()
+    ID allocate()
     {
         auto O = _next_free;
-        _next_free = wlalat::UInt{O.raw() + 1};
-        return ID<TagT>{O};
+        _next_free = wlalat::NewID{O.raw() + 1};
+        return ID{O};
     }
 
   private:
-    wlalat::UInt _next_free{2};
+    wlalat::NewID _next_free{2};
 };
+
+static bool operator==(const ObjectIDManager::ID &l, const wlalat::Object &o)
+{
+    return l.raw() == o.raw();
+}
 
 struct MessageOwner
 {
     template <typename MsgPayloadT>
     wlalat::MessageViewFD<int>
-        prepare(wlalat::UInt object_id, const MsgPayloadT &P)
+        prepare(ObjectIDManager::ID object_id, const MsgPayloadT &P)
     {
         _payload.clear();
         _fd_payload.clear();
@@ -163,7 +170,7 @@ struct Display
     void sync()
     {
         wayland::wl_display::message_sync msg;
-        msg.callback = _id_manager.allocate<wayland::wl_callback::Tag>();
+        msg.callback = _id_manager.allocate();
         wayland::wl_display::Request req{msg};
         auto msg_view = encode(req);
         std::println("-> Sync {}", dump_message(msg_view));
@@ -189,7 +196,7 @@ struct Display
 
     void on(const wayland::wl_display::message_error &m)
     {
-        uint32_t object_id = m.object_id;
+        uint32_t object_id = m.object_id.raw();
         uint32_t code = m.code;
         std::string_view message = m.message;
         std::println(
@@ -205,7 +212,7 @@ struct Display
     }
 
   private:
-    static constexpr ObjectIDManager::ID<Tag> _id{1};
+    static constexpr ObjectIDManager::ID _id{1};
     wlalat::Unix::Socket &_s;
     ObjectIDManager &_id_manager;
 
@@ -216,10 +223,10 @@ struct Surface
 {
     using Tag = wayland::wl_surface::Tag;
 
-    Surface(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+    Surface(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s} {};
 
-    void attach(ObjectIDManager::ID<wayland::wl_buffer::Tag> buffer_id)
+    void attach(ObjectIDManager::ID buffer_id)
     {
         wayland::wl_surface::message_attach msg{};
         msg.buffer = buffer_id;
@@ -245,7 +252,7 @@ struct Surface
     }
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
@@ -254,12 +261,12 @@ struct Compositor
 {
     using Tag = wayland::wl_compositor::Tag;
 
-    Compositor(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+    Compositor(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s} {};
 
     auto create_surface(ObjectIDManager &id_manager)
     {
-        auto O = id_manager.allocate<Surface::Tag>();
+        auto O = id_manager.allocate();
 
         wayland::wl_compositor::message_create_surface msg{};
         msg.id = O;
@@ -274,7 +281,7 @@ struct Compositor
     }
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
@@ -283,8 +290,7 @@ struct Buffer
 {
     using Tag = wayland::wl_buffer::Tag;
 
-    Buffer(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
-        : _id{id}, _s{s} {};
+    Buffer(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s} {};
 
     void dispatch(wlalat::MessageView &M)
     {
@@ -317,7 +323,7 @@ struct Buffer
     bool released = true;
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
 };
 
@@ -325,15 +331,13 @@ struct ShmPool
 {
     using Tag = wayland::wl_shm_pool::Tag;
 
-    ShmPool(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
-        : _id{id}, _s{s}
+    ShmPool(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
     }
 
-    ObjectIDManager::ID<wayland::wl_buffer::Tag>
-        create_buffer(ObjectIDManager &id_manager)
+    ObjectIDManager::ID create_buffer(ObjectIDManager &id_manager)
     {
-        auto O = id_manager.allocate<wayland::wl_buffer::Tag>();
+        auto O = id_manager.allocate();
         wayland::wl_shm_pool::message_create_buffer msg{};
         msg.id = O;
         msg.offset = wlalat::Int{0};
@@ -351,7 +355,7 @@ struct ShmPool
     }
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
@@ -360,14 +364,13 @@ struct Shm
 {
     using Tag = wayland::wl_shm::Tag;
 
-    Shm(wlalat::Unix::Socket &s, ObjectIDManager::ID<Tag> id) : _id{id}, _s{s}
+    Shm(wlalat::Unix::Socket &s, ObjectIDManager::ID id) : _id{id}, _s{s}
     {
     }
 
-    ObjectIDManager::ID<ShmPool::Tag> create_pool(ObjectIDManager &id_manager)
+    ObjectIDManager::ID create_pool(ObjectIDManager &id_manager)
     {
-        ObjectIDManager::ID<ShmPool::Tag> O =
-            id_manager.allocate<ShmPool::Tag>();
+        ObjectIDManager::ID O = id_manager.allocate();
 
         wayland::wl_shm::message_create_pool<int> msg;
 
@@ -435,7 +438,7 @@ struct Shm
     }
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
@@ -443,13 +446,13 @@ struct Shm
 struct XDGTopLevel
 {
     using Tag = xdg_shell::xdg_toplevel::Tag;
-    XDGTopLevel(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
+    XDGTopLevel(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s}
     {
     }
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
@@ -457,8 +460,7 @@ struct XDGTopLevel
 struct XDGSurface
 {
     using Tag = xdg_shell::xdg_surface::Tag;
-    XDGSurface(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
-        : _id{id}, _s{s}
+    XDGSurface(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
     }
 
@@ -499,7 +501,7 @@ struct XDGSurface
 
     auto get_top_level(ObjectIDManager &id_manager)
     {
-        auto O = id_manager.allocate<XDGTopLevel::Tag>();
+        auto O = id_manager.allocate();
 
         xdg_shell::xdg_surface::message_get_toplevel msg{};
         msg.id = O;
@@ -516,7 +518,7 @@ struct XDGSurface
     bool configured = false;
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
@@ -525,8 +527,7 @@ struct XDGBase
 {
     using Tag = xdg_shell::xdg_wm_base::Tag;
 
-    XDGBase(ObjectIDManager::ID<Tag> id, wlalat::Unix::Socket &s)
-        : _id{id}, _s{s}
+    XDGBase(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
     }
 
@@ -562,11 +563,10 @@ struct XDGBase
         _s.send(req);
     }
 
-    ObjectIDManager::ID<XDGSurface::Tag> get_xdg_surface(
-        ObjectIDManager &id_manager,
-        ObjectIDManager::ID<Surface::Tag> surface_id)
+    ObjectIDManager::ID get_xdg_surface(
+        ObjectIDManager &id_manager, ObjectIDManager::ID surface_id)
     {
-        auto O = id_manager.allocate<XDGSurface::Tag>();
+        auto O = id_manager.allocate();
         xdg_shell::xdg_wm_base::message_get_xdg_surface msg{};
         msg.id = O;
         msg.surface = surface_id;
@@ -581,7 +581,7 @@ struct XDGBase
     }
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
 };
@@ -592,7 +592,7 @@ struct Registry
 
     Registry(
         wlalat::Unix::Socket &s,
-        ObjectIDManager::ID<wayland::wl_registry::Tag> id,
+        ObjectIDManager::ID id,
         ObjectIDManager &id_manager)
         : _id{id}, _s{s}, _id_manager{id_manager}
     {
@@ -633,7 +633,7 @@ struct Registry
     }
 
     template <typename TagT>
-    std::optional<ObjectIDManager::ID<TagT>> try_bind(
+    std::optional<ObjectIDManager::ID> try_bind(
         ObjectIDManager &id_manager,
         std::type_identity<TagT> interface,
         std::optional<uint32_t> version)
@@ -667,7 +667,7 @@ struct Registry
             bind_version = wlalat::UInt{version.value()};
         }
         bind_msg.id_interface_version_amogus_arg = bind_version;
-        ObjectIDManager::ID<TagT> new_id = id_manager.allocate<TagT>();
+        ObjectIDManager::ID new_id = id_manager.allocate();
         bind_msg.id = new_id;
         wayland::wl_registry::Request req{bind_msg};
         wlalat::MessageView req_msg = _raw_msg.prepare(_id, req);
@@ -692,7 +692,7 @@ struct Registry
     }
 
   private:
-    ObjectIDManager::ID<Tag> _id;
+    ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     MessageOwner _raw_msg;
     ObjectIDManager &_id_manager;
@@ -728,7 +728,7 @@ try {
 
     bool initial_commit = false;
 
-    auto registry_tag = id_manager.allocate<wayland::wl_registry::Tag>();
+    auto registry_tag = id_manager.allocate();
     Registry registry{s, registry_tag, id_manager};
 
     wayland::wl_display::message_get_registry m{};

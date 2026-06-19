@@ -165,9 +165,8 @@ struct Generator
         Pair map[]{
             {"int", "wlalat::Int"},
             {"uint", "wlalat::UInt"},
-            {"new_id", "/* new_id */ wlalat::UInt"},
-            {"id", "/* id */ wlalat::UInt"},
-            {"object", "/* object */ wlalat::UInt"},
+            {"new_id", "/* new_id */ wlalat::NewID"},
+            {"object", "/* object */ wlalat::Object"},
             {"string", "wlalat::String"},
             {"fixed", "wlalat::Fixed"},
             {"array", "wlalat::Array"},

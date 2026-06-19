@@ -2,6 +2,7 @@
 
 #include "Binary.hh"
 #include "Message.hh"
+#include "wlalat/Types.hh"
 
 #include <cstddef>
 #include <cstdint>
@@ -17,12 +18,12 @@ struct MessageParser
     {
     }
 
-    std::optional<uint32_t> object_id() const
+    std::optional<Object> object_id() const
     {
         if (_data.size() < 4) {
             return {};
         }
-        return fle32(_data.subspan<0, 4>());
+        return Object{fle32(_data.subspan<0, 4>())};
     }
 
     std::optional<uint16_t> opcode() const
