@@ -2,6 +2,7 @@
 
 #include "ClosableFD.hh"
 
+#include <algorithm>
 #include <wlalat/Error.hh>
 #include <wlalat/Message.hh>
 #include <wlalat/MessageParser.hh>
@@ -118,6 +119,7 @@ struct Socket
         if (ancillary_size > _ancillary_send_buffer.size()) {
             _ancillary_send_buffer.resize(ancillary_size);
         }
+        std::ranges::fill(_ancillary_send_buffer, std::byte{0});
 
         auto to_send = _send_serializer(msg);
 
