@@ -3,17 +3,21 @@
 #include "Binary.hh"
 #include "Error.hh"
 #include "Message.hh"
+#include "Types.hh"
+#include "Writer.hh"
 
 #include <cstddef>
 #include <cstdint>
 
 #include <algorithm>
+#include <iterator>
 #include <limits>
 #include <memory_resource>
 #include <span>
 #include <vector>
 
-namespace wlalat {
+namespace wlalat
+{
 
 struct MessageSerializer
 {
@@ -22,11 +26,12 @@ struct MessageSerializer
     {
     }
 
-    std::span<const std::byte> operator()(MessageView msg)
+    [[deprecated("Removing MessageView")]] std::span<const std::byte>
+        operator()(MessageView msg)
     {
         uint16_t message_size = msg.payload.size() + 8;
         if (message_size > std::numeric_limits<uint16_t>::max()) {
-            throw Error::from_cstring("MessageRef::payload is to big");
+            throw Error::from_cstring("MessageView::payload is to big");
         }
 
         if (data.size() < message_size) {
@@ -55,7 +60,37 @@ struct MessageSerializer
         return data_span.subspan(0, message_size);
     }
 
+    template <typename MessageT>
+    std::span<const std::byte> operator()(Object id, const MessageT &msg)
+    {
+        payload_buffer.clear();
+        Writer W{std::back_inserter(payload_buffer)};
+        IgnoreIntFDWriter no_fd_W{W};
+        typename MessageT::WriteVisitor WV{no_fd_W};
+        std::visit(WV, msg);
+        MessageView m;
+        m.object_id = id;
+        m.opcode = msg.opcode();
+        m.payload = payload_buffer;
+        return (*this)(m);
+    }
+
   private:
+    template <typename UpstreamWriterT>
+    struct IgnoreIntFDWriter
+    {
+        UpstreamWriterT &W;
+
+        void operator()(int) {};
+
+        template <typename T>
+        void operator()(const T &v)
+        {
+            W(v);
+        }
+    };
+
+    std::vector<std::byte> payload_buffer;
     std::pmr::vector<std::byte> data;
 };
 

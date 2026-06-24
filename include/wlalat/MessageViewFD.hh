@@ -8,7 +8,7 @@ namespace wlalat
 {
 
 template <typename FDT>
-struct MessageViewFD : MessageView
+struct [[deprecated("Removing MessageView")]] MessageViewFD : MessageView
 {
     MessageViewFD() = default;
     MessageViewFD(MessageView M) : MessageView{M}

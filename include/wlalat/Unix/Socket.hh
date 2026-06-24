@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ClosableFD.hh"
+#include "wlalat/Types.hh"
 
 #include <algorithm>
 #include <wlalat/Error.hh>
@@ -160,13 +161,20 @@ struct Socket
     }
 
   public:
-    void send(MessageViewFD<int> msg)
+    [[deprecated("Removing MessageView")]] void send(MessageViewFD<int> msg)
     {
         auto to_send = _send_serializer(msg);
         priv_send(to_send, msg.fds);
     }
 
-    std::optional<MessageView> recv()
+    template <typename MessageT>
+    void send(Object obj, const MessageT &msg, std::span<int> fds = {})
+    {
+        auto to_send = _send_serializer(obj, msg);
+        priv_send(to_send, fds);
+    }
+
+    [[deprecated("Removing MessageView")]] std::optional<MessageView> recv()
     {
         return recv_at(_recv_buffer);
     }

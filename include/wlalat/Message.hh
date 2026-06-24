@@ -8,7 +8,7 @@
 
 namespace wlalat {
 
-struct MessageView
+struct [[deprecated("Removing MessageView")]] MessageView
 {
     Object object_id;
     uint16_t opcode;
