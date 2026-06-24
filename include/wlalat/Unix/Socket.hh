@@ -113,15 +113,14 @@ struct Socket
     {
     }
 
-    void send(MessageViewFD<int> msg)
+  private:
+    void priv_send(std::span<const std::byte> to_send, std::span<const int> fds)
     {
-        auto ancillary_size = CMSG_SPACE(sizeof(int)) * msg.fds.size();
+        auto ancillary_size = CMSG_SPACE(sizeof(int)) * fds.size();
         if (ancillary_size > _ancillary_send_buffer.size()) {
             _ancillary_send_buffer.resize(ancillary_size);
         }
         std::ranges::fill(_ancillary_send_buffer, std::byte{0});
-
-        auto to_send = _send_serializer(msg);
 
         msghdr sendmsg_arg{};
 
@@ -136,7 +135,7 @@ struct Socket
         sendmsg_arg.msg_control = _ancillary_send_buffer.data();
 
         cmsghdr *cmsg_p = CMSG_FIRSTHDR(&sendmsg_arg);
-        for (auto &fd : msg.fds) {
+        for (auto &fd : fds) {
             cmsghdr &cmsg = *cmsg_p;
             cmsg = cmsghdr{};
             cmsg.cmsg_level = SOL_SOCKET;
@@ -158,6 +157,13 @@ struct Socket
             _fd.close();
             throw Error::from_cstring("Send size failure");
         }
+    }
+
+  public:
+    void send(MessageViewFD<int> msg)
+    {
+        auto to_send = _send_serializer(msg);
+        priv_send(to_send, msg.fds);
     }
 
     std::optional<MessageView> recv()
