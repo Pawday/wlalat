@@ -121,6 +121,7 @@ struct Generator
 
         O += "#pragma once";
         O += "";
+        O += "#include <wlalat/ArgsIterator.hh>";
         O += "#include <wlalat/Types.hh>";
         O += "";
         O += "#include <cstddef>";
@@ -192,20 +193,40 @@ struct Generator
         O += std::format("namespace {}", name);
         O += "{";
 
-        bool f = true;
+        std::vector<
+            std::reference_wrapper<const ProtocolParsing::InterfaceNode>>
+            iface_nodes;
+
         auto sink = [&](const ProtocolParsing::Node &node) {
+            const auto &iface_node =
+                std::get<ProtocolParsing::InterfaceNode>(node);
+            iface_nodes.push_back(std::ref(iface_node));
+        };
+        _view.chain_iterate(proto_node.interfaces.value(), sink);
+
+        bool f = true;
+        for (const ProtocolParsing::InterfaceNode &iface_node : iface_nodes) {
             if (!f) {
                 O += "";
             }
             f = false;
-
-            const auto &iface_node =
-                std::get<ProtocolParsing::InterfaceNode>(node);
             O += define_iface(iface_node);
-        };
-        _view.chain_iterate(proto_node.interfaces.value(), sink);
+        }
 
         O += std::format("}} // namespace {}", name);
+
+        O += "namespace wlalat";
+        O += "{";
+        f = true;
+        for (const ProtocolParsing::InterfaceNode &iface_node : iface_nodes) {
+            if (!f) {
+                O += "";
+            }
+            f = false;
+            O += define_iface_arg_iterators(name, iface_node);
+        }
+        O += "} // namespace wlalat";
+
         return O;
     }
 
@@ -274,6 +295,108 @@ struct Generator
         O += gen_variant(requests, req_has_fd, "Request");
         O += std::format("}} // namespace {}", name);
 
+        return O;
+    }
+
+    LineList define_iface_arg_iterators(
+        std::string_view proto_ns,
+        const ProtocolParsing::InterfaceNode &iface_node)
+    {
+        LineList O;
+
+        auto &iface_name = iface_node.name.value();
+
+        std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
+            requests;
+        std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
+            events;
+
+        auto sink = [&](const ProtocolParsing::Node &node) {
+            const auto *req_node =
+                std::get_if<ProtocolParsing::RequestNode>(&node);
+            if (req_node) {
+                requests.push_back(*req_node);
+            }
+
+            const auto *ev_node =
+                std::get_if<ProtocolParsing::EventNode>(&node);
+            if (ev_node) {
+                events.push_back(*ev_node);
+            }
+        };
+        if (iface_node.requests) {
+            _view.chain_iterate(iface_node.requests.value(), sink);
+        }
+
+        if (iface_node.events) {
+            _view.chain_iterate(iface_node.events.value(), sink);
+        }
+
+        for (const ProtocolParsing::RequestNode &req : requests) {
+            std::list<AmogusArg> args;
+            auto &req_name = req.name.value();
+            if (req.args) {
+                args = AmogusArg::collect_amogusified(req.args.value(), _view);
+            }
+            O += gen_args_iterator(proto_ns, iface_name, req_name, args);
+        }
+
+        for (const ProtocolParsing::EventNode &ev : events) {
+            std::list<AmogusArg> args;
+            auto &req_name = ev.name.value();
+            if (ev.args) {
+                args = AmogusArg::collect_amogusified(ev.args.value(), _view);
+            }
+            O += gen_args_iterator(proto_ns, iface_name, req_name, args);
+        }
+
+        return O;
+    }
+
+    LineList gen_args_iterator(
+        std::string_view proto_ns,
+        std::string_view iface_name,
+        std::string_view msg_name,
+        const std::list<AmogusArg> &args)
+    {
+        LineList O;
+
+        bool with_fd = has_fd(args);
+
+        if (with_fd) {
+            O += "template <typename VisitorT, typename FDT>";
+        } else {
+            O += "template <typename VisitorT>";
+        }
+        const char *fdt_str = "";
+        if (with_fd) {
+            fdt_str = "<FDT>";
+        }
+        O += std::format(
+            "struct ArgsIteratorWithName<VisitorT, {}::{}::message_{}{}>",
+            proto_ns,
+            iface_name,
+            msg_name,
+            fdt_str);
+
+        LineList SB; // Struct Body
+        O += "{";
+        SB += "template<typename MsgT>";
+        SB += "constexpr ArgsIteratorWithName(VisitorT &V, MsgT &M)";
+        SB += "{";
+
+        LineList CB; // Constructor Body
+
+        for (auto &arg : args) {
+            auto &arg_name = arg.name.value();
+            CB += std::format("V(M.{}, \"{}\");", arg_name, arg_name);
+        }
+        CB.indent();
+        SB += std::move(CB);
+        SB += "}";
+        SB.indent();
+        O += std::move(SB);
+        O += "};";
         return O;
     }
 
@@ -406,17 +529,19 @@ struct Generator
     }
 
     template <typename MessageNodeT>
-    LineList gen_variant_write_with_visitor(
+    [[deprecated]] LineList gen_variant_write_with_visitor(
         const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs)
     {
         LineList O;
         O += gen_write_visitor(msgs);
         O += "";
         O += "template<typename WriterT>";
-        O += "void write(WriterT &W) const";
+        O += "[[deprecated]] void write(WriterT &W) const";
         O += "{";
         LineList B0;
-        B0 += "std::visit(WriteVisitor<WriterT>{W}, *this);";
+        B0 += "auto V = [&]<typename MsgT>(const MsgT &M) { "
+              "wlalat::ArgsIterator{W, M}; };";
+        B0 += "std::visit(V, *this);";
         B0.indent();
         O += std::move(B0);
         O += "}";
@@ -424,12 +549,12 @@ struct Generator
     }
 
     template <typename MessageNodeT>
-    LineList gen_write_visitor(
+    [[deprecated]] LineList gen_write_visitor(
         const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs)
     {
         LineList O;
         O += "template<typename WriterT>";
-        O += "struct WriteVisitor";
+        O += "struct [[deprecated]] WriteVisitor";
         O += "{";
 
         LineList B0;
@@ -491,7 +616,7 @@ struct Generator
         return O;
     }
 
-    static bool has_fd(std::list<AmogusArg> &args)
+    static bool has_fd(const std::list<AmogusArg> &args)
     {
         bool has_fd = false;
         auto &am_args = args;
