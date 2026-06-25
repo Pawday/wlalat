@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <memory>
 #include <memory_resource>
 #include <span>
 #include <variant>
@@ -19,22 +20,30 @@
 namespace wlalat
 {
 
+template <typename FDT>
 struct MessageSerializer
 {
     MessageSerializer() = default;
-    MessageSerializer(std::pmr::memory_resource *res) : data{res}
+    MessageSerializer(std::pmr::memory_resource *res) : data{res}, fds{res}
     {
     }
 
+    struct WriteOutputData
+    {
+        std::span<const std::byte> message;
+        std::span<const FDT *> fds;
+    };
+
     template <typename MessageT>
-    std::span<const std::byte> operator()(Object object_id, const MessageT &msg)
+    WriteOutputData operator()(Object object_id, const MessageT &msg)
     {
         data.clear();
+        fds.clear();
         auto oiter = std::back_inserter(data);
 
         uint_least64_t message_size = 0;
         OIterSize size_counter{message_size};
-        MsgWriteVisitor size_v{size_counter};
+        MsgWriteVisitor size_v{size_counter, nullptr};
         std::visit(size_v, msg);
         message_size += 8;
 
@@ -52,11 +61,16 @@ struct MessageSerializer
         auto size_opcode_pair_data = tole32(size_opcode_pair);
         std::ranges::copy(size_opcode_pair_data, oiter);
 
-        MsgWriteVisitor V{oiter};
+        MsgWriteVisitor V{oiter, std::addressof(fds)};
         std::visit(V, msg);
 
         std::span<const std::byte> data_span{data};
-        return data_span.subspan(0, message_size);
+        data_span = data_span.subspan(0, message_size);
+
+        WriteOutputData O{};
+        O.message = data_span;
+        O.fds = fds;
+        return O;
     }
 
   private:
@@ -95,11 +109,18 @@ struct MessageSerializer
     };
 
     template <typename UpstreamWriterT>
-    struct IgnoreIntFDWriter
+    struct InterceptFDWriter
     {
         UpstreamWriterT &W;
+        std::pmr::vector<const FDT *> *fds;
 
-        void operator()(int) {};
+        void operator()(const FDT &fd)
+        {
+            if (!fds) {
+                return;
+            }
+            fds->push_back(&fd);
+        };
 
         template <typename T>
         void operator()(const T &v)
@@ -112,16 +133,18 @@ struct MessageSerializer
     struct MsgWriteVisitor
     {
         OIterT oiter;
+        std::pmr::vector<const FDT *> *fds;
         template <typename MessageT>
         void operator()(const MessageT &M)
         {
             Writer W{oiter};
-            IgnoreIntFDWriter no_fd_W{W};
-            ArgsIterator{no_fd_W, M};
+            InterceptFDWriter fd_itercept_W{W, fds};
+            ArgsIterator{fd_itercept_W, M};
         }
     };
 
     std::pmr::vector<std::byte> data;
+    std::pmr::vector<const FDT *> fds;
 };
 
 } // namespace wlalat

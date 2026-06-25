@@ -406,7 +406,7 @@ struct Shm
         wayland::wl_shm::Request<int> req{msg};
         wlalat::MessageViewFD<int> req_msg = _raw_msg.prepare(_id, req);
         std::println("-> Req message_create_pool {}", dump_message(req_msg));
-        _s.send(_id, req, req_msg.fds);
+        _s.send(_id, req);
 
         return O;
     }

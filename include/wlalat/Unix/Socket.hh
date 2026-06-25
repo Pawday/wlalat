@@ -114,9 +114,13 @@ struct Socket
     {
     }
 
-  private:
-    void priv_send(std::span<const std::byte> to_send, std::span<const int> fds)
+    template <typename MessageT>
+    void send(Object obj, const MessageT &msg)
     {
+        auto ser_data = _send_serializer(obj, msg);
+        auto to_send = ser_data.message;
+        auto fds = ser_data.fds;
+
         auto ancillary_size = CMSG_SPACE(sizeof(int)) * fds.size();
         if (ancillary_size > _ancillary_send_buffer.size()) {
             _ancillary_send_buffer.resize(ancillary_size);
@@ -136,14 +140,14 @@ struct Socket
         sendmsg_arg.msg_control = _ancillary_send_buffer.data();
 
         cmsghdr *cmsg_p = CMSG_FIRSTHDR(&sendmsg_arg);
-        for (auto &fd : fds) {
+        for (const int *fd : fds) {
             cmsghdr &cmsg = *cmsg_p;
             cmsg = cmsghdr{};
             cmsg.cmsg_level = SOL_SOCKET;
             cmsg.cmsg_type = SCM_RIGHTS;
             cmsg.cmsg_len = CMSG_LEN(sizeof(fd));
             void *cmsg_payload = CMSG_DATA(cmsg_p);
-            std::memcpy(cmsg_payload, &fd, sizeof(fd));
+            std::memcpy(cmsg_payload, fd, sizeof(int));
             cmsg_p = CMSG_NXTHDR(&sendmsg_arg, cmsg_p);
         }
 
@@ -158,14 +162,6 @@ struct Socket
             _fd.close();
             throw Error::from_cstring("Send size failure");
         }
-    }
-
-  public:
-    template <typename MessageT>
-    void send(Object obj, const MessageT &msg, std::span<int> fds = {})
-    {
-        auto to_send = _send_serializer(obj, msg);
-        priv_send(to_send, fds);
     }
 
     [[deprecated("Removing MessageView")]] std::optional<MessageView> recv()
@@ -229,7 +225,7 @@ struct Socket
     }
 
     ClosableFD _fd;
-    MessageSerializer _send_serializer;
+    MessageSerializer<int> _send_serializer;
     std::pmr::vector<std::byte> _recv_buffer;
     std::pmr::vector<std::byte> _ancillary_send_buffer;
 };
