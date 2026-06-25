@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ArgsIterator.hh"
 #include "Binary.hh"
 #include "Error.hh"
 #include "Types.hh"
@@ -13,6 +14,7 @@
 #include <limits>
 #include <memory_resource>
 #include <span>
+#include <variant>
 #include <vector>
 
 namespace wlalat
@@ -29,10 +31,8 @@ struct MessageSerializer
     std::span<const std::byte> operator()(Object object_id, const MessageT &msg)
     {
         payload.clear();
-        Writer W{std::back_inserter(payload)};
-        IgnoreIntFDWriter no_fd_W{W};
-        typename MessageT::WriteVisitor WV{no_fd_W};
-        std::visit(WV, msg);
+        MsgWriteVisitor V{payload};
+        std::visit(V, msg);
 
         uint16_t message_size = payload.size() + 8;
         if (message_size > std::numeric_limits<uint16_t>::max()) {
@@ -77,6 +77,18 @@ struct MessageSerializer
         void operator()(const T &v)
         {
             W(v);
+        }
+    };
+
+    struct MsgWriteVisitor
+    {
+        std::pmr::vector<std::byte> &payload;
+        template <typename MessageT>
+        void operator()(const MessageT &M)
+        {
+            Writer W{std::back_inserter(payload)};
+            IgnoreIntFDWriter no_fd_W{W};
+            ArgsIterator{no_fd_W, M};
         }
     };
 
