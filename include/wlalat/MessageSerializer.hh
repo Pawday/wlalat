@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <limits>
 #include <memory_resource>
 #include <span>
 #include <variant>
@@ -23,49 +22,78 @@ namespace wlalat
 struct MessageSerializer
 {
     MessageSerializer() = default;
-    MessageSerializer(std::pmr::memory_resource *res) : data{res}, payload{res}
+    MessageSerializer(std::pmr::memory_resource *res) : data{res}
     {
     }
 
     template <typename MessageT>
     std::span<const std::byte> operator()(Object object_id, const MessageT &msg)
     {
-        payload.clear();
-        MsgWriteVisitor V{payload};
-        std::visit(V, msg);
+        data.clear();
+        auto oiter = std::back_inserter(data);
 
-        uint16_t message_size = payload.size() + 8;
-        if (message_size > std::numeric_limits<uint16_t>::max()) {
+        uint_least64_t message_size = 0;
+        OIterSize size_counter{message_size};
+        MsgWriteVisitor size_v{size_counter};
+        std::visit(size_v, msg);
+        message_size += 8;
+
+        if (message_size > 0xffff) {
             throw Error::from_cstring("payload is to big");
         }
 
-        if (data.size() < message_size) {
-            data.resize(message_size);
-        }
-
-        std::span<std::byte> write_head{data};
-        write_head = write_head.subspan(0, message_size);
-
         auto msg_id_data = tole32(object_id.raw());
-        std::ranges::copy(msg_id_data, write_head.begin());
-        write_head = write_head.subspan(msg_id_data.size());
+        std::ranges::copy(msg_id_data, oiter);
 
         uint32_t size_opcode_pair = 0;
         size_opcode_pair |= message_size;
         size_opcode_pair <<= 16;
         size_opcode_pair |= msg.opcode();
         auto size_opcode_pair_data = tole32(size_opcode_pair);
-        std::ranges::copy(size_opcode_pair_data, write_head.begin());
-        write_head = write_head.subspan(size_opcode_pair_data.size());
+        std::ranges::copy(size_opcode_pair_data, oiter);
 
-        std::ranges::copy(payload, write_head.begin());
-        write_head = write_head.subspan(payload.size());
+        MsgWriteVisitor V{oiter};
+        std::visit(V, msg);
 
         std::span<const std::byte> data_span{data};
         return data_span.subspan(0, message_size);
     }
 
   private:
+    struct OIterSize
+    {
+        using difference_type = std::ptrdiff_t;
+        using value_type = void;
+
+        constexpr OIterSize(uint_least64_t &o_size) : _count{&o_size}
+        {
+        }
+
+        template <typename T>
+        constexpr OIterSize &operator=(const T &)
+        {
+            ++(*_count);
+            return *this;
+        }
+
+        constexpr OIterSize &operator*()
+        {
+            return *this;
+        }
+
+        constexpr OIterSize &operator++()
+        {
+            return *this;
+        }
+
+        constexpr void operator++(int)
+        {
+        }
+
+      private:
+        uint_least64_t *_count;
+    };
+
     template <typename UpstreamWriterT>
     struct IgnoreIntFDWriter
     {
@@ -80,19 +108,19 @@ struct MessageSerializer
         }
     };
 
+    template <typename OIterT>
     struct MsgWriteVisitor
     {
-        std::pmr::vector<std::byte> &payload;
+        OIterT oiter;
         template <typename MessageT>
         void operator()(const MessageT &M)
         {
-            Writer W{std::back_inserter(payload)};
+            Writer W{oiter};
             IgnoreIntFDWriter no_fd_W{W};
             ArgsIterator{no_fd_W, M};
         }
     };
 
-    std::pmr::vector<std::byte> payload;
     std::pmr::vector<std::byte> data;
 };
 
