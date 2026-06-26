@@ -37,21 +37,6 @@ namespace Unix
 
 struct Socket
 {
-    static sockaddr_un make_address(uid_t user_id, uint32_t server_id)
-    {
-        sockaddr_un o{};
-        o.sun_family = PF_UNIX;
-        std::span<char> path{o.sun_path};
-        path = path.subspan(0, path.size() - 1);
-        std::format_to_n(
-            path.begin(),
-            path.size(),
-            "/run/user/{}/wayland-{}",
-            user_id,
-            server_id);
-        return o;
-    }
-
     static std::optional<sockaddr_un> try_make_address_default()
     {
         sockaddr_un o{};
