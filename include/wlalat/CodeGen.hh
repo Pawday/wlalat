@@ -449,6 +449,8 @@ struct Generator
             "static std::optional<{}> parse(ParserT &P, uint_least16_t opcode)",
             class_name);
         B0 += "{";
+        B1 += "bool G = true;";
+        B1 += "auto V = [&]<typename T>(T &A) {if (!G) return; G = P(A);};";
 
         std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
             args;
@@ -472,7 +474,8 @@ struct Generator
             LineList if_body;
             if_body += std::format(
                 "message_{}{} O;", name, msg_fd_templated ? "<FDT>" : "");
-            if_body += gen_read_body(args);
+            if_body += "wlalat::ArgsIterator{V, O};";
+            if_body += "if (!G) return {};";
             if_body += std::format("return {}{{O}};", class_name);
 
             B1 += std::format("if (opcode == {}) {{", opcode_ref);
@@ -592,20 +595,6 @@ struct Generator
 
         O += "};";
         return O;
-    }
-
-    LineList gen_read_body(
-        std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
-            args)
-    {
-        LineList body;
-
-        for (const ProtocolParsing::ArgRawTag &arg : args) {
-            auto &B = body;
-            auto N = arg.name.value();
-            B += std::format("if (!P(O.{})) return {{}};", N);
-        }
-        return body;
     }
 
     LineList gen_write_body(
