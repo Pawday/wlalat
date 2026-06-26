@@ -490,7 +490,7 @@ struct Generator
         O += std::move(B0);
 
         B0.clear();
-        B0 += gen_variant_write_with_visitor(msgs);
+        B0 += gen_variant_write(msgs);
         B0.indent();
         O += "";
         O += std::move(B0);
@@ -529,12 +529,10 @@ struct Generator
     }
 
     template <typename MessageNodeT>
-    [[deprecated]] LineList gen_variant_write_with_visitor(
+    [[deprecated]] LineList gen_variant_write(
         const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs)
     {
         LineList O;
-        O += gen_write_visitor(msgs);
-        O += "";
         O += "template<typename WriterT>";
         O += "[[deprecated]] void write(WriterT &W) const";
         O += "{";
@@ -542,74 +540,6 @@ struct Generator
         B0 += "auto V = [&]<typename MsgT>(const MsgT &M) { "
               "wlalat::ArgsIterator{W, M}; };";
         B0 += "std::visit(V, *this);";
-        B0.indent();
-        O += std::move(B0);
-        O += "}";
-        return O;
-    }
-
-    template <typename MessageNodeT>
-    [[deprecated]] LineList gen_write_visitor(
-        const std::vector<std::reference_wrapper<const MessageNodeT>> &msgs)
-    {
-        LineList O;
-        O += "template<typename WriterT>";
-        O += "struct [[deprecated]] WriteVisitor";
-        O += "{";
-
-        LineList B0;
-        B0 += "WriterT &W;";
-        B0 += "";
-
-        bool f = true;
-        for (const MessageNodeT &msg : msgs) {
-            auto name = msg.name.value();
-            if (!f) {
-                B0 += "";
-            }
-            f = false;
-            B0 += gen_write_visitor_overload(name, msg.args);
-        }
-
-        B0.indent();
-        O += std::move(B0);
-        O += "};";
-        return O;
-    }
-
-    LineList gen_write_visitor_overload(
-        const ProtocolParsing::AttrString &name_op,
-        const std::optional<
-            ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode>>
-            &args_chain_start)
-    {
-        LineList O;
-        auto name = name_op.value();
-
-        std::list<AmogusArg> amogus_args;
-        std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
-            args;
-
-        auto sink = [&](const ProtocolParsing::ArgRawTag &arg) {
-            amogus_args.emplace_back(arg);
-        };
-        if (args_chain_start) {
-            amogus_args =
-                AmogusArg::collect_amogusified(args_chain_start.value(), _view);
-        }
-
-        for (auto &am_arg : amogus_args) {
-            args.push_back(std::ref(am_arg));
-        }
-
-        bool fd_templated = has_fd(amogus_args);
-
-        O += std::format(
-            "void operator()(const message_{}{} &M)",
-            name,
-            fd_templated ? "<FDT>" : "");
-        O += "{";
-        LineList B0 = gen_write_body(args);
         B0.indent();
         O += std::move(B0);
         O += "}";
