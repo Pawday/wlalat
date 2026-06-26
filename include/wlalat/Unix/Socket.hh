@@ -117,9 +117,13 @@ struct Socket
     template <typename MessageT>
     void send(Object obj, const MessageT &msg)
     {
-        auto ser_data = _send_serializer(obj, msg);
-        auto to_send = ser_data.message;
-        auto fds = ser_data.fds;
+        auto ser = _send_serializer(obj, msg);
+        send_raw(ser.message, ser.fds);
+    }
+
+    void send_raw(std::span<const std::byte> data, std::span<const int *> fds)
+    {
+        auto to_send = data;
 
         auto ancillary_size = CMSG_SPACE(sizeof(int)) * fds.size();
         if (ancillary_size > _ancillary_send_buffer.size()) {
