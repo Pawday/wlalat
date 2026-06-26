@@ -1,14 +1,14 @@
 #pragma once
 
 #include "ClosableFD.hh"
-#include "wlalat/Types.hh"
 
-#include <algorithm>
+#include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
 #include <wlalat/Message.hh>
-#include <wlalat/MessageParser.hh>
+#include <wlalat/MessageHeader.hh>
 #include <wlalat/MessageSerializer.hh>
 #include <wlalat/MessageViewFD.hh>
+#include <wlalat/Types.hh>
 
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -17,10 +17,10 @@
 
 #include <cerrno>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 
+#include <algorithm>
 #include <array>
 #include <format>
 #include <memory_resource>
@@ -158,10 +158,10 @@ struct Socket
         return recv_at(_recv_buffer);
     }
 
-  private:
-    std::optional<MessageView> recv_at(std::pmr::vector<std::byte> &buf)
+    std::optional<MessageHeader> peek_header()
     {
         std::array<std::byte, 8> header{};
+        auto header_data_span = std::span{header};
         int status = ::recv(
             _fd(), header.data(), header.size(), MSG_DONTWAIT | MSG_PEEK);
         int err = errno;
@@ -175,20 +175,38 @@ struct Socket
 
         if (status != header.size()) {
             _fd.close();
-            throw Error::from_cstring("No header");
+            throw Error::from_cstring("No header data");
         }
 
-        MessageParser header_view{header};
-        auto proto_size_op = header_view.size();
-        if (!proto_size_op) {
+        auto object_id = fle32(header_data_span.subspan<0, 4>());
+        auto size_opcode_pair = fle32(header_data_span.subspan<4, 4>());
+        auto size = (size_opcode_pair >> 16) & 0xffff;
+        auto opcode = size_opcode_pair & 0xffff;
+
+        if (size < header.size()) {
             _fd.close();
-            throw Error::from_cstring("Bad header");
+            throw Error::from_cstring(
+                "Protocol violation: Message size value from header is less "
+                "than 8 (minimal message size)");
         }
-        uint16_t proto_size = proto_size_op.value();
-        if (proto_size < header.size()) {
-            _fd.close();
-            throw Error::from_cstring("Bad size in header");
+
+        MessageHeader O{};
+        O.object_id = object_id;
+        O.opcode = opcode;
+        O.size = size;
+        return O;
+    }
+
+  private:
+    std::optional<MessageView> recv_at(std::pmr::vector<std::byte> &buf)
+    {
+        auto H_op = peek_header();
+        if (!H_op) {
+            return {};
         }
+
+        auto &H = H_op.value();
+        auto proto_size = H.size;
 
         if (buf.size() < proto_size) {
             buf.resize(proto_size);
@@ -197,7 +215,7 @@ struct Socket
         std::span<std::byte> message_data{buf};
         message_data = message_data.subspan(0, proto_size);
 
-        status = ::recv(_fd(), message_data.data(), message_data.size(), 0);
+        int status = ::recv(_fd(), message_data.data(), message_data.size(), 0);
         if (status < 0) {
             int err = errno;
             _fd.close();
@@ -209,8 +227,11 @@ struct Socket
             throw Error::from_cstring("No message");
         }
 
-        MessageParser parser{message_data};
-        return parser.try_parse();
+        MessageView O{};
+        O.object_id = Object{H.object_id};
+        O.opcode = H.opcode;
+        O.payload = message_data.subspan(8);
+        return O;
     }
 
     ClosableFD _fd;

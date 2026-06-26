@@ -4,7 +4,6 @@
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
 #include <wlalat/Message.hh>
-#include <wlalat/MessageParser.hh>
 #include <wlalat/MessageSerializer.hh>
 #include <wlalat/MessageViewFD.hh>
 #include <wlalat/Parser.hh>
