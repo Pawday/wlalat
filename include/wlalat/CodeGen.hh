@@ -637,17 +637,13 @@ struct Traits<wayland::wl_registry::message_bind>
         B0 += "using ArgMemberPointerVariant = std::variant";
         B0 += "<";
         LineList B1;
-
-        bool f = true;
         for (std::string_view u_arg : arg_wlalat_types_unique) {
-            const char *comma_if_not_first = f ? "" : ",";
-            f = false;
-            B1 += std::format("{} Type::*{}", u_arg, comma_if_not_first);
+            B1 += std::format("{} Type::*", u_arg);
         }
         if (arg_wlalat_types_unique.empty()) {
             B1 += "std::monostate";
         }
-        std::ranges::reverse(B1);
+        comma_sep(B1);
         B1.indent();
         B0 += std::move(B1);
         B0 += ">;";
@@ -664,13 +660,7 @@ struct Traits<wayland::wl_registry::message_bind>
             arg_names.size());
         B0 += "{";
         B1.clear();
-        f = true;
-        for (auto &name : std::views::reverse(arg_names)) {
-            const char *comma_if_not_first = f ? "" : ",";
-            f = false;
-            B1 += std::format("&Type::{}{}", name, comma_if_not_first);
-        }
-        std::ranges::reverse(B1);
+        comma_sep(B1);
         B1.indent();
         B0 += std::move(B1);
         B0 += "};";
@@ -680,13 +670,7 @@ struct Traits<wayland::wl_registry::message_bind>
             arg_names.size());
         B0 += "{";
         B1.clear();
-        f = true;
-        for (auto &name : std::views::reverse(arg_names)) {
-            const char *comma_if_not_first = f ? "" : ",";
-            f = false;
-            B1 += std::format("\"{}\"{}", name, comma_if_not_first);
-        }
-        std::ranges::reverse(B1);
+        comma_sep(B1);
         B1.indent();
         B0 += std::move(B1);
         B0 += "};";
