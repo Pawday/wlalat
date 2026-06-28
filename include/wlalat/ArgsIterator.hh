@@ -4,14 +4,14 @@ namespace wlalat
 {
 
 template <typename VisitorT, typename MsgT>
-struct ArgsIteratorWithName
+struct [[deprecated]] ArgsIteratorWithName
 {
     ArgsIteratorWithName(VisitorT &, MsgT &) = delete;
     ArgsIteratorWithName(VisitorT &, const MsgT &) = delete;
 };
 
 template <typename VisitorT, typename MsgT>
-struct ArgsIterator
+struct [[deprecated]] ArgsIterator
 {
     ArgsIterator(VisitorT &V, MsgT &M)
     {

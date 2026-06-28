@@ -9,6 +9,8 @@
 #include <functional>
 #include <list>
 #include <optional>
+#include <ranges>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -122,12 +124,15 @@ struct Generator
         O += "#pragma once";
         O += "";
         O += "#include <wlalat/ArgsIterator.hh>";
+        O += "#include <wlalat/Traits.hh>";
         O += "#include <wlalat/Types.hh>";
         O += "";
         O += "#include <cstddef>";
         O += "#include <cstdint>";
         O += "";
+        O += "#include <array>";
         O += "#include <optional>";
+        O += "#include <string_view>";
         O += "#include <variant>";
         O += "";
 
@@ -217,6 +222,16 @@ struct Generator
 
         O += "namespace wlalat";
         O += "{";
+
+        f = true;
+        for (const ProtocolParsing::InterfaceNode &iface_node : iface_nodes) {
+            if (!f) {
+                O += "";
+            }
+            f = false;
+            O += define_iface_traits(name, iface_node);
+        }
+
         f = true;
         for (const ProtocolParsing::InterfaceNode &iface_node : iface_nodes) {
             if (!f) {
@@ -298,7 +313,70 @@ struct Generator
         return O;
     }
 
-    LineList define_iface_arg_iterators(
+    LineList define_iface_traits(
+        std::string_view proto_ns,
+        const ProtocolParsing::InterfaceNode &iface_node)
+    {
+        LineList O;
+
+        auto &iface_name = iface_node.name.value();
+
+        std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
+            requests;
+        std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
+            events;
+
+        auto sink = [&](const ProtocolParsing::Node &node) {
+            const auto *req_node =
+                std::get_if<ProtocolParsing::RequestNode>(&node);
+            if (req_node) {
+                requests.push_back(*req_node);
+            }
+
+            const auto *ev_node =
+                std::get_if<ProtocolParsing::EventNode>(&node);
+            if (ev_node) {
+                events.push_back(*ev_node);
+            }
+        };
+        if (iface_node.requests) {
+            _view.chain_iterate(iface_node.requests.value(), sink);
+        }
+
+        if (iface_node.events) {
+            _view.chain_iterate(iface_node.events.value(), sink);
+        }
+
+        for (size_t idx = 0; idx != requests.size(); ++idx) {
+            const ProtocolParsing::RequestNode &req = requests[idx];
+            std::list<AmogusArg> args;
+            auto &req_name = req.name.value();
+            if (req.args) {
+                args = AmogusArg::collect_amogusified(req.args.value(), _view);
+            }
+            bool is_event = false;
+            size_t opcode = idx;
+            O += gen_args_traits(
+                proto_ns, iface_name, req_name, args, opcode, is_event);
+        }
+
+        for (size_t idx = 0; idx != events.size(); ++idx) {
+            const ProtocolParsing::EventNode &ev = events[idx];
+            std::list<AmogusArg> args;
+            auto &req_name = ev.name.value();
+            if (ev.args) {
+                args = AmogusArg::collect_amogusified(ev.args.value(), _view);
+            }
+            size_t opcode = idx;
+            bool is_event = true;
+            O += gen_args_traits(
+                proto_ns, iface_name, req_name, args, opcode, is_event);
+        }
+
+        return O;
+    }
+
+    [[deprecated]] LineList define_iface_arg_iterators(
         std::string_view proto_ns,
         const ProtocolParsing::InterfaceNode &iface_node)
     {
@@ -353,7 +431,7 @@ struct Generator
         return O;
     }
 
-    LineList gen_args_iterator(
+    [[deprecated]] LineList gen_args_iterator(
         std::string_view proto_ns,
         std::string_view iface_name,
         std::string_view msg_name,
@@ -373,7 +451,8 @@ struct Generator
             fdt_str = "<FDT>";
         }
         O += std::format(
-            "struct ArgsIteratorWithName<VisitorT, {}::{}::message_{}{}>",
+            "struct [[deprecated]] ArgsIteratorWithName<VisitorT, "
+            "{}::{}::message_{}{}>",
             proto_ns,
             iface_name,
             msg_name,
@@ -396,6 +475,158 @@ struct Generator
         SB += "}";
         SB.indent();
         O += std::move(SB);
+        O += "};";
+        return O;
+    }
+
+#if 0
+template <>
+struct Traits<wayland::wl_registry::message_bind>
+{
+    using Type = wayland::wl_registry::message_bind;
+    using InterfaceTag = wayland::wl_registry::Tag;
+    static constexpr const size_t opcode = Type::opcode;
+    static constexpr bool is_request = true;
+    static constexpr bool is_event = !is_request;
+
+    using ArgMemberPointerVariant = std::variant
+    <
+        wlalat::UInt Type::*,
+        wlalat::String Type::*,
+        wlalat::NewID Type::*
+    >;
+
+    static constexpr ArgMemberPointerVariant args[]
+    {
+        &Type::name,
+        &Type::id_interface_name_amogus_arg,
+        &Type::id_interface_version_amogus_arg,
+        &Type::id
+    };
+
+    static constexpr std::string_view arg_names[]
+    {
+        "name",
+        "id_interface_name_amogus_arg",
+        "id_interface_version_amogus_arg",
+        "id"
+    };
+};
+#endif
+
+    LineList gen_args_traits(
+        std::string_view proto_ns,
+        std::string_view iface_name,
+        std::string_view msg_name,
+        const std::list<AmogusArg> &args,
+        size_t opcode,
+        bool is_event)
+    {
+        LineList O;
+
+        bool with_fd = has_fd(args);
+        if (!with_fd) {
+            O += "template<>";
+        } else {
+            O += "template<typename FDT>";
+        }
+
+        const char *fdt_template_param = "";
+        if (with_fd) {
+            fdt_template_param = "<FDT>";
+        }
+        std::string full_qualified_msg_type = std::format(
+            "{}::{}::message_{}{}",
+            proto_ns,
+            iface_name,
+            msg_name,
+            fdt_template_param);
+        O += std::format("struct Traits<{}>", full_qualified_msg_type);
+        O += "{";
+
+        LineList B0;
+
+        B0 += std::format("using Type = {};", full_qualified_msg_type);
+        B0 += std::format(
+            "using InterfaceTag = {}::{}::Tag;", proto_ns, iface_name);
+        B0 += std::format("static constexpr const size_t opcode = {};", opcode);
+        B0 += std::format("static_assert(Type::opcode == opcode);");
+        B0 += std::format("static constexpr bool is_event = {};", is_event);
+
+        std::set<std::string_view> arg_wlalat_types_unique;
+        for (auto &arg : args) {
+            auto arg_type = arg.type.value();
+            auto arg_wlalat_type = to_wlalat_type(arg_type).value();
+            arg_wlalat_types_unique.emplace(arg_wlalat_type);
+        }
+
+        B0 += "using ArgMemberPointerVariant = std::variant";
+        B0 += "<";
+        LineList B1;
+
+        bool f = true;
+        for (std::string_view u_arg : arg_wlalat_types_unique) {
+            const char *comma_if_not_first = f ? "" : ",";
+            f = false;
+            B1 += std::format("{} Type::*{}", u_arg, comma_if_not_first);
+        }
+        if (arg_wlalat_types_unique.empty()) {
+            B1 += "std::monostate";
+        }
+        std::ranges::reverse(B1);
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += ">;";
+
+        std::vector<std::string_view> arg_names;
+        for (auto &arg : args) {
+            auto arg_name = arg.name.value();
+            arg_names.push_back(arg_name);
+        }
+
+        B0 += std::format(
+            "static constexpr std::array<ArgMemberPointerVariant, {}> "
+            "arg_member_pointers",
+            arg_names.size());
+        B0 += "{";
+        B1.clear();
+        f = true;
+        for (auto &name : std::views::reverse(arg_names)) {
+            const char *comma_if_not_first = f ? "" : ",";
+            f = false;
+            B1 += std::format("&Type::{}{}", name, comma_if_not_first);
+        }
+        std::ranges::reverse(B1);
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += "};";
+
+        B0 += std::format(
+            "static constexpr std::array<std::string_view, {}> arg_names",
+            arg_names.size());
+        B0 += "{";
+        B1.clear();
+        f = true;
+        for (auto &name : std::views::reverse(arg_names)) {
+            const char *comma_if_not_first = f ? "" : ",";
+            f = false;
+            B1 += std::format("\"{}\"{}", name, comma_if_not_first);
+        }
+        std::ranges::reverse(B1);
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += "};";
+
+        B1.clear();
+
+        for (auto &arg : args) {
+            auto arg_type = arg.type.value();
+            auto arg_wlalat_type = to_wlalat_type(arg_type).value();
+            arg_wlalat_types_unique.emplace(arg_wlalat_type);
+        }
+
+        B0.indent();
+        O += std::move(B0);
         O += "};";
         return O;
     }
@@ -577,7 +808,9 @@ struct Generator
         O += std::format("struct message_{}", name);
         O += "{";
         LineList B;
-        B += std::format("static constexpr const size_t opcode = {};", opcode);
+        B += std::format(
+            "[[deprecated]] static constexpr const size_t opcode = {};",
+            opcode);
 
         if (true) {
             bool f = true;
