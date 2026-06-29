@@ -221,11 +221,16 @@ struct Generator
 
         bool f = true;
         for (const ProtocolParsing::InterfaceNode &iface_node : iface_nodes) {
+            std::string_view iface_name = iface_node.name.value();
+            std::string iface_typename{iface_name};
+            if (iface_typename == name) {
+                iface_typename = std::format("{}_interface", iface_typename);
+            }
             if (!f) {
                 O += "";
             }
             f = false;
-            O += define_iface(iface_node);
+            O += define_iface(iface_node, iface_typename);
         }
 
         O += std::format("}}; // struct {}", name);
@@ -235,11 +240,16 @@ struct Generator
 
         f = true;
         for (const ProtocolParsing::InterfaceNode &iface_node : iface_nodes) {
+            std::string_view iface_name = iface_node.name.value();
+            std::string iface_typename{iface_name};
+            if (iface_typename == name) {
+                iface_typename = std::format("{}_interface", iface_typename);
+            }
             if (!f) {
                 O += "";
             }
             f = false;
-            O += define_iface_traits(name, iface_node);
+            O += define_iface_traits(name, iface_node, iface_typename);
         }
 
         O += "} // namespace wlalat";
@@ -247,10 +257,10 @@ struct Generator
         return O;
     }
 
-    LineList define_iface(const ProtocolParsing::InterfaceNode &iface_node)
+    LineList define_iface(
+        const ProtocolParsing::InterfaceNode &iface_node, std::string_view name)
     {
         LineList O;
-        auto name = iface_node.name.value();
 
         O += std::format("struct {}", name);
         O += "{";
@@ -312,11 +322,10 @@ struct Generator
 
     LineList define_iface_traits(
         std::string_view proto_ns,
-        const ProtocolParsing::InterfaceNode &iface_node)
+        const ProtocolParsing::InterfaceNode &iface_node,
+        std::string_view iface_typename)
     {
         LineList O;
-
-        auto &iface_name = iface_node.name.value();
 
         std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
             requests;
@@ -361,7 +370,7 @@ struct Generator
             bool is_event = false;
             size_t opcode = idx;
             O += gen_args_traits(
-                proto_ns, iface_name, req_name, args, opcode, is_event);
+                proto_ns, iface_typename, req_name, args, opcode, is_event);
         }
 
         bool events_has_fd = false;
@@ -381,12 +390,12 @@ struct Generator
             size_t opcode = idx;
             bool is_event = true;
             O += gen_args_traits(
-                proto_ns, iface_name, ev_name, args, opcode, is_event);
+                proto_ns, iface_typename, ev_name, args, opcode, is_event);
         }
 
         O += "template<>";
 
-        O += std::format("struct Traits<{}::{}>", proto_ns, iface_name);
+        O += std::format("struct Traits<{}::{}>", proto_ns, iface_typename);
         O += "{";
         LineList B0;
         if (events_has_fd) {
@@ -397,7 +406,7 @@ struct Generator
         LineList B1;
         for (auto &msg_type_name : events_msg_types_may_be_FDT) {
             std::string full_qualified_msg_type = std::format(
-                "{}::{}::message_{}", proto_ns, iface_name, msg_type_name);
+                "{}::{}::message_{}", proto_ns, iface_typename, msg_type_name);
             B1 += std::format("{}", full_qualified_msg_type);
         }
         if (events_msg_types_may_be_FDT.empty()) {
@@ -416,7 +425,7 @@ struct Generator
         B1.clear();
         for (auto &msg_type_name : requests_msg_types_may_be_FDT) {
             std::string full_qualified_msg_type = std::format(
-                "{}::{}::message_{}", proto_ns, iface_name, msg_type_name);
+                "{}::{}::message_{}", proto_ns, iface_typename, msg_type_name);
             B1 += std::format("{}", full_qualified_msg_type);
         }
         if (requests_msg_types_may_be_FDT.empty()) {
@@ -436,7 +445,7 @@ struct Generator
 
     LineList gen_args_traits(
         std::string_view proto_ns,
-        std::string_view iface_name,
+        std::string_view iface_typename,
         std::string_view msg_name,
         const std::list<AmogusArg> &args,
         size_t opcode,
@@ -458,7 +467,7 @@ struct Generator
         std::string full_qualified_msg_type = std::format(
             "{}::{}::message_{}{}",
             proto_ns,
-            iface_name,
+            iface_typename,
             msg_name,
             fdt_template_param);
         O += std::format("struct Traits<{}>", full_qualified_msg_type);
@@ -467,7 +476,8 @@ struct Generator
         LineList B0;
 
         B0 += std::format("using Type = {};", full_qualified_msg_type);
-        B0 += std::format("using InterfaceTag = {}::{};", proto_ns, iface_name);
+        B0 += std::format(
+            "using InterfaceTag = {}::{};", proto_ns, iface_typename);
         B0 += std::format(
             "static constexpr std::string_view name = \"{}\";", msg_name);
         B0 += std::format("static constexpr const size_t opcode = {};", opcode);
