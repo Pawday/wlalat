@@ -266,8 +266,6 @@ struct Generator
         O += std::format("struct {}", name);
         O += "{";
 
-        O += "struct Tag {};";
-
         std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
             requests;
         std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
@@ -402,7 +400,7 @@ struct Generator
 
         O += "template<>";
 
-        O += std::format("struct Traits<{}::{}::Tag>", proto_ns, iface_name);
+        O += std::format("struct Traits<{}::{}>", proto_ns, iface_name);
         O += "{";
         LineList B0;
         if (events_has_fd) {
@@ -587,7 +585,7 @@ struct Generator
 
         B0 += std::format("using Type = {};", full_qualified_msg_type);
         B0 += std::format(
-            "using InterfaceTag = {}::{}::Tag;", proto_ns, iface_name);
+            "using InterfaceTag = {}::{};", proto_ns, iface_name);
         B0 += std::format("static constexpr const size_t opcode = {};", opcode);
         B0 += std::format("static_assert(Type::opcode == opcode);");
         B0 += std::format("static constexpr bool is_event = {};", is_event);

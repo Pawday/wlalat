@@ -144,9 +144,9 @@ struct MessageOwner
 template <typename TagT>
 struct TagName;
 // clang-format off
-template <> struct TagName<wayland::wl_shm::Tag>         { static constexpr std::string_view value{"wl_shm"};};
-template <> struct TagName<wayland::wl_compositor::Tag>  { static constexpr std::string_view value{"wl_compositor"};};
-template <> struct TagName<xdg_shell::xdg_wm_base::Tag>  { static constexpr std::string_view value{"xdg_wm_base"};};
+template <> struct TagName<wayland::wl_shm>         { static constexpr std::string_view value{"wl_shm"};};
+template <> struct TagName<wayland::wl_compositor>  { static constexpr std::string_view value{"wl_compositor"};};
+template <> struct TagName<xdg_shell::xdg_wm_base>  { static constexpr std::string_view value{"xdg_wm_base"};};
 // clang-format on
 
 template <typename TagT>
@@ -154,7 +154,7 @@ static constexpr std::string_view TagNameV = TagName<TagT>::value;
 
 struct Display
 {
-    using Tag = wayland::wl_display::Tag;
+    using Tag = wayland::wl_display;
 
     Display(wlalat::Unix::Socket &s, ObjectIDManager &id_manager)
         : _s{s}, _id_manager{id_manager}
@@ -220,7 +220,7 @@ struct Display
 
 struct Surface
 {
-    using Tag = wayland::wl_surface::Tag;
+    using Tag = wayland::wl_surface;
 
     Surface(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s} {};
@@ -256,7 +256,7 @@ struct Surface
 
 struct Compositor
 {
-    using Tag = wayland::wl_compositor::Tag;
+    using Tag = wayland::wl_compositor;
 
     Compositor(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s} {};
@@ -284,7 +284,7 @@ struct Compositor
 
 struct Buffer
 {
-    using Tag = wayland::wl_buffer::Tag;
+    using Tag = wayland::wl_buffer;
 
     Buffer(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s} {};
 
@@ -325,7 +325,7 @@ struct Buffer
 
 struct ShmPool
 {
-    using Tag = wayland::wl_shm_pool::Tag;
+    using Tag = wayland::wl_shm_pool;
 
     ShmPool(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
@@ -358,7 +358,7 @@ struct ShmPool
 
 struct Shm
 {
-    using Tag = wayland::wl_shm::Tag;
+    using Tag = wayland::wl_shm;
 
     Shm(wlalat::Unix::Socket &s, ObjectIDManager::ID id) : _id{id}, _s{s}
     {
@@ -441,7 +441,7 @@ struct Shm
 
 struct XDGTopLevel
 {
-    using Tag = xdg_shell::xdg_toplevel::Tag;
+    using Tag = xdg_shell::xdg_toplevel;
     XDGTopLevel(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s}
     {
@@ -455,7 +455,7 @@ struct XDGTopLevel
 
 struct XDGSurface
 {
-    using Tag = xdg_shell::xdg_surface::Tag;
+    using Tag = xdg_shell::xdg_surface;
     XDGSurface(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
     }
@@ -519,7 +519,7 @@ struct XDGSurface
 
 struct XDGBase
 {
-    using Tag = xdg_shell::xdg_wm_base::Tag;
+    using Tag = xdg_shell::xdg_wm_base;
 
     XDGBase(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
@@ -580,7 +580,7 @@ struct XDGBase
 
 struct Registry
 {
-    using Tag = wayland::wl_registry::Tag;
+    using Tag = wayland::wl_registry;
 
     Registry(
         wlalat::Unix::Socket &s,
