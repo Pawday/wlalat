@@ -553,41 +553,6 @@ struct Generator
         return O;
     }
 
-#if 0
-template <>
-struct Traits<wayland::wl_registry::message_bind>
-{
-    using Type = wayland::wl_registry::message_bind;
-    using InterfaceTag = wayland::wl_registry::Tag;
-    static constexpr const size_t opcode = Type::opcode;
-    static constexpr bool is_request = true;
-    static constexpr bool is_event = !is_request;
-
-    using ArgMemberPointerVariant = std::variant
-    <
-        wlalat::UInt Type::*,
-        wlalat::String Type::*,
-        wlalat::NewID Type::*
-    >;
-
-    static constexpr ArgMemberPointerVariant args[]
-    {
-        &Type::name,
-        &Type::id_interface_name_amogus_arg,
-        &Type::id_interface_version_amogus_arg,
-        &Type::id
-    };
-
-    static constexpr std::string_view arg_names[]
-    {
-        "name",
-        "id_interface_name_amogus_arg",
-        "id_interface_version_amogus_arg",
-        "id"
-    };
-};
-#endif
-
     LineList gen_args_traits(
         std::string_view proto_ns,
         std::string_view iface_name,
