@@ -4,10 +4,8 @@
 
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
-#include <wlalat/Message.hh>
 #include <wlalat/MessageHeader.hh>
 #include <wlalat/MessageSerializer.hh>
-#include <wlalat/MessageViewFD.hh>
 #include <wlalat/Parser.hh>
 #include <wlalat/Traits.hh>
 #include <wlalat/Types.hh>
@@ -159,11 +157,6 @@ struct Socket
         }
     }
 
-    [[deprecated("Removing MessageView")]] std::optional<MessageView> recv()
-    {
-        return recv_at(_recv_buffer);
-    }
-
     std::optional<MessageHeader> peek_header()
     {
         std::array<std::byte, 8> header{};
@@ -267,42 +260,6 @@ struct Socket
             return true;
         }
     };
-
-    std::optional<MessageView> recv_at(std::pmr::vector<std::byte> &buf)
-    {
-        auto H_op = peek_header();
-        if (!H_op) {
-            return {};
-        }
-
-        auto &H = H_op.value();
-        auto proto_size = H.size;
-
-        if (buf.size() < proto_size) {
-            buf.resize(proto_size);
-        }
-
-        std::span<std::byte> message_data{buf};
-        message_data = message_data.subspan(0, proto_size);
-
-        int status = ::recv(_fd(), message_data.data(), message_data.size(), 0);
-        if (status < 0) {
-            int err = errno;
-            _fd.close();
-            throw Error::from_errno(err);
-        }
-
-        if (status != proto_size) {
-            _fd.close();
-            throw Error::from_cstring("No message");
-        }
-
-        MessageView O{};
-        O.object_id = Object{H.object_id};
-        O.opcode = H.opcode;
-        O.payload = message_data.subspan(8);
-        return O;
-    }
 
     ClosableFD _fd;
     MessageSerializer<int> _send_serializer;
