@@ -1,6 +1,8 @@
 #include "wayland.xml.hh"
+#include "wlalat/Traits.hh"
 #include "xdg-shell.xml.hh"
 
+#include <ranges>
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
 #include <wlalat/Message.hh>
@@ -72,6 +74,51 @@ std::string dump_message(const wlalat::MessageView &msg)
         hexdump(msg.payload));
 }
 
+template <typename MsgT>
+struct TypeFormatVis
+{
+    MsgT &M;
+
+    template <typename Ptr>
+    std::string operator()(const Ptr &ptr)
+    {
+        const auto &member = M.*(ptr);
+        return my_format(member);
+    }
+
+  private:
+    std::string my_format(const wlalat::NewID &v)
+    {
+        return std::format("wlalat::NewID[{}]", v.raw());
+    }
+
+    std::string my_format(const wlalat::Int &v)
+    {
+        return std::format("wlalat::Int[{}]", v.raw());
+    }
+
+    std::string my_format(const int &v)
+    {
+        return std::format("FDT(int)[{}]", v);
+    }
+};
+
+template <typename MsgT>
+std::string dump_message_2(const MsgT &M)
+{
+    auto member_ptrs = wlalat::Traits<MsgT>::arg_member_pointers;
+    auto names = wlalat::Traits<MsgT>::arg_names;
+    auto pairs = std::views::zip(member_ptrs, names);
+
+    std::string O;
+
+    for (const auto &[ptr, name] : pairs) {
+        O += std::format(" {}={}", name, std::visit(TypeFormatVis{M}, ptr));
+    }
+
+    return O;
+}
+
 struct ObjectIDManager
 {
     struct ID : wlalat::NewID
@@ -98,49 +145,6 @@ static bool operator==(const ObjectIDManager::ID &l, const wlalat::Object &o)
     return l.raw() == o.raw();
 }
 
-struct MessageOwner
-{
-    template <typename MsgPayloadT>
-    wlalat::MessageViewFD<int>
-        prepare(ObjectIDManager::ID object_id, const MsgPayloadT &P)
-    {
-        _payload.clear();
-        _fd_payload.clear();
-        wlalat::Writer w{std::back_inserter(_payload)};
-
-        WriterFDInterceptor wfd{w, _fd_payload};
-        P.write(wfd);
-        wlalat::MessageViewFD<int> O;
-        O.object_id = object_id;
-        O.opcode = P.opcode();
-        O.payload = _payload;
-        O.fds = _fd_payload;
-        return O;
-    }
-
-  private:
-    template <typename UpstreamWriterT>
-    struct WriterFDInterceptor
-    {
-        UpstreamWriterT &_w;
-        std::vector<int> &_fds;
-
-        template <typename ArgT>
-        void operator()(const ArgT &arg)
-        {
-            _w(arg);
-        }
-
-        void operator()(int fd)
-        {
-            _fds.push_back(fd);
-        }
-    };
-
-    std::vector<int> _fd_payload;
-    std::vector<std::byte> _payload;
-};
-
 template <typename TagT>
 struct TagName;
 // clang-format off
@@ -161,18 +165,12 @@ struct Display
     {
     }
 
-    wlalat::MessageView encode(wayland::wl_display::Request m)
-    {
-        return _raw_msg.prepare(_id, m);
-    }
-
     void sync()
     {
         wayland::wl_display::message_sync msg;
         msg.callback = _id_manager.allocate();
+        std::println("-> Sync {}", dump_message_2(msg));
         wayland::wl_display::Request req{msg};
-        auto msg_view = encode(req);
-        std::println("-> Sync {}", dump_message(msg_view));
         _s.send(_id, req);
     }
 
@@ -214,8 +212,6 @@ struct Display
     static constexpr ObjectIDManager::ID _id{1};
     wlalat::Unix::Socket &_s;
     ObjectIDManager &_id_manager;
-
-    MessageOwner _raw_msg;
 };
 
 struct Surface
@@ -251,7 +247,6 @@ struct Surface
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
-    MessageOwner _raw_msg;
 };
 
 struct Compositor
@@ -279,7 +274,6 @@ struct Compositor
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
-    MessageOwner _raw_msg;
 };
 
 struct Buffer
@@ -341,11 +335,10 @@ struct ShmPool
         msg.height = wlalat::Int{h};
         msg.stride = wlalat::Int{w * 4};
         msg.format = wlalat::UInt{0};
-        auto req = _raw_msg.prepare(_id, wayland::wl_shm_pool::Request{msg});
         std::println(
             "-> wl_shm_pool@{}.create_buffer({})",
             _id.raw(),
-            dump_message(req));
+            dump_message_2(msg));
         _s.send(_id, wayland::wl_shm_pool::Request{msg});
         return O;
     }
@@ -353,7 +346,6 @@ struct ShmPool
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
-    MessageOwner _raw_msg;
 };
 
 struct Shm
@@ -403,8 +395,7 @@ struct Shm
         }
 
         wayland::wl_shm::Request<int> req{msg};
-        wlalat::MessageViewFD<int> req_msg = _raw_msg.prepare(_id, req);
-        std::println("-> Req message_create_pool {}", dump_message(req_msg));
+        std::println("-> Req message_create_pool {}", dump_message_2(msg));
         _s.send(_id, req);
 
         return O;
@@ -436,7 +427,6 @@ struct Shm
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
-    MessageOwner _raw_msg;
 };
 
 struct XDGTopLevel
@@ -450,7 +440,6 @@ struct XDGTopLevel
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
-    MessageOwner _raw_msg;
 };
 
 struct XDGSurface
@@ -514,7 +503,6 @@ struct XDGSurface
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
-    MessageOwner _raw_msg;
 };
 
 struct XDGBase
@@ -575,7 +563,6 @@ struct XDGBase
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
-    MessageOwner _raw_msg;
 };
 
 struct Registry
@@ -685,7 +672,6 @@ struct Registry
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
-    MessageOwner _raw_msg;
     ObjectIDManager &_id_manager;
 
     struct Global
@@ -725,8 +711,7 @@ try {
     wayland::wl_display::message_get_registry m{};
     m.registry = registry_tag;
 
-    wlalat::MessageView raw_m = display.encode({m});
-    std::println("-> {}", dump_message(raw_m));
+    std::println("-> {}", dump_message_2(m));
     s.send(wlalat::Object{1}, wayland::wl_display::Request{m});
 
     auto last_message = std::chrono::steady_clock::now();
