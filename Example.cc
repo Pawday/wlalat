@@ -143,20 +143,19 @@ std::string dump_message(const MsgT &M)
         "{}({})", wlalat::Traits<MsgT>::name, dump_message_args(M));
 }
 
-template <typename EventT, typename VisitorT>
-void iterate_events_on(std::type_identity<EventT>, VisitorT &V)
+template <typename... Alternatives>
+auto alternatives_array(std::type_identity<std::variant<Alternatives...>>)
 {
-    static constexpr auto event_message_type_idx =
-        []<typename... Events>(std::type_identity<std::variant<Events...>>) {
-            using TypeIdentityVariantT =
-                std::variant<std::type_identity<Events>...>;
-            return std::array<
-                TypeIdentityVariantT,
-                std::variant_size_v<TypeIdentityVariantT>>{
-                std::type_identity<Events>{}...};
-        }(std::type_identity<EventT>{});
+    using OutElT = std::variant<std::type_identity<Alternatives>...>;
+    return std::array<OutElT, std::variant_size_v<OutElT>>{
+        std::type_identity<Alternatives>{}...};
+}
 
-    for (auto &type : event_message_type_idx) {
+template <typename MessageVariantT, typename VisitorT>
+void iterate_messages_on(
+    VisitorT &V, std::type_identity<MessageVariantT> msg_var)
+{
+    for (auto &type : alternatives_array(msg_var)) {
         std::visit(V, type);
     }
 }
@@ -218,7 +217,7 @@ auto parse_event(std::type_identity<InterfaceT>, wlalat::MessageView M)
     std::optional<EventT> O;
     wlalat::Parser P{M.payload};
     OpcodeDispatchVisitor V{M.opcode, P, O};
-    iterate_events_on(std::type_identity<EventT>{}, V);
+    iterate_messages_on(V, std::type_identity<EventT>{});
     return O;
 }
 
