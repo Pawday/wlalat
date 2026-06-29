@@ -2,6 +2,7 @@
 #include "wlalat/Traits.hh"
 #include "xdg-shell.xml.hh"
 
+#include <array>
 #include <ranges>
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
@@ -135,6 +136,85 @@ std::string dump_message_args(const MsgT &M)
     return O;
 }
 
+template <typename EventT, typename VisitorT>
+void iterate_events_on(std::type_identity<EventT>, VisitorT &V)
+{
+    static constexpr auto event_message_type_idx =
+        []<typename... Events>(std::type_identity<std::variant<Events...>>) {
+            using TypeIdentityVariantT =
+                std::variant<std::type_identity<Events>...>;
+            return std::array<
+                TypeIdentityVariantT,
+                std::variant_size_v<TypeIdentityVariantT>>{
+                std::type_identity<Events>{}...};
+        }(std::type_identity<EventT>{});
+
+    for (auto &type : event_message_type_idx) {
+        std::visit(V, type);
+    }
+}
+
+template <typename MessageT>
+struct ArgParseVisitor
+{
+    MessageT &M;
+    wlalat::Parser &P;
+
+    template <typename ArgMemberPointerT>
+    bool operator()(ArgMemberPointerT ptr)
+    {
+        return P(M.*ptr);
+    }
+
+    bool operator()(std::monostate)
+    {
+        return true;
+    }
+};
+
+template <typename OEventT>
+struct OpcodeDispatchVisitor
+{
+    uint_least16_t &opcode;
+    wlalat::Parser &P;
+    std::optional<OEventT> &o_event;
+
+    template <typename MessageT>
+    void operator()(std::type_identity<MessageT> m_type_id)
+    {
+        if (o_event) {
+            return;
+        }
+        if (opcode != wlalat::Traits<MessageT>::opcode) {
+            return;
+        }
+
+        bool good = true;
+        MessageT M{};
+        ArgParseVisitor arg_parser{M, P};
+        for (auto m_ptr : wlalat::Traits<MessageT>::arg_member_pointers) {
+            good = good && std::visit(arg_parser, m_ptr);
+        }
+
+        if (!good) {
+            return;
+        }
+
+        o_event = std::move(M);
+    }
+};
+
+template <typename InterfaceT>
+auto parse_event(std::type_identity<InterfaceT>, wlalat::MessageView M)
+{
+    using EventT = typename wlalat::Traits<InterfaceT>::Event;
+    std::optional<EventT> O;
+    wlalat::Parser P{M.payload};
+    OpcodeDispatchVisitor V{M.opcode, P, O};
+    iterate_events_on(std::type_identity<EventT>{}, V);
+    return O;
+}
+
 struct ObjectIDManager
 {
     struct ID : wlalat::NewID
@@ -195,9 +275,7 @@ struct Display
             return;
         }
 
-        wlalat::Parser P{M.payload};
-
-        auto ev_op = wayland::wl_display::Event::parse(P, M.opcode);
+        auto ev_op = parse_event(std::type_identity<wayland::wl_display>{}, M);
         if (!ev_op) {
             return;
         }
@@ -295,9 +373,7 @@ struct Buffer
             return;
         }
 
-        wlalat::Parser P{M.payload};
-
-        auto ev_op = wayland::wl_buffer::Event::parse(P, M.opcode);
+        auto ev_op = parse_event(std::type_identity<wayland::wl_buffer>{}, M);
         if (!ev_op) {
             return;
         }
@@ -421,9 +497,7 @@ struct Shm
             return;
         }
 
-        wlalat::Parser P{M.payload};
-
-        auto ev_op = wayland::wl_shm::Event::parse(P, M.opcode);
+        auto ev_op = parse_event(std::type_identity<wayland::wl_shm>{}, M);
         if (!ev_op) {
             return;
         }
@@ -462,8 +536,8 @@ struct XDGSurface
         if (M.object_id != _id) {
             return;
         }
-        wlalat::Parser P{M.payload};
-        auto ev_op = xdg_shell::xdg_surface::Event::parse(P, M.opcode);
+        auto ev_op =
+            parse_event(std::type_identity<xdg_shell::xdg_surface>{}, M);
         if (!ev_op) {
             return;
         }
@@ -526,8 +600,8 @@ struct XDGBase
         if (M.object_id != _id) {
             return;
         }
-        wlalat::Parser P{M.payload};
-        auto ev_op = xdg_shell::xdg_wm_base::Event::parse(P, M.opcode);
+        auto ev_op =
+            parse_event(std::type_identity<xdg_shell::xdg_wm_base>{}, M);
         if (!ev_op) {
             return;
         }
@@ -589,8 +663,7 @@ struct Registry
         if (M.object_id != _id) {
             return;
         }
-        wlalat::Parser P{M.payload};
-        auto ev_op = wayland::wl_registry::Event::parse(P, M.opcode);
+        auto ev_op = parse_event(std::type_identity<wayland::wl_registry>{}, M);
         if (!ev_op) {
             return;
         }
