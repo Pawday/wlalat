@@ -660,6 +660,9 @@ struct Traits<wayland::wl_registry::message_bind>
             arg_names.size());
         B0 += "{";
         B1.clear();
+        for (auto &name : arg_names) {
+            B1 += std::format("&Type::{}", name);
+        }
         comma_sep(B1);
         B1.indent();
         B0 += std::move(B1);
@@ -670,6 +673,9 @@ struct Traits<wayland::wl_registry::message_bind>
             arg_names.size());
         B0 += "{";
         B1.clear();
+        for (auto &name : arg_names) {
+            B1 += std::format("\"{}\"", name);
+        }
         comma_sep(B1);
         B1.indent();
         B0 += std::move(B1);
