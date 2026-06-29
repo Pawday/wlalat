@@ -65,15 +65,6 @@ std::string hexdump(std::span<const std::byte> data)
     return O;
 }
 
-std::string dump_message(const wlalat::MessageView &msg)
-{
-    return std::format(
-        "MSG: obj=[{}], opcode=[{}], {}",
-        msg.object_id.raw(),
-        msg.opcode,
-        hexdump(msg.payload));
-}
-
 template <typename MsgT>
 struct TypeFormatVis
 {
@@ -86,25 +77,45 @@ struct TypeFormatVis
         return my_format(member);
     }
 
+    std::string operator()(std::monostate)
+    {
+        return "";
+    }
+
   private:
     std::string my_format(const wlalat::NewID &v)
     {
-        return std::format("wlalat::NewID[{}]", v.raw());
+        return std::format("(new_id){}", v.raw());
+    }
+
+    std::string my_format(const wlalat::Object &v)
+    {
+        return std::format("(object){}", v.raw());
     }
 
     std::string my_format(const wlalat::Int &v)
     {
-        return std::format("wlalat::Int[{}]", v.raw());
+        return std::format("(int){}", v.raw());
+    }
+
+    std::string my_format(const wlalat::UInt &v)
+    {
+        return std::format("(uint){}]", v.raw());
     }
 
     std::string my_format(const int &v)
     {
-        return std::format("FDT(int)[{}]", v);
+        return std::format("(fd){}", v);
+    }
+
+    std::string my_format(const wlalat::String &v)
+    {
+        return std::format("\"{}\"", std::string_view{v});
     }
 };
 
 template <typename MsgT>
-std::string dump_message_2(const MsgT &M)
+std::string dump_message_args(const MsgT &M)
 {
     auto member_ptrs = wlalat::Traits<MsgT>::arg_member_pointers;
     auto names = wlalat::Traits<MsgT>::arg_names;
@@ -112,8 +123,13 @@ std::string dump_message_2(const MsgT &M)
 
     std::string O;
 
+    bool f = true;
     for (const auto &[ptr, name] : pairs) {
-        O += std::format(" {}={}", name, std::visit(TypeFormatVis{M}, ptr));
+        if (!f) {
+            O += ", ";
+        }
+        f = false;
+        O += std::format("{}={}", name, std::visit(TypeFormatVis{M}, ptr));
     }
 
     return O;
@@ -169,7 +185,7 @@ struct Display
     {
         wayland::wl_display::message_sync msg;
         msg.callback = _id_manager.allocate();
-        std::println("-> Sync {}", dump_message_2(msg));
+        std::println("-> Sync {}", dump_message_args(msg));
         wayland::wl_display::Request req{msg};
         _s.send(_id, req);
     }
@@ -193,19 +209,12 @@ struct Display
 
     void on(const wayland::wl_display::message_error &m)
     {
-        uint32_t object_id = m.object_id.raw();
-        uint32_t code = m.code;
-        std::string_view message = m.message;
-        std::println(
-            "wl_display@1.error(object_id=[{}] code=[{}], message=[{}])",
-            object_id,
-            code,
-            message);
+        std::println("<- wl_display@1.error({})", dump_message_args(m));
     }
 
     void on(const wayland::wl_display::message_delete_id &m)
     {
-        std::println("wl_display@1.delete_id({:x})", m.id.raw());
+        std::println("<- wl_display@1.delete_id({})", dump_message_args(m));
     }
 
   private:
@@ -226,16 +235,15 @@ struct Surface
         wayland::wl_surface::message_attach msg{};
         msg.buffer = buffer_id;
         std::println(
-            "-> wl_surface@{}.attach(buffer=[{}])",
-            _id.raw(),
-            msg.buffer.raw());
+            "-> wl_surface@{}.attach({})", _id.raw(), dump_message_args(msg));
         _s.send(_id, wayland::wl_surface::Request{msg});
     }
 
     void commit()
     {
         wayland::wl_surface::message_commit msg{};
-        std::println("-> wl_surface@{}.commit()", _id.raw());
+        std::println(
+            "-> wl_surface@{}.commit({})", _id.raw(), dump_message_args(msg));
         _s.send(_id, wayland::wl_surface::Request{msg});
     }
 
@@ -264,9 +272,9 @@ struct Compositor
         msg.id = O;
 
         std::println(
-            "-> wl_compositor@{}.message_create_surface(id=[{}])",
+            "-> wl_compositor@{}.message_create_surface({})",
             _id.raw(),
-            msg.id.raw());
+            dump_message_args(msg));
         _s.send(_id, wayland::wl_compositor::Request{msg});
         return O;
     }
@@ -302,7 +310,8 @@ struct Buffer
     void on(const wayland::wl_buffer::message_release &m)
     {
         released = true;
-        std::println("wl_buffer@{}.release()", _id.raw());
+        std::println(
+            "<- wl_buffer@{}.release({})", _id.raw(), dump_message_args(m));
     }
 
     auto id() const
@@ -338,7 +347,7 @@ struct ShmPool
         std::println(
             "-> wl_shm_pool@{}.create_buffer({})",
             _id.raw(),
-            dump_message_2(msg));
+            dump_message_args(msg));
         _s.send(_id, wayland::wl_shm_pool::Request{msg});
         return O;
     }
@@ -395,7 +404,8 @@ struct Shm
         }
 
         wayland::wl_shm::Request<int> req{msg};
-        std::println("-> Req message_create_pool {}", dump_message_2(msg));
+        std::println(
+            "-> wl_shm@{}.create_pool({})", _id.raw(), dump_message_args(msg));
         _s.send(_id, req);
 
         return O;
@@ -404,7 +414,7 @@ struct Shm
     void on(wayland::wl_shm::message_format fmt)
     {
         std::println(
-            "wl_shm@{}.format(format=[{}])", _id.raw(), fmt.format.raw());
+            "<- wl_shm@{}.format({})", _id.raw(), dump_message_args(fmt));
     }
 
     void dispatch(wlalat::MessageView M)
@@ -467,7 +477,7 @@ struct XDGSurface
     void on(const xdg_shell::xdg_surface::message_configure &M)
     {
         std::println(
-            "xdg_surface@{}.configure(serial=[{}])", _id.raw(), M.serial.raw());
+            "<- xdg_surface@{}.configure({})", _id.raw(), dump_message_args(M));
         ack_configure(M.serial);
         configured = true;
     }
@@ -477,9 +487,9 @@ struct XDGSurface
         xdg_shell::xdg_surface::message_ack_configure msg{};
         msg.serial = serial;
         std::println(
-            "-> xdg_surface@{}.ack_configure(serial=[{}])",
+            "-> xdg_surface@{}.ack_configure({})",
             _id.raw(),
-            msg.serial.raw());
+            dump_message_args(msg));
         _s.send(_id, xdg_shell::xdg_surface::Request{msg});
     }
 
@@ -491,9 +501,9 @@ struct XDGSurface
         msg.id = O;
 
         std::println(
-            "-> xdg_surface@{}.get_top_level(id=[{}])",
+            "-> xdg_surface@{}.get_top_level({})",
             _id.raw(),
-            msg.id.raw());
+            dump_message_args(msg));
         _s.send(_id, xdg_shell::xdg_surface::Request{msg});
         return O;
     }
@@ -531,7 +541,7 @@ struct XDGBase
     void on(const xdg_shell::xdg_wm_base::message_ping &M)
     {
         std::println(
-            "xdg_wm_base@{}.ping(serial=[{}])", _id.raw(), M.serial.raw());
+            "<- xdg_wm_base@{}.ping({})", _id.raw(), dump_message_args(M));
         pong(M.serial);
     }
 
@@ -540,7 +550,7 @@ struct XDGBase
         xdg_shell::xdg_wm_base::message_pong msg{};
         msg.serial = serial;
         std::println(
-            "-> xdg_wm_base@{}.pong(serial=[{}])", _id.raw(), msg.serial.raw());
+            "-> xdg_wm_base@{}.pong({})", _id.raw(), dump_message_args(msg));
         _s.send(_id, xdg_shell::xdg_wm_base::Request{msg});
     }
 
@@ -552,10 +562,9 @@ struct XDGBase
         msg.id = O;
         msg.surface = surface_id;
         std::println(
-            "-> xdg_wm_base@{}.get_xdg_surface(id=[{}],surface=[{}])",
+            "-> xdg_wm_base@{}.get_xdg_surface({})",
             _id.raw(),
-            msg.id.raw(),
-            msg.surface.raw());
+            dump_message_args(msg));
         _s.send(_id, xdg_shell::xdg_wm_base::Request{msg});
         return O;
     }
@@ -598,11 +607,7 @@ struct Registry
         std::string_view interface{msg.interface};
         uint32_t version = msg.version;
         std::println(
-            "wl_registry@{}.global(name=[{}], interface=[{}], version=[{}])",
-            _id.raw(),
-            name,
-            interface,
-            version);
+            "<- wl_registry@{}.global({})", _id.raw(), dump_message_args(msg));
 
         Global new_global;
         new_global.numeric_name = name;
@@ -650,14 +655,9 @@ struct Registry
         bind_msg.id = new_id;
         wayland::wl_registry::Request req{bind_msg};
         std::println(
-            "-> wl_registry@{}.bind(name=[{}], "
-            "id_interface_name_amogus_arg=[{}], "
-            "id_interface_version_amogus_arg=[{}], id=[{}])",
+            "-> wl_registry@{}.bind({})",
             _id.raw(),
-            bind_msg.name.raw(),
-            std::string_view{bind_msg.id_interface_name_amogus_arg},
-            bind_msg.id_interface_version_amogus_arg.raw(),
-            bind_msg.id.raw());
+            dump_message_args(bind_msg));
         _s.send(_id, req);
         return new_id;
     }
@@ -666,7 +666,9 @@ struct Registry
     {
         uint32_t name = msg.name;
         std::println(
-            "wl_registry@{}.global_remove(name=[{}])", _id.raw(), name);
+            "<- wl_registry@{}.global_remove({})",
+            _id.raw(),
+            dump_message_args(msg));
     }
 
   private:
@@ -711,7 +713,8 @@ try {
     wayland::wl_display::message_get_registry m{};
     m.registry = registry_tag;
 
-    std::println("-> {}", dump_message_2(m));
+    std::println(
+        "-> wl_display@1.message_get_registry({})", dump_message_args(m));
     s.send(wlalat::Object{1}, wayland::wl_display::Request{m});
 
     auto last_message = std::chrono::steady_clock::now();
@@ -728,7 +731,11 @@ try {
         }
         wlalat::MessageView msg = message_op.value();
         last_message = decltype(last_message)::clock::now();
-        std::println("<- {}", dump_message(msg));
+        std::println(
+            "<- @{}.#{}({})",
+            msg.object_id.raw(),
+            msg.opcode,
+            hexdump(msg.payload));
 
         display.dispatch(msg);
         registry.dispatch(msg);
