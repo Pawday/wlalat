@@ -1,16 +1,13 @@
 #include "wayland.xml.hh"
-#include "wlalat/Traits.hh"
 #include "xdg-shell.xml.hh"
 
-#include <array>
-#include <ranges>
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
-#include <wlalat/Message.hh>
+#include <wlalat/MessageHeader.hh>
 #include <wlalat/MessageSerializer.hh>
-#include <wlalat/MessageViewFD.hh>
 #include <wlalat/Parser.hh>
 #include <wlalat/StringParser.hh>
+#include <wlalat/Traits.hh>
 #include <wlalat/Types.hh>
 #include <wlalat/Unix/Socket.hh>
 #include <wlalat/Writer.hh>
@@ -28,18 +25,23 @@
 #include <cstring>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <exception>
 #include <format>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <print>
+#include <ranges>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -97,6 +99,11 @@ struct TypeFormatVis
     std::string my_format(const wlalat::Int &v)
     {
         return std::format("(int){}", v.raw());
+    }
+
+    std::string my_format(const wlalat::Array &v)
+    {
+        return std::format("(array){}", hexdump(v));
     }
 
     std::string my_format(const wlalat::UInt &v)
@@ -210,17 +217,6 @@ struct OpcodeDispatchVisitor
     }
 };
 
-template <typename InterfaceT>
-auto parse_event(std::type_identity<InterfaceT>, wlalat::MessageView M)
-{
-    using EventT = typename wlalat::Traits<InterfaceT>::Event;
-    std::optional<EventT> O;
-    wlalat::Parser P{M.payload};
-    OpcodeDispatchVisitor V{M.opcode, P, O};
-    iterate_messages_on(V, std::type_identity<EventT>{});
-    return O;
-}
-
 struct ObjectIDManager
 {
     struct ID : wlalat::NewID
@@ -258,6 +254,111 @@ template <> struct TagName<xdg_shell::xdg_wm_base>  { static constexpr std::stri
 template <typename TagT>
 static constexpr std::string_view TagNameV = TagName<TagT>::value;
 
+struct SocketEventDispatcher
+{
+    SocketEventDispatcher(wlalat::Unix::Socket &s) : _s{s}
+    {
+    }
+
+    template <typename LType, typename InterfaceT>
+    void set_listener(
+        uint_least32_t object_id, LType &L, std::type_identity<InterfaceT>)
+    {
+        std::type_identity<typename wlalat::Traits<InterfaceT>::Event>
+            event_id{};
+        _listeners.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(object_id),
+            std::forward_as_tuple(_s, std::addressof(L), event_id));
+    }
+
+    bool recv_dispatch()
+    {
+        auto H_op = _s.peek_header();
+        if (!H_op) {
+            return false;
+        }
+        auto &H = H_op.value();
+
+        auto listener_it = _listeners.find(H.object_id);
+        if (listener_it == std::end(_listeners)) {
+            auto msg =
+                std::format("Missing listener for object@{}", H.object_id);
+            std::println("[WARN]: {}", msg);
+            return false;
+        }
+        return listener_it->second.recv_dispatch(H.opcode);
+    }
+
+  private:
+    struct Listener
+    {
+        template <typename LType, typename EventVarintT>
+        Listener(
+            wlalat::Unix::Socket &s, LType *l, std::type_identity<EventVarintT>)
+            : _s{s}, _l_ptr{l},
+              V_recv_dispatch{&Listener::T_recv_dispatch<EventVarintT, LType>}
+        {
+        }
+
+        bool recv_dispatch(uint_least16_t opcode)
+        {
+            return (this->*V_recv_dispatch)(opcode);
+        }
+
+        template <typename LType>
+        struct T_recv_dispatch_visitor
+        {
+            LType &L;
+            uint_least16_t &opcode;
+            wlalat::Unix::Socket &s;
+
+            template <typename MessageT>
+            bool operator()(const std::type_identity<MessageT> M)
+            {
+                if (opcode != wlalat::Traits<MessageT>::opcode) {
+                    return false;
+                }
+                auto m_op = s.recv_event(M);
+                if (!m_op) {
+                    throw std::runtime_error{m_op.error()};
+                }
+                L.on(m_op.value());
+                return true;
+            }
+
+            bool operator()(std::type_identity<std::monostate>)
+            {
+                return false;
+            }
+        };
+
+        template <typename EventVarintT, typename LType>
+        bool T_recv_dispatch(uint_least16_t opcode)
+        {
+            LType &L = *static_cast<LType *>(_l_ptr);
+
+            T_recv_dispatch_visitor V{L, opcode, _s};
+
+            for (auto msg_type_id :
+                 alternatives_array(std::type_identity<EventVarintT>{})) {
+                if (std::visit(V, msg_type_id)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        wlalat::Unix::Socket &_s;
+        void *_l_ptr;
+        bool (Listener::*V_recv_dispatch)(uint_least16_t opcode) = nullptr;
+    };
+
+    wlalat::Unix::Socket &_s;
+    std::unordered_map<uint_least32_t, Listener> _listeners;
+};
+
 struct Display
 {
     using Tag = wayland::wl_display;
@@ -273,21 +374,6 @@ struct Display
         msg.callback = _id_manager.allocate();
         std::println("-> wl_display@1.{}", dump_message(msg));
         _s.send(_id, msg);
-    }
-
-    void dispatch(wlalat::MessageView M)
-    {
-        if (M.object_id != _id) {
-            return;
-        }
-
-        auto ev_op = parse_event(std::type_identity<wayland::wl_display>{}, M);
-        if (!ev_op) {
-            return;
-        }
-
-        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev_op.value());
     }
 
     void on(const wayland::wl_display::message_error &m)
@@ -333,6 +419,12 @@ struct Surface
         return _id;
     }
 
+    template <typename EventT>
+    void on(const EventT &ev)
+    {
+        std::println("<- wl_surface@{}.{}", _id.raw(), dump_message(ev));
+    }
+
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
@@ -367,21 +459,6 @@ struct Buffer
     using Tag = wayland::wl_buffer;
 
     Buffer(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s} {};
-
-    void dispatch(wlalat::MessageView &M)
-    {
-        if (M.object_id != _id) {
-            return;
-        }
-
-        auto ev_op = parse_event(std::type_identity<wayland::wl_buffer>{}, M);
-        if (!ev_op) {
-            return;
-        }
-
-        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev_op.value());
-    }
 
     void on(const wayland::wl_buffer::message_release &m)
     {
@@ -422,6 +499,12 @@ struct ShmPool
         std::println("-> wl_shm_pool@{}.{}", _id.raw(), dump_message(msg));
         _s.send(_id, msg);
         return O;
+    }
+
+    template <typename EventT>
+    void on(const EventT &ev)
+    {
+        std::println("<- wl_shm_pool@{}.{}", _id.raw(), dump_message(ev));
     }
 
   private:
@@ -486,21 +569,6 @@ struct Shm
         std::println("<- wl_shm@{}.{}", _id.raw(), dump_message(fmt));
     }
 
-    void dispatch(wlalat::MessageView M)
-    {
-        if (M.object_id != _id) {
-            return;
-        }
-
-        auto ev_op = parse_event(std::type_identity<wayland::wl_shm>{}, M);
-        if (!ev_op) {
-            return;
-        }
-
-        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev_op.value());
-    }
-
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
@@ -514,6 +582,12 @@ struct XDGTopLevel
     {
     }
 
+    template <typename EventT>
+    void on(const EventT &ev)
+    {
+        std::println("<- xdg_toplevel@{}.{}", _id.raw(), dump_message(ev));
+    }
+
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
@@ -524,21 +598,6 @@ struct XDGSurface
     using Tag = xdg_shell::xdg_surface;
     XDGSurface(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
-    }
-
-    void dispatch(wlalat::MessageView M)
-    {
-        if (M.object_id != _id) {
-            return;
-        }
-        auto ev_op =
-            parse_event(std::type_identity<xdg_shell::xdg_surface>{}, M);
-        if (!ev_op) {
-            return;
-        }
-        auto &ev = ev_op.value();
-        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev);
     }
 
     void on(const xdg_shell::xdg_surface::message_configure &M)
@@ -583,21 +642,6 @@ struct XDGBase
     {
     }
 
-    void dispatch(wlalat::MessageView M)
-    {
-        if (M.object_id != _id) {
-            return;
-        }
-        auto ev_op =
-            parse_event(std::type_identity<xdg_shell::xdg_wm_base>{}, M);
-        if (!ev_op) {
-            return;
-        }
-        auto &ev = ev_op.value();
-        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev);
-    }
-
     void on(const xdg_shell::xdg_wm_base::message_ping &M)
     {
         std::println("<- xdg_wm_base@{}.{}", _id.raw(), dump_message(M));
@@ -636,23 +680,11 @@ struct Registry
     Registry(
         wlalat::Unix::Socket &s,
         ObjectIDManager::ID id,
-        ObjectIDManager &id_manager)
-        : _id{id}, _s{s}, _id_manager{id_manager}
+        ObjectIDManager &id_manager,
+        SocketEventDispatcher &disp)
+        : _id{id}, _s{s}, _id_manager{id_manager}, _disp{disp}
     {
-    }
-
-    void dispatch(wlalat::MessageView M)
-    {
-        if (M.object_id != _id) {
-            return;
-        }
-        auto ev_op = parse_event(std::type_identity<wayland::wl_registry>{}, M);
-        if (!ev_op) {
-            return;
-        }
-        auto &ev = ev_op.value();
-        auto vis = [&]<typename EvT>(const EvT &ev) { on(ev); };
-        std::visit(vis, ev);
+        _disp.set_listener(_id.raw(), *this, std::type_identity<Tag>{});
     }
 
     void on(const wayland::wl_registry::message_global &msg)
@@ -720,6 +752,7 @@ struct Registry
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
     ObjectIDManager &_id_manager;
+    SocketEventDispatcher &_disp;
 
     struct Global
     {
@@ -736,7 +769,10 @@ try {
     ObjectIDManager id_manager;
     wlalat::Unix::Socket s;
 
+    SocketEventDispatcher disp{s};
     Display display{s, id_manager};
+
+    disp.set_listener(1, display, std::type_identity<wayland::wl_display>{});
 
     std::optional<Shm> shm;
     std::optional<ShmPool> pool;
@@ -753,7 +789,7 @@ try {
     bool initial_commit = false;
 
     auto registry_tag = id_manager.allocate();
-    Registry registry{s, registry_tag, id_manager};
+    Registry registry{s, registry_tag, id_manager, disp};
 
     wayland::wl_display::message_get_registry m{};
     m.registry = registry_tag;
@@ -768,35 +804,11 @@ try {
         if (elapsed > message_timeout) {
             break;
         }
-        std::optional<wlalat::MessageView> message_op = s.recv();
-        if (!message_op) {
+        auto disp_status = disp.recv_dispatch();
+        if (!disp_status) {
             std::this_thread::yield();
-            continue;
-        }
-        wlalat::MessageView msg = message_op.value();
-        last_message = decltype(last_message)::clock::now();
-        std::println(
-            "<- @{}.#{}({})",
-            msg.object_id.raw(),
-            msg.opcode,
-            hexdump(msg.payload));
-
-        display.dispatch(msg);
-        registry.dispatch(msg);
-        if (shm) {
-            shm->dispatch(msg);
-        }
-
-        if (buffer) {
-            buffer->dispatch(msg);
-        }
-
-        if (xdg) {
-            xdg->dispatch(msg);
-        }
-
-        if (xdg_surface) {
-            xdg_surface->dispatch(msg);
+        } else {
+            last_message = decltype(last_message)::clock::now();
         }
 
         if (!shm) {
@@ -804,6 +816,8 @@ try {
                 id_manager, std::type_identity<Shm::Tag>{}, {});
             if (id_op) {
                 shm.emplace(s, id_op.value());
+                using IdT = std::type_identity<decltype(shm)::value_type::Tag>;
+                disp.set_listener(id_op.value().raw(), shm.value(), IdT{});
             }
         }
 
@@ -812,6 +826,10 @@ try {
                 id_manager, std::type_identity<Compositor::Tag>(), {});
             if (compositor_id_op) {
                 compositor.emplace(compositor_id_op.value(), s);
+                using IdT =
+                    std::type_identity<decltype(compositor)::value_type::Tag>;
+                disp.set_listener(
+                    compositor_id_op.value().raw(), compositor.value(), IdT{});
             }
         }
 
@@ -820,32 +838,46 @@ try {
                 id_manager, std::type_identity<XDGBase::Tag>(), {});
             if (id_op) {
                 xdg.emplace(id_op.value(), s);
+                using IdT = std::type_identity<decltype(xdg)::value_type::Tag>;
+                disp.set_listener(id_op.value().raw(), xdg.value(), IdT{});
             }
         }
 
         if (!xdg_surface && surface && xdg) {
             auto id = xdg->get_xdg_surface(id_manager, surface->id());
             xdg_surface.emplace(id, s);
+            using IdT =
+                std::type_identity<decltype(xdg_surface)::value_type::Tag>;
+            disp.set_listener(id.raw(), xdg_surface.value(), IdT{});
         }
 
         if (!xdg_top_level && xdg_surface) {
             auto id = xdg_surface->get_top_level(id_manager);
             xdg_top_level.emplace(id, s);
+            using IdT =
+                std::type_identity<decltype(xdg_top_level)::value_type::Tag>;
+            disp.set_listener(id.raw(), xdg_top_level.value(), IdT{});
         }
 
         if (compositor && !surface) {
             auto id = compositor->create_surface(id_manager);
             surface.emplace(id, s);
+            using IdT = std::type_identity<decltype(surface)::value_type::Tag>;
+            disp.set_listener(id.raw(), surface.value(), IdT{});
         }
 
         if (shm && !pool) {
             auto pool_id = shm->create_pool(id_manager);
             pool.emplace(pool_id, s);
+            using IdT = std::type_identity<decltype(pool)::value_type::Tag>;
+            disp.set_listener(pool_id.raw(), pool.value(), IdT{});
         }
 
         if (pool && !buffer) {
             auto buffer_id = pool->create_buffer(id_manager);
             buffer.emplace(buffer_id, s);
+            using IdT = std::type_identity<decltype(buffer)::value_type::Tag>;
+            disp.set_listener(buffer_id.raw(), buffer.value(), IdT{});
         }
 
         bool can_attach = xdg_surface && xdg_surface->configured;
