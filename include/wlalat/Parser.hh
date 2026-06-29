@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ArrayParser.hh"
 #include "Binary.hh"
 #include "StringParser.hh"
 #include "Types.hh"
@@ -8,7 +9,6 @@
 
 #include <optional>
 #include <span>
-#include <stdexcept>
 #include <type_traits>
 
 namespace wlalat
@@ -40,8 +40,11 @@ struct Parser
 
     bool has(std::type_identity<Array>) const
     {
-        // TODO: Figure out array structure
-        return false;
+        ArrayParser P{_data};
+        if (!P.parse()) {
+            return false;
+        }
+        return true;
     }
 
     Numeric next(std::type_identity<Numeric>)
@@ -70,7 +73,8 @@ struct Parser
 
     Array next(std::type_identity<Array>)
     {
-        throw std::runtime_error{"Array Parser::next() is not implemented"};
+        ArrayParser P{_data};
+        return Array{P.parse().value()};
     }
 
     template <typename T>
