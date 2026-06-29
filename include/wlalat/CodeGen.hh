@@ -208,7 +208,7 @@ struct Generator
         }
 
         auto name = proto_node.name.value();
-        O += std::format("namespace {}", name);
+        O += std::format("struct {}", name);
         O += "{";
 
         std::vector<
@@ -231,7 +231,7 @@ struct Generator
             O += define_iface(iface_node);
         }
 
-        O += std::format("}} // namespace {}", name);
+        O += std::format("}}; // struct {}", name);
 
         O += "namespace wlalat";
         O += "{";
@@ -263,7 +263,7 @@ struct Generator
         LineList O;
         auto name = iface_node.name.value();
 
-        O += std::format("namespace {}", name);
+        O += std::format("struct {}", name);
         O += "{";
 
         O += "struct Tag {};";
@@ -321,7 +321,7 @@ struct Generator
         O += "";
         O += gen_variant(events, ev_has_fd, "Event");
         O += gen_variant(requests, req_has_fd, "Request");
-        O += std::format("}} // namespace {}", name);
+        O += std::format("}}; // struct {}", name);
 
         return O;
     }
