@@ -186,8 +186,7 @@ struct Display
         wayland::wl_display::message_sync msg;
         msg.callback = _id_manager.allocate();
         std::println("-> Sync {}", dump_message_args(msg));
-        wayland::wl_display::Request req{msg};
-        _s.send(_id, req);
+        _s.send(_id, msg);
     }
 
     void dispatch(wlalat::MessageView M)
@@ -236,7 +235,7 @@ struct Surface
         msg.buffer = buffer_id;
         std::println(
             "-> wl_surface@{}.attach({})", _id.raw(), dump_message_args(msg));
-        _s.send(_id, wayland::wl_surface::Request{msg});
+        _s.send(_id, msg);
     }
 
     void commit()
@@ -244,7 +243,7 @@ struct Surface
         wayland::wl_surface::message_commit msg{};
         std::println(
             "-> wl_surface@{}.commit({})", _id.raw(), dump_message_args(msg));
-        _s.send(_id, wayland::wl_surface::Request{msg});
+        _s.send(_id, msg);
     }
 
     auto id() const
@@ -275,7 +274,7 @@ struct Compositor
             "-> wl_compositor@{}.message_create_surface({})",
             _id.raw(),
             dump_message_args(msg));
-        _s.send(_id, wayland::wl_compositor::Request{msg});
+        _s.send(_id, msg);
         return O;
     }
 
@@ -348,7 +347,7 @@ struct ShmPool
             "-> wl_shm_pool@{}.create_buffer({})",
             _id.raw(),
             dump_message_args(msg));
-        _s.send(_id, wayland::wl_shm_pool::Request{msg});
+        _s.send(_id, msg);
         return O;
     }
 
@@ -403,10 +402,9 @@ struct Shm
             }
         }
 
-        wayland::wl_shm::Request<int> req{msg};
         std::println(
             "-> wl_shm@{}.create_pool({})", _id.raw(), dump_message_args(msg));
-        _s.send(_id, req);
+        _s.send(_id, msg);
 
         return O;
     }
@@ -490,7 +488,7 @@ struct XDGSurface
             "-> xdg_surface@{}.ack_configure({})",
             _id.raw(),
             dump_message_args(msg));
-        _s.send(_id, xdg_shell::xdg_surface::Request{msg});
+        _s.send(_id, msg);
     }
 
     auto get_top_level(ObjectIDManager &id_manager)
@@ -504,7 +502,7 @@ struct XDGSurface
             "-> xdg_surface@{}.get_top_level({})",
             _id.raw(),
             dump_message_args(msg));
-        _s.send(_id, xdg_shell::xdg_surface::Request{msg});
+        _s.send(_id, msg);
         return O;
     }
 
@@ -551,7 +549,7 @@ struct XDGBase
         msg.serial = serial;
         std::println(
             "-> xdg_wm_base@{}.pong({})", _id.raw(), dump_message_args(msg));
-        _s.send(_id, xdg_shell::xdg_wm_base::Request{msg});
+        _s.send(_id, msg);
     }
 
     ObjectIDManager::ID get_xdg_surface(
@@ -565,7 +563,7 @@ struct XDGBase
             "-> xdg_wm_base@{}.get_xdg_surface({})",
             _id.raw(),
             dump_message_args(msg));
-        _s.send(_id, xdg_shell::xdg_wm_base::Request{msg});
+        _s.send(_id, msg);
         return O;
     }
 
@@ -653,12 +651,11 @@ struct Registry
         bind_msg.id_interface_version_amogus_arg = bind_version;
         ObjectIDManager::ID new_id = id_manager.allocate();
         bind_msg.id = new_id;
-        wayland::wl_registry::Request req{bind_msg};
         std::println(
             "-> wl_registry@{}.bind({})",
             _id.raw(),
             dump_message_args(bind_msg));
-        _s.send(_id, req);
+        _s.send(_id, bind_msg);
         return new_id;
     }
 
@@ -715,7 +712,7 @@ try {
 
     std::println(
         "-> wl_display@1.message_get_registry({})", dump_message_args(m));
-    s.send(wlalat::Object{1}, wayland::wl_display::Request{m});
+    s.send(wlalat::Object{1}, m);
 
     auto last_message = std::chrono::steady_clock::now();
 

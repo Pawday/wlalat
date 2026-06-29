@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ArgsIterator.hh"
 #include "Binary.hh"
 #include "Error.hh"
+#include "Traits.hh"
 #include "Types.hh"
 #include "Writer.hh"
 
@@ -43,8 +43,10 @@ struct MessageSerializer
 
         uint_least64_t message_size = 0;
         OIterSize size_counter{message_size};
-        MsgWriteVisitor size_v{size_counter, nullptr};
-        std::visit(size_v, msg);
+        Writer size_w{size_counter};
+        InterceptFDWriter fd_itercept_W{size_w, nullptr};
+        write_args(msg, fd_itercept_W);
+
         message_size += 8;
 
         if (message_size > 0xffff) {
@@ -57,12 +59,13 @@ struct MessageSerializer
         uint32_t size_opcode_pair = 0;
         size_opcode_pair |= message_size;
         size_opcode_pair <<= 16;
-        size_opcode_pair |= msg.opcode();
+        size_opcode_pair |= wlalat::Traits<MessageT>::opcode;
         auto size_opcode_pair_data = tole32(size_opcode_pair);
         std::ranges::copy(size_opcode_pair_data, oiter);
 
-        MsgWriteVisitor V{oiter, std::addressof(fds)};
-        std::visit(V, msg);
+        Writer W{oiter};
+        InterceptFDWriter fd_itercept_W_write{W, std::addressof(fds)};
+        write_args(msg, fd_itercept_W_write);
 
         std::span<const std::byte> data_span{data};
         data_span = data_span.subspan(0, message_size);
@@ -129,19 +132,32 @@ struct MessageSerializer
         }
     };
 
-    template <typename OIterT>
-    struct MsgWriteVisitor
+    template <typename MessageT, typename UpstreamWriterT>
+    struct write_args_visitor
     {
-        OIterT oiter;
-        std::pmr::vector<const FDT *> *fds;
-        template <typename MessageT>
-        void operator()(const MessageT &M)
+        MessageT &M;
+        UpstreamWriterT &W;
+
+        template <typename ArgMemberPtrT>
+        void operator()(ArgMemberPtrT P)
         {
-            Writer W{oiter};
-            InterceptFDWriter fd_itercept_W{W, fds};
-            ArgsIterator{fd_itercept_W, M};
+            W(M.*(P));
+        }
+
+        void operator()(std::monostate)
+        {
         }
     };
+
+    template <typename MessageT, typename UpstreamWriterT>
+    static void write_args(const MessageT &M, UpstreamWriterT &W)
+    {
+        write_args_visitor V{M, W};
+        auto &AVM_ptrs = wlalat::Traits<MessageT>::arg_member_pointers;
+        for (auto &arg_varianted_ptr : AVM_ptrs) {
+            std::visit(V, arg_varianted_ptr);
+        }
+    }
 
     std::pmr::vector<std::byte> data;
     std::pmr::vector<const FDT *> fds;
