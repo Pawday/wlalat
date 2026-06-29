@@ -8,6 +8,8 @@
 #include <wlalat/MessageHeader.hh>
 #include <wlalat/MessageSerializer.hh>
 #include <wlalat/MessageViewFD.hh>
+#include <wlalat/Parser.hh>
+#include <wlalat/Traits.hh>
 #include <wlalat/Types.hh>
 
 #include <sys/socket.h>
@@ -22,11 +24,15 @@
 
 #include <algorithm>
 #include <array>
+#include <expected>
 #include <format>
 #include <memory_resource>
 #include <optional>
 #include <span>
+#include <string>
+#include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace wlalat
@@ -197,7 +203,71 @@ struct Socket
         return O;
     }
 
+    template <typename EventMessageT>
+    std::expected<EventMessageT, std::string>
+        recv_event(std::type_identity<EventMessageT> ev_t)
+    {
+        auto H_op = peek_header();
+        if (!H_op) {
+            return std::unexpected{"No header"};
+        }
+        auto &H = H_op.value();
+
+        if (_recv_buffer.size() < H.size) {
+            _recv_buffer.resize(H.size);
+        }
+
+        std::span<std::byte> message_data{_recv_buffer};
+        message_data = message_data.subspan(0, H.size);
+
+        int status = ::recv(_fd(), message_data.data(), message_data.size(), 0);
+        if (status < 0) {
+            int err = errno;
+            _fd.close();
+            return std::unexpected{strerror(err)};
+        }
+
+        if (status != H.size) {
+            _fd.close();
+            return std::unexpected{"Bad message"};
+        }
+
+        auto payload = message_data.subspan(8);
+        wlalat::Parser P{payload};
+        EventMessageT M{};
+        ArgParseVisitor arg_parser{M, P};
+
+        bool good = true;
+        for (auto m_ptr : wlalat::Traits<EventMessageT>::arg_member_pointers) {
+            good = good && std::visit(arg_parser, m_ptr);
+        }
+
+        if (!good) {
+            return std::unexpected{"Parse failure"};
+        }
+
+        return M;
+    }
+
   private:
+    template <typename MessageT>
+    struct ArgParseVisitor
+    {
+        MessageT &M;
+        wlalat::Parser &P;
+
+        template <typename ArgMemberPointerT>
+        bool operator()(ArgMemberPointerT ptr)
+        {
+            return P(M.*ptr);
+        }
+
+        bool operator()(std::monostate)
+        {
+            return true;
+        }
+    };
+
     std::optional<MessageView> recv_at(std::pmr::vector<std::byte> &buf)
     {
         auto H_op = peek_header();
