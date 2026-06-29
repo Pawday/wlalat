@@ -468,6 +468,8 @@ struct Generator
 
         B0 += std::format("using Type = {};", full_qualified_msg_type);
         B0 += std::format("using InterfaceTag = {}::{};", proto_ns, iface_name);
+        B0 += std::format(
+            "static constexpr std::string_view name = \"{}\";", msg_name);
         B0 += std::format("static constexpr const size_t opcode = {};", opcode);
         B0 += std::format("static constexpr bool is_event = {};", is_event);
 
