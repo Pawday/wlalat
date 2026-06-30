@@ -1,4 +1,5 @@
 #include "wayland.xml.hh"
+#include "xdg-decoration-unstable-v1.xml.hh"
 #include "xdg-shell.xml.hh"
 
 #include <wlalat/Binary.hh>
@@ -577,6 +578,11 @@ struct XDGTopLevel
         std::println("<- xdg_toplevel@{}.{}", _id.raw(), dump_message(ev));
     }
 
+    auto id() const
+    {
+        return _id;
+    }
+
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
@@ -660,6 +666,77 @@ struct XDGBase
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
+};
+
+struct XDGDecorTopLevel
+{
+    using Tag = xdg_decoration_unstable_v1::zxdg_toplevel_decoration_v1;
+
+    XDGDecorTopLevel(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
+        : _id{id}, _s{s}
+    {
+    }
+
+    void on(const Tag::message_configure &M)
+    {
+        std::println(
+            "<- zxdg_toplevel_decoration_v1@{}.{}", _id.raw(), dump_message(M));
+    }
+
+    void set_server_side()
+    {
+        Tag::message_set_mode M{};
+        M.mode = wlalat::UInt{2}; // server side mode
+        std::println(
+            "-> zxdg_toplevel_decoration_v1@{}.{}", _id.raw(), dump_message(M));
+        _s.send(_id, M);
+    }
+
+  private:
+    ObjectIDManager::ID _id;
+    wlalat::Unix::Socket &_s;
+};
+
+struct XDGDecorManager
+{
+    using Tag = xdg_decoration_unstable_v1::zxdg_decoration_manager_v1;
+    XDGDecorManager(
+        ObjectIDManager::ID id,
+        wlalat::Unix::Socket &s,
+        ObjectIDManager &id_manager,
+        SocketEventDispatcher &disp)
+        : _id{id}, _s{s}, _id_manager{id_manager}, _disp{disp}
+    {
+    }
+
+    void get_toplevel_decoration_to(
+        std::optional<XDGDecorTopLevel> &O, const XDGTopLevel &top_level)
+    {
+        if (O) {
+            return;
+        }
+
+        Tag::message_get_toplevel_decoration msg{};
+        msg.id = _id_manager.allocate();
+        msg.toplevel = top_level.id();
+        std::println(
+            "-> zxdg_decoration_manager_v1@{}.{}",
+            _id.raw(),
+            dump_message(msg));
+        _s.send(_id, msg);
+        O.emplace(ObjectIDManager::ID{msg.id}, _s);
+        _disp.set_listener(
+            msg.id.raw(),
+            O.value(),
+            std::type_identity<
+                xdg_decoration_unstable_v1::zxdg_toplevel_decoration_v1>{});
+    }
+
+  private:
+    ObjectIDManager::ID _id;
+    wlalat::Unix::Socket &_s;
+    ObjectIDManager &_id_manager;
+    SocketEventDispatcher &_disp;
 };
 
 struct Registry
@@ -768,14 +845,17 @@ try {
     std::optional<Buffer> buffer;
     std::optional<Compositor> compositor;
     std::optional<Surface> surface;
+    std::optional<XDGDecorManager> decor_manager;
 
     bool surface_attached = false;
 
     std::optional<XDGBase> xdg;
     std::optional<XDGSurface> xdg_surface;
     std::optional<XDGTopLevel> xdg_top_level;
+    std::optional<XDGDecorTopLevel> xdg_top_level_decor;
 
     bool initial_commit = false;
+    bool top_level_decore_set = false;
 
     auto registry_tag = id_manager.allocate();
     Registry registry{s, registry_tag, id_manager, disp};
@@ -798,6 +878,28 @@ try {
             std::this_thread::yield();
         } else {
             last_message = decltype(last_message)::clock::now();
+        }
+
+        if (!decor_manager) {
+            auto id_op = registry.try_bind(
+                id_manager, std::type_identity<XDGDecorManager::Tag>{}, {});
+            if (id_op) {
+                decor_manager.emplace(id_op.value(), s, id_manager, disp);
+                using IdT = std::type_identity<
+                    decltype(decor_manager)::value_type::Tag>;
+                disp.set_listener(
+                    id_op.value().raw(), decor_manager.value(), IdT{});
+            }
+        }
+
+        if (!xdg_top_level_decor && decor_manager && xdg_top_level) {
+            decor_manager->get_toplevel_decoration_to(
+                xdg_top_level_decor, xdg_top_level.value());
+        }
+
+        if (!top_level_decore_set && xdg_top_level_decor) {
+            xdg_top_level_decor->set_server_side();
+            top_level_decore_set = true;
         }
 
         if (!shm) {
