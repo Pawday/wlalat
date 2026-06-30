@@ -243,17 +243,6 @@ static bool operator==(const ObjectIDManager::ID &l, const wlalat::Object &o)
     return l.raw() == o.raw();
 }
 
-template <typename TagT>
-struct TagName;
-// clang-format off
-template <> struct TagName<wayland::wl_shm>         { static constexpr std::string_view value{"wl_shm"};};
-template <> struct TagName<wayland::wl_compositor>  { static constexpr std::string_view value{"wl_compositor"};};
-template <> struct TagName<xdg_shell::xdg_wm_base>  { static constexpr std::string_view value{"xdg_wm_base"};};
-// clang-format on
-
-template <typename TagT>
-static constexpr std::string_view TagNameV = TagName<TagT>::value;
-
 struct SocketEventDispatcher
 {
     SocketEventDispatcher(wlalat::Unix::Socket &s) : _s{s}
@@ -707,7 +696,7 @@ struct Registry
         std::type_identity<TagT> interface,
         std::optional<uint32_t> version)
     {
-        std::string_view interface_name = TagNameV<TagT>;
+        std::string_view interface_name = wlalat::Traits<TagT>::name;
 
         auto match = [&](const Global &g) {
             if (g.interface != interface_name) {
@@ -730,7 +719,7 @@ struct Registry
 
         wayland::wl_registry::message_bind bind_msg;
         bind_msg.name = wlalat::UInt{global.numeric_name};
-        bind_msg.id_interface_name_amogus_arg = TagNameV<TagT>;
+        bind_msg.id_interface_name_amogus_arg = interface_name;
         wlalat::UInt bind_version{global.version};
         if (version) {
             bind_version = wlalat::UInt{version.value()};
