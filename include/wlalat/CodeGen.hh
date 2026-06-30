@@ -249,7 +249,8 @@ struct Generator
                 O += "";
             }
             f = false;
-            O += define_iface_traits(name, iface_node, iface_typename);
+            O += define_iface_traits(
+                name, iface_node, iface_typename, iface_name);
         }
 
         O += "} // namespace wlalat";
@@ -323,7 +324,8 @@ struct Generator
     LineList define_iface_traits(
         std::string_view proto_ns,
         const ProtocolParsing::InterfaceNode &iface_node,
-        std::string_view iface_typename)
+        std::string_view iface_typename,
+        std::string_view iface_name)
     {
         LineList O;
 
@@ -398,6 +400,8 @@ struct Generator
         O += std::format("struct Traits<{}::{}>", proto_ns, iface_typename);
         O += "{";
         LineList B0;
+        B0 += std::format(
+            "static constexpr std::string_view name = \"{}\";", iface_name);
         if (events_has_fd) {
             B0 += std::format("template<typename FDT>");
         }
