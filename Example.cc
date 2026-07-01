@@ -34,6 +34,7 @@
 #include <memory>
 #include <optional>
 #include <print>
+#include <queue>
 #include <ranges>
 #include <span>
 #include <stdexcept>
@@ -43,6 +44,7 @@
 #include <tuple>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -89,12 +91,12 @@ struct TypeFormatVis
   private:
     std::string my_format(const wlalat::NewID &v)
     {
-        return std::format("(new_id){}", v.raw());
+        return std::format("(new_id)@{}", v.raw());
     }
 
     std::string my_format(const wlalat::Object &v)
     {
-        return std::format("(object){}", v.raw());
+        return std::format("(object)@{}", v.raw());
     }
 
     std::string my_format(const wlalat::Int &v)
@@ -230,13 +232,34 @@ struct ObjectIDManager
 
     ID allocate()
     {
+        if (!_avail.empty()) {
+            auto O = _avail.front();
+            _allocated.emplace(O);
+            _avail.pop();
+            return ID{O};
+        }
         auto O = _next_free;
+        _allocated.emplace(O.raw());
         _next_free = wlalat::NewID{O.raw() + 1};
         return ID{O};
     }
 
+    void deallocate(ID id)
+    {
+        auto allocated_it = _allocated.find(id.raw());
+        if (std::end(_allocated) == allocated_it) {
+            auto msg = std::format(
+                "ObjectIDManager::deallocate({}): ID not allocated", id.raw());
+            throw std::runtime_error{std::move(msg)};
+        }
+        _avail.push(id.raw());
+        _allocated.erase(allocated_it);
+    }
+
   private:
     wlalat::NewID _next_free{2};
+    std::unordered_set<uint_least32_t> _allocated;
+    std::queue<uint_least32_t> _avail;
 };
 
 static bool operator==(const ObjectIDManager::ID &l, const wlalat::Object &o)
@@ -260,6 +283,19 @@ struct SocketEventDispatcher
             std::piecewise_construct,
             std::forward_as_tuple(object_id),
             std::forward_as_tuple(_s, std::addressof(L), event_id));
+    }
+
+    void remove_listener(uint_least32_t object_id)
+    {
+        auto listener_it = _listeners.find(object_id);
+        if (listener_it == std::end(_listeners)) {
+            auto msg = std::format(
+                "SocketEventDispatcher::remove_listener({}): Listener does not "
+                "exist",
+                object_id);
+            throw std::runtime_error{std::move(msg)};
+        }
+        _listeners.erase(listener_it);
     }
 
     bool recv_dispatch()
@@ -342,28 +378,60 @@ struct SocketEventDispatcher
 
         wlalat::Unix::Socket &_s;
         void *_l_ptr;
-        bool (Listener::*V_recv_dispatch)(uint_least16_t opcode) = nullptr;
+        bool (Listener::*const V_recv_dispatch)(uint_least16_t opcode);
     };
 
     wlalat::Unix::Socket &_s;
     std::unordered_map<uint_least32_t, Listener> _listeners;
 };
 
+struct Callback
+{
+    using Tag = wayland::wl_callback;
+
+    Callback(ObjectIDManager::ID id, std::optional<Tag::message_done> &done_msg)
+        : _id{id}, _done_msg{done_msg}
+    {
+    }
+
+    void on(const Tag::message_done &M)
+    {
+        std::println("<- wl_callback@{}.{}", _id.raw(), dump_message(M));
+        _done_msg = M;
+    }
+
+  private:
+    ObjectIDManager::ID _id;
+    std::optional<Tag::message_done> &_done_msg;
+};
+
 struct Display
 {
     using Tag = wayland::wl_display;
 
-    Display(wlalat::Unix::Socket &s, ObjectIDManager &id_manager)
-        : _s{s}, _id_manager{id_manager}
+    Display(
+        wlalat::Unix::Socket &s,
+        ObjectIDManager &id_manager,
+        SocketEventDispatcher &disp)
+        : _s{s}, _id_manager{id_manager}, _disp{disp}
     {
     }
 
-    void sync()
+    [[nodiscard]] auto
+        sync(std::optional<wayland::wl_callback::message_done> &done_msg)
     {
         wayland::wl_display::message_sync msg;
         msg.callback = _id_manager.allocate();
+
+        auto obj = std::make_shared<Callback>(
+            ObjectIDManager::ID{msg.callback}, done_msg);
+        _disp.set_listener(
+            msg.callback.raw(), *obj, std::type_identity<Callback::Tag>{});
+        _sync_callbacks[msg.callback.raw()] = obj;
+
         std::println("-> wl_display@1.{}", dump_message(msg));
         _s.send(_id, msg);
+        return std::weak_ptr{obj};
     }
 
     void on(const wayland::wl_display::message_error &m)
@@ -374,12 +442,23 @@ struct Display
     void on(const wayland::wl_display::message_delete_id &m)
     {
         std::println("<- wl_display@1.{}", dump_message(m));
+        _disp.remove_listener(m.id.raw());
+        _id_manager.deallocate(ObjectIDManager::ID{m.id});
+
+        auto sync_obj_it = _sync_callbacks.find(m.id.raw());
+        if (sync_obj_it != std::end(_sync_callbacks)) {
+            _sync_callbacks.erase(sync_obj_it);
+        }
     }
 
   private:
     static constexpr ObjectIDManager::ID _id{1};
     wlalat::Unix::Socket &_s;
     ObjectIDManager &_id_manager;
+    SocketEventDispatcher &_disp;
+
+    std::unordered_map<uint_least16_t, std::shared_ptr<Callback>>
+        _sync_callbacks;
 };
 
 struct Surface
@@ -836,7 +915,7 @@ try {
     wlalat::Unix::Socket s;
 
     SocketEventDispatcher disp{s};
-    Display display{s, id_manager};
+    Display display{s, id_manager, disp};
 
     disp.set_listener(1, display, std::type_identity<wayland::wl_display>{});
 
