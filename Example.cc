@@ -846,14 +846,9 @@ struct Registry
         globals.push_back(std::move(new_global));
     }
 
-    template <typename TagT>
     std::optional<ObjectIDManager::ID> try_bind(
-        ObjectIDManager &id_manager,
-        std::type_identity<TagT> interface,
-        std::optional<uint32_t> version)
+        std::string_view interface_name, std::optional<uint32_t> version)
     {
-        std::string_view interface_name = wlalat::Traits<TagT>::name;
-
         auto match = [&](const Global &g) {
             if (g.interface != interface_name) {
                 return false;
@@ -881,7 +876,7 @@ struct Registry
             bind_version = wlalat::UInt{version.value()};
         }
         bind_msg.id_interface_version_amogus_arg = bind_version;
-        ObjectIDManager::ID new_id = id_manager.allocate();
+        ObjectIDManager::ID new_id = _id_manager.allocate();
         bind_msg.id = new_id;
         std::println("-> wl_registry@{}.{}", _id.raw(), dump_message(bind_msg));
         _s.send(_id, bind_msg);
@@ -960,12 +955,11 @@ try {
         }
 
         if (!decor_manager) {
-            auto id_op = registry.try_bind(
-                id_manager, std::type_identity<XDGDecorManager::Tag>{}, {});
+            using Tag = decltype(decor_manager)::value_type::Tag;
+            using IdT = std::type_identity<Tag>;
+            auto id_op = registry.try_bind(wlalat::Traits<Tag>::name, {});
             if (id_op) {
                 decor_manager.emplace(id_op.value(), s, id_manager, disp);
-                using IdT = std::type_identity<
-                    decltype(decor_manager)::value_type::Tag>;
                 disp.set_listener(
                     id_op.value().raw(), decor_manager.value(), IdT{});
             }
@@ -982,30 +976,30 @@ try {
         }
 
         if (!shm) {
-            auto id_op = registry.try_bind(
-                id_manager, std::type_identity<Shm::Tag>{}, {});
+            using Tag = decltype(shm)::value_type::Tag;
+            using IdT = std::type_identity<Tag>;
+            auto id_op = registry.try_bind(wlalat::Traits<Tag>::name, {});
             if (id_op) {
                 shm.emplace(s, id_op.value());
-                using IdT = std::type_identity<decltype(shm)::value_type::Tag>;
                 disp.set_listener(id_op.value().raw(), shm.value(), IdT{});
             }
         }
 
         if (!compositor) {
-            auto compositor_id_op = registry.try_bind(
-                id_manager, std::type_identity<Compositor::Tag>(), {});
-            if (compositor_id_op) {
-                compositor.emplace(compositor_id_op.value(), s);
-                using IdT =
-                    std::type_identity<decltype(compositor)::value_type::Tag>;
+            using Tag = decltype(compositor)::value_type::Tag;
+            using IdT = std::type_identity<Tag>;
+            auto id_op = registry.try_bind(wlalat::Traits<Tag>::name, {});
+            if (id_op) {
+                compositor.emplace(id_op.value(), s);
                 disp.set_listener(
-                    compositor_id_op.value().raw(), compositor.value(), IdT{});
+                    id_op.value().raw(), compositor.value(), IdT{});
             }
         }
 
         if (!xdg) {
-            auto id_op = registry.try_bind(
-                id_manager, std::type_identity<XDGBase::Tag>(), {});
+            using Tag = decltype(xdg)::value_type::Tag;
+            using IdT = std::type_identity<Tag>;
+            auto id_op = registry.try_bind(wlalat::Traits<Tag>::name, {});
             if (id_op) {
                 xdg.emplace(id_op.value(), s);
                 using IdT = std::type_identity<decltype(xdg)::value_type::Tag>;
