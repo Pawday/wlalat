@@ -440,6 +440,17 @@ struct Surface
         _s.send(_id, msg);
     }
 
+    void damage()
+    {
+        wayland::wl_surface::message_damage msg{};
+        msg.x = wlalat::Int{0};
+        msg.y = wlalat::Int{0};
+        msg.width = wlalat::Int{w};
+        msg.height = wlalat::Int{h};
+        std::println("-> wl_surface@{}.{}", _id.raw(), dump_message(msg));
+        _s.send(_id, msg);
+    }
+
     auto id() const
     {
         return _id;
@@ -512,12 +523,12 @@ struct ShmPool
     {
     }
 
-    ObjectIDManager::ID create_buffer(ObjectIDManager &id_manager)
+    ObjectIDManager::ID create_buffer(ObjectIDManager &id_manager, size_t id)
     {
         auto O = id_manager.allocate();
         wayland::wl_shm_pool::message_create_buffer msg{};
         msg.id = O;
-        msg.offset = wlalat::Int{0};
+        msg.offset = wlalat::Int{(w * h * 4) * id};
         msg.width = wlalat::Int{w};
         msg.height = wlalat::Int{h};
         msg.stride = wlalat::Int{w * 4};
@@ -552,7 +563,7 @@ struct Shm
 
         wayland::wl_shm::message_create_pool<int> msg;
 
-        size_t sz = w * h * 4;
+        size_t sz = (w * h * 4) * 2;
         int memfd = memfd_create("SHM", O_RDWR);
         ftruncate(memfd, sz);
         msg.fd = memfd;
@@ -580,6 +591,24 @@ struct Shm
                 c0 = 0;
                 c1 = float(y) / h * 255;
                 c2 = float(x) / w * 255;
+                c3 = 0xff;
+            }
+        }
+
+        for (size_t y = 0; y != h; ++y) {
+            for (size_t x = 0; x != w; ++x) {
+                size_t offset = (y * w + x) * 4;
+                offset += (w * h) * 4;
+                uint8_t *pixel_p = static_cast<uint8_t *>(mem);
+                pixel_p += offset;
+                auto &c0 = pixel_p[0];
+                auto &c1 = pixel_p[1];
+                auto &c2 = pixel_p[2];
+                auto &c3 = pixel_p[3];
+
+                c0 = float(y) / h * 255;
+                c1 = float(x) / w * 255;
+                c2 = 0;
                 c3 = 0xff;
             }
         }
@@ -873,12 +902,12 @@ try {
 
     std::optional<Shm> shm;
     std::optional<ShmPool> pool;
-    std::optional<Buffer> buffer;
+    std::optional<Buffer> buffer_0;
+    std::optional<Buffer> buffer_1;
+    size_t next_buffer_to_use = 0;
     std::optional<Compositor> compositor;
     std::optional<Surface> surface;
     std::optional<XDGDecorManager> decor_manager;
-
-    bool surface_attached = false;
 
     std::optional<XDGBase> xdg;
     std::optional<XDGSurface> xdg_surface;
@@ -887,6 +916,8 @@ try {
 
     bool initial_commit = false;
     bool top_level_decore_set = false;
+
+    std::chrono::steady_clock::time_point last_buffer_commit_time{};
 
     auto registry_tag = id_manager.allocate();
     Registry registry{s, registry_tag, id_manager, disp};
@@ -994,19 +1025,18 @@ try {
             disp.set_listener(pool_id.raw(), pool.value(), IdT{});
         }
 
-        if (pool && !buffer) {
-            auto buffer_id = pool->create_buffer(id_manager);
-            buffer.emplace(buffer_id, s);
-            using IdT = std::type_identity<decltype(buffer)::value_type::Tag>;
-            disp.set_listener(buffer_id.raw(), buffer.value(), IdT{});
+        if (pool && !buffer_0) {
+            auto buffer_id = pool->create_buffer(id_manager, 0);
+            buffer_0.emplace(buffer_id, s);
+            using IdT = std::type_identity<decltype(buffer_0)::value_type::Tag>;
+            disp.set_listener(buffer_id.raw(), buffer_0.value(), IdT{});
         }
 
-        bool can_attach = xdg_surface && xdg_surface->configured;
-        can_attach = can_attach && surface && buffer;
-        can_attach = can_attach && !surface_attached;
-        if (can_attach) {
-            surface->attach(buffer->id());
-            surface_attached = true;
+        if (pool && !buffer_1) {
+            auto buffer_id = pool->create_buffer(id_manager, 1);
+            buffer_1.emplace(buffer_id, s);
+            using IdT = std::type_identity<decltype(buffer_1)::value_type::Tag>;
+            disp.set_listener(buffer_id.raw(), buffer_1.value(), IdT{});
         }
 
         bool can_initial_commit = !initial_commit;
@@ -1017,9 +1047,33 @@ try {
             initial_commit = true;
         }
 
-        if (xdg_surface && xdg_surface->configured && buffer->released) {
-            surface->commit();
-            buffer->released = false;
+        if (xdg_surface && xdg_surface->configured && surface) {
+            auto last_buffer_commit_time_diff =
+                std::chrono::steady_clock::now() - last_buffer_commit_time;
+
+            Buffer *active_buffer = nullptr;
+
+            if (buffer_0 && buffer_0->released && next_buffer_to_use == 0) {
+                active_buffer = &buffer_0.value();
+            }
+            if (buffer_1 && buffer_1->released && next_buffer_to_use == 1) {
+                active_buffer = &buffer_1.value();
+            }
+
+            if (active_buffer &&
+                last_buffer_commit_time_diff > std::chrono::milliseconds{500}) {
+                active_buffer->released = false;
+                surface->attach(active_buffer->id());
+                surface->damage();
+                surface->commit();
+                last_buffer_commit_time = std::chrono::steady_clock::now();
+
+                if (next_buffer_to_use == 0) {
+                    next_buffer_to_use = 1;
+                } else if (next_buffer_to_use == 1) {
+                    next_buffer_to_use = 0;
+                }
+            }
         }
     }
 
