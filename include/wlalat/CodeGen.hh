@@ -495,19 +495,7 @@ struct Generator
             arg_wlalat_types_unique.emplace(arg_wlalat_type);
         }
 
-        B0 += "using ArgMemberPointerVariant [[deprecated]] = std::variant";
-        B0 += "<";
         LineList B1;
-        for (std::string_view u_arg : arg_wlalat_types_unique) {
-            B1 += std::format("{} Type::*", u_arg);
-        }
-        if (arg_wlalat_types_unique.empty()) {
-            B1 += "std::monostate";
-        }
-        comma_sep(B1);
-        B1.indent();
-        B0 += std::move(B1);
-        B0 += ">;";
 
         std::vector<std::string_view> arg_names;
         for (auto &arg : args) {
@@ -527,20 +515,6 @@ struct Generator
         B0 += ">;";
 
         B0 += "static constexpr ArgMemberPointerTuple args_tuple";
-        B0 += "{";
-        B1.clear();
-        for (auto &name : arg_names) {
-            B1 += std::format("&Type::{}", name);
-        }
-        comma_sep(B1);
-        B1.indent();
-        B0 += std::move(B1);
-        B0 += "};";
-
-        B0 += std::format(
-            "[[deprecated]] static constexpr std::array<ArgMemberPointerVariant, {}> "
-            "arg_member_pointers",
-            arg_names.size());
         B0 += "{";
         B1.clear();
         for (auto &name : arg_names) {
