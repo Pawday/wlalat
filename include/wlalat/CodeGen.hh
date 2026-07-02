@@ -615,19 +615,6 @@ struct Generator
         return O;
     }
 
-    LineList gen_write_body(
-        std::vector<std::reference_wrapper<const ProtocolParsing::ArgRawTag>>
-            args)
-    {
-        LineList body;
-        for (const ProtocolParsing::ArgRawTag &arg : args) {
-            auto &B = body;
-            auto N = arg.name.value();
-            B += std::format("W(M.{});", N);
-        }
-        return body;
-    }
-
     LineList define_arg(const ProtocolParsing::ArgRawTag &arg)
     {
         LineList O;

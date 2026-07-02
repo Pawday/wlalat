@@ -167,15 +167,6 @@ auto alternatives_array(std::type_identity<std::variant<Alternatives...>>)
         std::type_identity<Alternatives>{}...};
 }
 
-template <typename MessageVariantT, typename VisitorT>
-void iterate_messages_on(
-    VisitorT &V, std::type_identity<MessageVariantT> msg_var)
-{
-    for (auto &type : alternatives_array(msg_var)) {
-        std::visit(V, type);
-    }
-}
-
 struct ObjectIDManager
 {
     struct ID : wlalat::NewID
