@@ -74,18 +74,33 @@ std::string hexdump(std::span<const std::byte> data)
 template <typename MsgT>
 struct TypeFormatVis
 {
-    MsgT &M;
-
-    template <typename Ptr>
-    std::string operator()(const Ptr &ptr)
+    TypeFormatVis(MsgT &M, std::span<const std::string_view> names)
+        : M{M}, names{names}
     {
-        const auto &member = M.*(ptr);
-        return my_format(member);
     }
 
-    std::string operator()(std::monostate)
+    template <typename... Ptrs>
+    void operator()(const Ptrs &...ptrs)
     {
-        return "";
+        ((apply_single(ptrs)), ...);
+    }
+
+    template <typename Ptr>
+    void apply_single(const Ptr &ptr)
+    {
+        const auto &member = M.*(ptr);
+        auto arg_str =
+            std::format("{}={}", names[_next_idx], my_format(member));
+        if (_next_idx != 0) {
+            _output += ", ";
+        }
+        _next_idx++;
+        _output += std::move(arg_str);
+    }
+
+    std::string output() const
+    {
+        return _output;
     }
 
   private:
@@ -123,27 +138,19 @@ struct TypeFormatVis
     {
         return std::format("\"{}\"", std::string_view{v});
     }
+
+    const MsgT &M;
+    std::span<const std::string_view> names;
+    size_t _next_idx = 0;
+    std::string _output{};
 };
 
 template <typename MsgT>
 std::string dump_message_args(const MsgT &M)
 {
-    auto member_ptrs = wlalat::Traits<MsgT>::arg_member_pointers;
-    auto names = wlalat::Traits<MsgT>::arg_names;
-    auto pairs = std::views::zip(member_ptrs, names);
-
-    std::string O;
-
-    bool f = true;
-    for (const auto &[ptr, name] : pairs) {
-        if (!f) {
-            O += ", ";
-        }
-        f = false;
-        O += std::format("{}={}", name, std::visit(TypeFormatVis{M}, ptr));
-    }
-
-    return O;
+    TypeFormatVis V{M, wlalat::Traits<MsgT>::arg_names};
+    std::apply(V, wlalat::Traits<MsgT>::args_tuple);
+    return V.output();
 }
 
 template <typename MsgT>
