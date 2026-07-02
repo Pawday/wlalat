@@ -177,56 +177,6 @@ void iterate_messages_on(
     }
 }
 
-template <typename MessageT>
-struct ArgParseVisitor
-{
-    MessageT &M;
-    wlalat::Parser &P;
-
-    template <typename ArgMemberPointerT>
-    bool operator()(ArgMemberPointerT ptr)
-    {
-        return P(M.*ptr);
-    }
-
-    bool operator()(std::monostate)
-    {
-        return true;
-    }
-};
-
-template <typename OEventT>
-struct OpcodeDispatchVisitor
-{
-    uint_least16_t &opcode;
-    wlalat::Parser &P;
-    std::optional<OEventT> &o_event;
-
-    template <typename MessageT>
-    void operator()(std::type_identity<MessageT> m_type_id)
-    {
-        if (o_event) {
-            return;
-        }
-        if (opcode != wlalat::Traits<MessageT>::opcode) {
-            return;
-        }
-
-        bool good = true;
-        MessageT M{};
-        ArgParseVisitor arg_parser{M, P};
-        for (auto m_ptr : wlalat::Traits<MessageT>::arg_member_pointers) {
-            good = good && std::visit(arg_parser, m_ptr);
-        }
-
-        if (!good) {
-            return;
-        }
-
-        o_event = std::move(M);
-    }
-};
-
 struct ObjectIDManager
 {
     struct ID : wlalat::NewID
