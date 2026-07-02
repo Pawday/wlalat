@@ -88,14 +88,12 @@ struct TypeFormatVis
     template <typename Ptr>
     void apply_single(const Ptr &ptr)
     {
-        const auto &member = M.*(ptr);
-        auto arg_str =
-            std::format("{}={}", names[_next_idx], my_format(member));
         if (_next_idx != 0) {
-            _output += ", ";
+            std::format_to(O, ", ");
         }
+        std::format_to(O, "{}=", names[_next_idx]);
+        my_format(M.*(ptr));
         _next_idx++;
-        _output += std::move(arg_str);
     }
 
     std::string output() const
@@ -104,45 +102,46 @@ struct TypeFormatVis
     }
 
   private:
-    std::string my_format(const wlalat::NewID &v)
+    void my_format(const wlalat::NewID &v)
     {
-        return std::format("(new_id)@{}", v.raw());
+        std::format_to(O, "(new_id)@{}", v.raw());
     }
 
-    std::string my_format(const wlalat::Object &v)
+    void my_format(const wlalat::Object &v)
     {
-        return std::format("(object)@{}", v.raw());
+        std::format_to(O, "(object)@{}", v.raw());
     }
 
-    std::string my_format(const wlalat::Int &v)
+    void my_format(const wlalat::Int &v)
     {
-        return std::format("(int){}", v.raw());
+        std::format_to(O, "(int){}", v.raw());
     }
 
-    std::string my_format(const wlalat::Array &v)
+    void my_format(const wlalat::Array &v)
     {
-        return std::format("(array){}", hexdump(v));
+        std::format_to(O, "(array){}", hexdump(v));
     }
 
-    std::string my_format(const wlalat::UInt &v)
+    void my_format(const wlalat::UInt &v)
     {
-        return std::format("(uint){}", v.raw());
+        std::format_to(O, "(uint){}", v.raw());
     }
 
-    std::string my_format(const int &v)
+    void my_format(const int &v)
     {
-        return std::format("(fd){}", v);
+        std::format_to(O, "(fd){}", v);
     }
 
-    std::string my_format(const wlalat::String &v)
+    void my_format(const wlalat::String &v)
     {
-        return std::format("\"{}\"", std::string_view{v});
+        std::format_to(O, "\"{}\"", std::string_view{v});
     }
 
     const MsgT &M;
     std::span<const std::string_view> names;
     size_t _next_idx = 0;
     std::string _output{};
+    std::back_insert_iterator<std::string> O = std::back_inserter(_output);
 };
 
 template <typename MsgT>
