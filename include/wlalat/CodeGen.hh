@@ -495,7 +495,7 @@ struct Generator
             arg_wlalat_types_unique.emplace(arg_wlalat_type);
         }
 
-        B0 += "using ArgMemberPointerVariant = std::variant";
+        B0 += "using ArgMemberPointerVariant [[deprecated]] = std::variant";
         B0 += "<";
         LineList B1;
         for (std::string_view u_arg : arg_wlalat_types_unique) {
@@ -538,7 +538,7 @@ struct Generator
         B0 += "};";
 
         B0 += std::format(
-            "static constexpr std::array<ArgMemberPointerVariant, {}> "
+            "[[deprecated]] static constexpr std::array<ArgMemberPointerVariant, {}> "
             "arg_member_pointers",
             arg_names.size());
         B0 += "{";
