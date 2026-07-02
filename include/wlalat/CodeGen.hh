@@ -144,6 +144,7 @@ struct Generator
         O += "#include <array>";
         O += "#include <string_view>";
         O += "#include <variant>";
+        O += "#include <tuple>";
         O += "";
 
         bool f = true;
@@ -513,6 +514,28 @@ struct Generator
             auto arg_name = arg.name.value();
             arg_names.push_back(arg_name);
         }
+
+        B0 += "using ArgMemberPointerTuple = std::tuple";
+        B0 += "<";
+        B1.clear();
+        for (auto &name : arg_names) {
+            B1 += std::format("decltype(&Type::{})", name);
+        }
+        comma_sep(B1);
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += ">;";
+
+        B0 += "static constexpr ArgMemberPointerTuple args_tuple";
+        B0 += "{";
+        B1.clear();
+        for (auto &name : arg_names) {
+            B1 += std::format("&Type::{}", name);
+        }
+        comma_sep(B1);
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += "};";
 
         B0 += std::format(
             "static constexpr std::array<ArgMemberPointerVariant, {}> "
