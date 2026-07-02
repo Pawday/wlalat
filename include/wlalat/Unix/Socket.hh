@@ -2,6 +2,7 @@
 
 #include "ClosableFD.hh"
 
+#include <tuple>
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
 #include <wlalat/MessageHeader.hh>
@@ -228,13 +229,9 @@ struct Socket
         auto payload = message_data.subspan(8);
         wlalat::Parser P{payload};
         EventMessageT M{};
-        ArgParseVisitor arg_parser{M, P};
-
         bool good = true;
-        for (auto m_ptr : wlalat::Traits<EventMessageT>::arg_member_pointers) {
-            good = good && std::visit(arg_parser, m_ptr);
-        }
-
+        auto F = [&](auto... ptrs) { ((good = good && P(M.*ptrs)), ...); };
+        std::apply(F, wlalat::Traits<EventMessageT>::args_tuple);
         if (!good) {
             return std::unexpected{"Parse failure"};
         }
@@ -243,24 +240,6 @@ struct Socket
     }
 
   private:
-    template <typename MessageT>
-    struct ArgParseVisitor
-    {
-        MessageT &M;
-        wlalat::Parser &P;
-
-        template <typename ArgMemberPointerT>
-        bool operator()(ArgMemberPointerT ptr)
-        {
-            return P(M.*ptr);
-        }
-
-        bool operator()(std::monostate)
-        {
-            return true;
-        }
-    };
-
     ClosableFD _fd;
     MessageSerializer<int> _send_serializer;
     std::pmr::vector<std::byte> _recv_buffer;

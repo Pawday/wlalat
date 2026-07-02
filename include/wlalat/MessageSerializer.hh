@@ -14,6 +14,7 @@
 #include <memory>
 #include <memory_resource>
 #include <span>
+#include <tuple>
 #include <variant>
 #include <vector>
 
@@ -133,30 +134,10 @@ struct MessageSerializer
     };
 
     template <typename MessageT, typename UpstreamWriterT>
-    struct write_args_visitor
-    {
-        MessageT &M;
-        UpstreamWriterT &W;
-
-        template <typename ArgMemberPtrT>
-        void operator()(ArgMemberPtrT P)
-        {
-            W(M.*(P));
-        }
-
-        void operator()(std::monostate)
-        {
-        }
-    };
-
-    template <typename MessageT, typename UpstreamWriterT>
     static void write_args(const MessageT &M, UpstreamWriterT &W)
     {
-        write_args_visitor V{M, W};
-        auto &AVM_ptrs = wlalat::Traits<MessageT>::arg_member_pointers;
-        for (auto &arg_varianted_ptr : AVM_ptrs) {
-            std::visit(V, arg_varianted_ptr);
-        }
+        auto F = [&](auto... ptrs) { ((W(M.*(ptrs))), ...); };
+        std::apply(F, wlalat::Traits<MessageT>::args_tuple);
     }
 
     std::pmr::vector<std::byte> data;
