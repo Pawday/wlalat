@@ -633,14 +633,26 @@ struct XDGTopLevel
         std::println("<- xdg_toplevel@{}.{}", _id.raw(), dump_message(ev));
     }
 
+    void on(const xdg_shell::xdg_toplevel::message_close &ev)
+    {
+        std::println("<- xdg_toplevel@{}.{}", _id.raw(), dump_message(ev));
+        _close_flag = true;
+    }
+
     auto id() const
     {
         return _id;
     }
 
+    auto close_flag() const
+    {
+        return _close_flag;
+    }
+
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
+    bool _close_flag = false;
 };
 
 struct XDGSurface
@@ -921,6 +933,10 @@ try {
     auto last_message = std::chrono::steady_clock::now();
 
     while (true) {
+        if (xdg_top_level && xdg_top_level->close_flag()) {
+            break;
+        }
+
         auto elapsed = decltype(last_message)::clock::now() - last_message;
         if (elapsed > message_timeout) {
             break;
