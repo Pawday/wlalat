@@ -58,14 +58,9 @@ struct LineList : std::vector<std::string>
 
 static void comma_sep(LineList &lines)
 {
-    bool f = true;
-    for (auto &line : std::views::reverse(lines)) {
-        if (f) {
-            f = false;
-            continue;
-        }
-        line.append(",");
-    }
+    auto need_comma_lines = lines | std::views::reverse | std::views::drop(1);
+    auto add_comma = [](std::string &line) { line.append(","); };
+    std::ranges::for_each(need_comma_lines, add_comma);
 }
 
 // https://gitlab.freedesktop.org/wayland/wayland/-/commit/85a6a470873357089ffb968a176d5074fddd1756
