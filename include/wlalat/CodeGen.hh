@@ -138,7 +138,6 @@ struct Generator
         O += "";
         O += "#include <array>";
         O += "#include <string_view>";
-        O += "#include <variant>";
         O += "#include <tuple>";
         O += "";
 
@@ -388,7 +387,7 @@ struct Generator
         LineList B0;
         B0 += std::format(
             "static constexpr std::string_view name = \"{}\";", iface_name);
-        B0 += std::format("using Event = std::variant");
+        B0 += std::format("using Events = std::tuple");
         B0 += "<";
         LineList B1;
         for (auto &msg_type_name : events_msg_types) {
@@ -396,24 +395,18 @@ struct Generator
                 "{}::{}::message_{}", proto_ns, iface_typename, msg_type_name);
             B1 += std::format("{}", full_qualified_msg_type);
         }
-        if (events_msg_types.empty()) {
-            B1 += "std::monostate";
-        }
         comma_sep(B1);
         B1.indent();
         B0 += std::move(B1);
         B0 += ">;";
 
-        B0 += std::format("using Request = std::variant");
+        B0 += std::format("using Requests = std::tuple");
         B0 += "<";
         B1.clear();
         for (auto &msg_type_name : requests_msg_types) {
             std::string full_qualified_msg_type = std::format(
                 "{}::{}::message_{}", proto_ns, iface_typename, msg_type_name);
             B1 += std::format("{}", full_qualified_msg_type);
-        }
-        if (requests_msg_types.empty()) {
-            B1 += "std::monostate";
         }
         comma_sep(B1);
         B1.indent();

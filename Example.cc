@@ -71,6 +71,23 @@ std::string hexdump(std::span<const std::byte> data)
     return O;
 }
 
+template <typename TupleT>
+struct Tuple2Variant;
+template <typename... Alternatives>
+struct Tuple2Variant<std::tuple<Alternatives...>>
+    : std::type_identity<std::variant<Alternatives...>>
+{
+};
+
+template <>
+struct Tuple2Variant<std::tuple<>>
+    : std::type_identity<std::variant<std::monostate>>
+{
+};
+
+template <typename TupleT>
+using Tuple2VariantT = typename Tuple2Variant<TupleT>::type;
+
 template <typename MsgT>
 struct TypeFormatVis
 {
@@ -225,8 +242,9 @@ struct SocketEventDispatcher
     void set_listener(
         uint_least32_t object_id, LType &L, std::type_identity<InterfaceT>)
     {
-        std::type_identity<typename wlalat::Traits<InterfaceT>::Event>
-            event_id{};
+        using VariantT =
+            Tuple2VariantT<typename wlalat::Traits<InterfaceT>::Events>;
+        std::type_identity<VariantT> event_id{};
         _listeners.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(object_id),
