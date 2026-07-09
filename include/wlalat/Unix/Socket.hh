@@ -111,7 +111,7 @@ struct Socket
         send_raw(ser.message, ser.fds);
     }
 
-    void send_raw(std::span<const std::byte> data, std::span<const int *> fds)
+    void send_raw(std::span<const std::byte> data, std::span<const void *> fds)
     {
         auto to_send = data;
 
@@ -134,7 +134,8 @@ struct Socket
         sendmsg_arg.msg_control = _ancillary_send_buffer.data();
 
         cmsghdr *cmsg_p = CMSG_FIRSTHDR(&sendmsg_arg);
-        for (const int *fd : fds) {
+        for (const void *fd_p : fds) {
+            const int *fd = static_cast<const int *>(fd_p);
             cmsghdr &cmsg = *cmsg_p;
             cmsg = cmsghdr{};
             cmsg.cmsg_level = SOL_SOCKET;
@@ -241,7 +242,7 @@ struct Socket
 
   private:
     ClosableFD _fd;
-    MessageSerializer<int> _send_serializer;
+    MessageSerializer _send_serializer;
     std::pmr::vector<std::byte> _recv_buffer;
     std::pmr::vector<std::byte> _ancillary_send_buffer;
 };

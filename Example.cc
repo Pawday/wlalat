@@ -127,9 +127,10 @@ struct TypeFormatVis
         std::format_to(O, "(uint){}", v.raw());
     }
 
-    void my_format(const int &v)
+    void my_format(const void *vp)
     {
-        std::format_to(O, "(fd){}", v);
+        const int *vip = static_cast<const int *>(vp);
+        std::format_to(O, "(fd){}", *vip);
     }
 
     void my_format(const wlalat::String &v)
@@ -551,17 +552,17 @@ struct Shm
     {
         ObjectIDManager::ID O = id_manager.allocate();
 
-        wayland::wl_shm::message_create_pool<int> msg;
+        wayland::wl_shm::message_create_pool msg;
 
         size_t sz = (w * h * 4) * 2;
-        int memfd = memfd_create("SHM", O_RDWR);
-        ftruncate(memfd, sz);
-        msg.fd = memfd;
+        _fd = memfd_create("SHM", O_RDWR);
+        ftruncate(_fd.value(), sz);
+        msg.fd = std::addressof(_fd.value());
         msg.id = O;
         msg.size = wlalat::Int{sz};
 
-        auto mem =
-            mmap(nullptr, sz, PROT_WRITE | PROT_WRITE, MAP_SHARED, memfd, 0);
+        auto mem = mmap(
+            nullptr, sz, PROT_WRITE | PROT_WRITE, MAP_SHARED, _fd.value(), 0);
         if (mem == MAP_FAILED) {
             auto err = errno;
             throw std::runtime_error{
@@ -617,6 +618,7 @@ struct Shm
   private:
     ObjectIDManager::ID _id;
     wlalat::Unix::Socket &_s;
+    std::optional<int> _fd;
 };
 
 struct XDGTopLevel

@@ -187,7 +187,7 @@ struct Generator
             {"string", "wlalat::String"},
             {"fixed", "wlalat::Fixed"},
             {"array", "wlalat::Array"},
-            {"fd", "FDT"},
+            {"fd", "void *"},
         };
 
         auto matched = [&](const auto &s) { return type == s.first; };
@@ -356,8 +356,7 @@ struct Generator
             _view.chain_iterate(iface_node.events.value(), sink);
         }
 
-        bool requests_has_fd = false;
-        LineList requests_msg_types_may_be_FDT;
+        LineList requests_msg_types;
         for (size_t idx = 0; idx != requests.size(); ++idx) {
             const ProtocolParsing::RequestNode &req = requests[idx];
             std::list<AmogusArg> args;
@@ -365,19 +364,14 @@ struct Generator
             if (req.args) {
                 args = AmogusArg::collect_amogusified(req.args.value(), _view);
             }
-            bool arg_with_fd = has_fd(args);
-            const char *fdt_param = arg_with_fd ? "<FDT>" : "";
-            requests_msg_types_may_be_FDT +=
-                std::format("{}{}", req_name, fdt_param);
-            requests_has_fd = requests_has_fd || arg_with_fd;
+            requests_msg_types += req_name;
             bool is_event = false;
             size_t opcode = idx;
             O += gen_args_traits(
                 proto_ns, iface_typename, req_name, args, opcode, is_event);
         }
 
-        bool events_has_fd = false;
-        LineList events_msg_types_may_be_FDT;
+        LineList events_msg_types;
         for (size_t idx = 0; idx != events.size(); ++idx) {
             const ProtocolParsing::EventNode &ev = events[idx];
             std::list<AmogusArg> args;
@@ -385,11 +379,7 @@ struct Generator
             if (ev.args) {
                 args = AmogusArg::collect_amogusified(ev.args.value(), _view);
             }
-            bool arg_with_fd = has_fd(args);
-            const char *fdt_param = arg_with_fd ? "<FDT>" : "";
-            events_msg_types_may_be_FDT +=
-                std::format("{}{}", ev_name, fdt_param);
-            events_has_fd = events_has_fd || arg_with_fd;
+            events_msg_types += ev_name;
             size_t opcode = idx;
             bool is_event = true;
             O += gen_args_traits(
@@ -403,18 +393,15 @@ struct Generator
         LineList B0;
         B0 += std::format(
             "static constexpr std::string_view name = \"{}\";", iface_name);
-        if (events_has_fd) {
-            B0 += std::format("template<typename FDT>");
-        }
         B0 += std::format("using Event = std::variant");
         B0 += "<";
         LineList B1;
-        for (auto &msg_type_name : events_msg_types_may_be_FDT) {
+        for (auto &msg_type_name : events_msg_types) {
             std::string full_qualified_msg_type = std::format(
                 "{}::{}::message_{}", proto_ns, iface_typename, msg_type_name);
             B1 += std::format("{}", full_qualified_msg_type);
         }
-        if (events_msg_types_may_be_FDT.empty()) {
+        if (events_msg_types.empty()) {
             B1 += "std::monostate";
         }
         comma_sep(B1);
@@ -422,18 +409,15 @@ struct Generator
         B0 += std::move(B1);
         B0 += ">;";
 
-        if (requests_has_fd) {
-            B0 += std::format("template<typename FDT>");
-        }
         B0 += std::format("using Request = std::variant");
         B0 += "<";
         B1.clear();
-        for (auto &msg_type_name : requests_msg_types_may_be_FDT) {
+        for (auto &msg_type_name : requests_msg_types) {
             std::string full_qualified_msg_type = std::format(
                 "{}::{}::message_{}", proto_ns, iface_typename, msg_type_name);
             B1 += std::format("{}", full_qualified_msg_type);
         }
-        if (requests_msg_types_may_be_FDT.empty()) {
+        if (requests_msg_types.empty()) {
             B1 += "std::monostate";
         }
         comma_sep(B1);
@@ -458,23 +442,10 @@ struct Generator
     {
         LineList O;
 
-        bool with_fd = has_fd(args);
-        if (!with_fd) {
-            O += "template<>";
-        } else {
-            O += "template<typename FDT>";
-        }
+        O += "template<>";
 
-        const char *fdt_template_param = "";
-        if (with_fd) {
-            fdt_template_param = "<FDT>";
-        }
         std::string full_qualified_msg_type = std::format(
-            "{}::{}::message_{}{}",
-            proto_ns,
-            iface_typename,
-            msg_name,
-            fdt_template_param);
+            "{}::{}::message_{}", proto_ns, iface_typename, msg_name);
         O += std::format("struct Traits<{}>", full_qualified_msg_type);
         O += "{";
 
@@ -590,9 +561,6 @@ struct Generator
 
         auto name = name_op.value();
 
-        if (has_fd(args)) {
-            O += "template<typename FDT>";
-        }
         O += std::format("struct message_{}", name);
         O += "{";
         LineList B;

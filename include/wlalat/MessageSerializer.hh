@@ -21,7 +21,6 @@
 namespace wlalat
 {
 
-template <typename FDT>
 struct MessageSerializer
 {
     MessageSerializer() = default;
@@ -32,7 +31,7 @@ struct MessageSerializer
     struct WriteOutputData
     {
         std::span<const std::byte> message;
-        std::span<const FDT *> fds;
+        std::span<const void *> fds;
     };
 
     template <typename MessageT>
@@ -116,14 +115,24 @@ struct MessageSerializer
     struct InterceptFDWriter
     {
         UpstreamWriterT &W;
-        std::pmr::vector<const FDT *> *fds;
+        std::pmr::vector<const void *> *fds;
 
-        void operator()(const FDT &fd)
+        void write_fd(const void *fd)
         {
             if (!fds) {
                 return;
             }
-            fds->push_back(&fd);
+            fds->push_back(fd);
+        }
+
+        void operator()(const void *fd)
+        {
+            write_fd(fd);
+        };
+
+        void operator()(void *fd)
+        {
+            write_fd(fd);
         };
 
         template <typename T>
@@ -141,7 +150,7 @@ struct MessageSerializer
     }
 
     std::pmr::vector<std::byte> data;
-    std::pmr::vector<const FDT *> fds;
+    std::pmr::vector<const void *> fds;
 };
 
 } // namespace wlalat
