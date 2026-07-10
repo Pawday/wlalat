@@ -552,21 +552,12 @@ struct Generator
         O += std::format("struct message_{}", name);
         O += "{";
         LineList B;
-
-        if (true) {
-            bool f = true;
-            for (auto &arg : args) {
-                if (!f) {
-                    B += "";
-                }
-                f = false;
-                B += define_arg(arg);
-            }
+        for (auto &arg : args) {
+            B += define_arg(arg);
         }
 
         B.indent();
         O += std::move(B);
-
         O += "};";
         return O;
     }
@@ -574,11 +565,6 @@ struct Generator
     LineList define_arg(const ProtocolParsing::ArgRawTag &arg)
     {
         LineList O;
-
-        if (arg.summary) {
-            O += std::format("/* {} */", arg.summary.value());
-        }
-
         auto type = arg.type.value();
         auto type_str = std::format("void * /* UNMAPPED {} */", type);
         auto wlalat_type_str_op = to_wlalat_type(type);
