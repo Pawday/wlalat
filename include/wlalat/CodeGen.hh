@@ -447,19 +447,15 @@ struct Generator
         B0 += std::format("static constexpr const size_t opcode = {};", opcode);
         B0 += std::format("static constexpr bool is_event = {};", is_event);
 
-        std::set<std::string_view> arg_wlalat_types_unique;
-        for (auto &arg : args) {
-            auto arg_type = arg.type.value();
-            auto arg_wlalat_type = to_wlalat_type(arg_type).value();
-            arg_wlalat_types_unique.emplace(arg_wlalat_type);
-        }
-
         LineList B1;
 
         std::vector<std::string_view> arg_names;
+        std::vector<std::string_view> arg_types;
         for (auto &arg : args) {
             auto arg_name = arg.name.value();
             arg_names.push_back(arg_name);
+            auto &arg_type = arg.type.value();
+            arg_types.push_back(arg_type);
         }
 
         B0 += "using ArgMemberPointerTuple = std::tuple";
@@ -497,13 +493,17 @@ struct Generator
         B0 += std::move(B1);
         B0 += "};";
 
+        B0 += "template<typename TypeTagsT>";
+        B0 += "using ArgTags = std::tuple";
+        B0 += "<";
         B1.clear();
-
-        for (auto &arg : args) {
-            auto arg_type = arg.type.value();
-            auto arg_wlalat_type = to_wlalat_type(arg_type).value();
-            arg_wlalat_types_unique.emplace(arg_wlalat_type);
+        for (auto &type : arg_types) {
+            B1 += std::format("typename TypeTagsT::wl_{}", type);
         }
+        comma_sep(B1);
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += ">;";
 
         B0.indent();
         O += std::move(B0);
