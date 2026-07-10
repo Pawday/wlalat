@@ -1,5 +1,7 @@
 #pragma once
 
+#include "XML.hh"
+
 #include <cstddef>
 
 #include <algorithm>
@@ -8,6 +10,7 @@
 #include <functional>
 #include <iterator>
 #include <optional>
+#include <print>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -23,7 +26,7 @@ namespace wlalat
 namespace ProtocolParsing
 {
 
-using AttrString = std::optional<std::string_view>;
+using AttrString = std::optional<std::string>;
 
 template <typename RawTagT>
 using MappingType = std::pair<std::string_view, AttrString RawTagT::*>;
@@ -195,8 +198,8 @@ struct RawTagVariant : std::variant<
             RawTagVariant{Alternatives{}}...};
     }
 
-    static constexpr auto
-        from_tag_name(std::string_view tag_name) -> std::optional<RawTagVariant>
+    static constexpr auto from_tag_name(std::string_view tag_name)
+        -> std::optional<RawTagVariant>
     {
         auto name_match = [tag_name](RawTagVariant &v) {
             return v.tag_name() == tag_name;
@@ -760,12 +763,10 @@ struct ProtocolParser
 
     constexpr ProtocolTree parse()
     {
-        while (!_s.empty()) {
-            auto err = process();
-            if (err) {
-                throw std::runtime_error{err.value()};
-            }
+        for (auto c : _s) {
+            _xml.send(c);
         }
+        _xml.finalize();
         return tree.build();
     }
 
@@ -892,7 +893,8 @@ struct ProtocolParser
         return {};
     }
 
-    [[nodiscard("Possible error message")]] constexpr std::optional<std::string>
+    [[nodiscard("Possible error message")]]
+    [[deprecated]] constexpr std::optional<std::string>
         process()
     {
         if (_s.empty()) {
@@ -938,6 +940,37 @@ struct ProtocolParser
     constexpr void on_data(std::string_view data)
     {
     }
+
+    constexpr void on_comment(std::string_view data)
+    {
+    }
+
+    struct CallbackObj
+    {
+        ProtocolParser *p;
+
+        constexpr void on_tag(std::string_view tag)
+        {
+            auto err = p->process_tag_string(tag);
+            if (err) {
+                throw std::runtime_error{err.value()};
+            }
+        }
+
+        constexpr void on_data(std::string_view data)
+        {
+            p->on_data(data);
+        }
+
+        constexpr void on_comment(std::string_view comment)
+        {
+            p->on_comment(comment);
+        }
+    };
+    friend struct CallbackObj;
+
+    CallbackObj _xml_callback{this};
+    xml::Parser<CallbackObj> _xml{&_xml_callback};
 
     std::string_view _s;
     ProtocolTreeBuilder tree;

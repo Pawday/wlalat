@@ -452,7 +452,7 @@ struct Generator
         std::vector<std::string_view> arg_names;
         std::vector<std::string_view> arg_types;
         for (auto &arg : args) {
-            auto arg_name = arg.name.value();
+            std::string_view arg_name{arg.name.value()};
             arg_names.push_back(arg_name);
             auto &arg_type = arg.type.value();
             arg_types.push_back(arg_type);
