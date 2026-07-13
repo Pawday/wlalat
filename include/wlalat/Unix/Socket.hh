@@ -231,8 +231,15 @@ struct Socket
         wlalat::Parser P{payload};
         EventMessageT M{};
         bool good = true;
-        auto F = [&](auto... ptrs) { ((good = good && P(M.*ptrs)), ...); };
-        std::apply(F, wlalat::Traits<EventMessageT>::args_tuple);
+
+        using MsgTraits = wlalat::Traits<EventMessageT>;
+        auto pointers = MsgTraits::args_tuple;
+        using TagsT = typename MsgTraits::template ArgTags<WlTags>;
+        TagsT tags{};
+        auto F = [&](auto... pairs) {
+            ((good = good && P(M.*(pairs.first), pairs.second)), ...);
+        };
+        std::apply(F, pairwise(pointers, tags));
         if (!good) {
             return std::unexpected{"Parse failure"};
         }
@@ -241,6 +248,37 @@ struct Socket
     }
 
   private:
+    struct WlTags
+    {
+        using wl_int = std::type_identity<wlalat::Int>;
+        using wl_uint = std::type_identity<wlalat::UInt>;
+        using wl_new_id = std::type_identity<wlalat::NewID>;
+        using wl_object = std::type_identity<wlalat::Object>;
+        using wl_string = std::type_identity<wlalat::String>;
+        using wl_array = std::type_identity<wlalat::Array>;
+        using wl_fd = std::type_identity<int>;
+    };
+
+    template <typename... Pointers, typename... Tags, size_t... Is>
+    auto pairwise_impl(
+        std::tuple<Pointers...> &ptrs,
+        std::tuple<Tags...> &tags,
+        std::index_sequence<Is...>)
+    {
+        return std::make_tuple(
+            std::make_pair(std::get<Is>(ptrs), std::get<Is>(tags))...);
+    }
+
+    template <typename... Pointers, typename... Tags>
+    auto pairwise(std::tuple<Pointers...> &ptrs, std::tuple<Tags...> &tags)
+    {
+        using PtrsT = std::tuple<Pointers...>;
+        using TagsT = std::tuple<Tags...>;
+        using Stride = std::integral_constant<size_t, std::tuple_size_v<PtrsT>>;
+        using Indexes = std::make_index_sequence<Stride{}()>;
+        return pairwise_impl(ptrs, tags, Indexes{});
+    }
+
     ClosableFD _fd;
     MessageSerializer _send_serializer;
     std::pmr::vector<std::byte> _recv_buffer;

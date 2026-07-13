@@ -132,13 +132,14 @@ struct Generator
         O += "#pragma once";
         O += "";
         O += "#include <wlalat/Traits.hh>";
-        O += "#include <wlalat/Types.hh>";
         O += "";
         O += "#include <cstddef>";
+        O += "#include <cstdint>";
         O += "";
         O += "#include <array>";
         O += "#include <string_view>";
         O += "#include <tuple>";
+        O += "#include <span>";
         O += "";
 
         bool f = true;
@@ -169,18 +170,17 @@ struct Generator
         return O;
     }
 
-    std::optional<std::string_view> to_wlalat_type(std::string_view type)
+    std::optional<std::string_view> to_cxx_type(std::string_view type)
     {
         using Pair = std::pair<std::string_view, std::string_view>;
-
         Pair map[]{
-            {"int", "wlalat::Int"},
-            {"uint", "wlalat::UInt"},
-            {"new_id", "wlalat::NewID"},
-            {"object", "wlalat::Object"},
-            {"string", "wlalat::String"},
-            {"fixed", "wlalat::Fixed"},
-            {"array", "wlalat::Array"},
+            {"int", "std::int_least32_t"},
+            {"uint", "std::uint_least32_t"},
+            {"new_id", "std::uint_least32_t"},
+            {"object", "std::uint_least32_t"},
+            {"string", "std::string_view"},
+            {"fixed", "std::uint_least32_t"},
+            {"array", "std::span<const std::byte>"},
             {"fd", "void *"},
         };
 
@@ -567,9 +567,9 @@ struct Generator
         LineList O;
         auto type = arg.type.value();
         auto type_str = std::format("void * /* UNMAPPED {} */", type);
-        auto wlalat_type_str_op = to_wlalat_type(type);
-        if (wlalat_type_str_op) {
-            type_str = std::format("{}", wlalat_type_str_op.value());
+        auto cxx_type_str_op = to_cxx_type(type);
+        if (cxx_type_str_op) {
+            type_str = std::format("{}", cxx_type_str_op.value());
         }
 
         O += std::format("{} {};", type_str, arg.name.value());

@@ -6,6 +6,7 @@
 #include "Types.hh"
 
 #include <cstddef>
+#include <cstdint>
 
 #include <optional>
 #include <span>
@@ -47,19 +48,19 @@ struct Parser
         return true;
     }
 
-    Numeric next(std::type_identity<Numeric>)
+    uint_least32_t next(std::type_identity<Numeric>)
     {
         std::span<const std::byte, 4> d = _data.subspan<0, 4>();
         _data = _data.subspan(4);
-        return Numeric{fle32(d)};
+        return fle32(d);
     }
 
     // clang-format off
     using Obj = Object;
-    Int   next(std::type_identity<Int>)   { return Int   { next(std::type_identity<Numeric>{})}; };
-    UInt  next(std::type_identity<UInt>)  { return UInt  { next(std::type_identity<Numeric>{})}; };
-    Obj   next(std::type_identity<Obj>)   { return Object{ next(std::type_identity<Numeric>{})}; };
-    Fixed next(std::type_identity<Fixed>) { return Fixed { next(std::type_identity<Numeric>{})}; };
+    int_least32_t   next(std::type_identity<Int>)   { return  next(std::type_identity<Numeric>{}); };
+    uint_least32_t  next(std::type_identity<UInt>)  { return  next(std::type_identity<Numeric>{}); };
+    uint_least32_t  next(std::type_identity<Obj>)   { return  next(std::type_identity<Numeric>{}); };
+    uint_least32_t  next(std::type_identity<Fixed>) { return  next(std::type_identity<Numeric>{}); };
     // clang-format on
 
     String next(std::type_identity<String>)
@@ -77,10 +78,9 @@ struct Parser
         return Array{P.parse().value()};
     }
 
-    template <typename T>
-    bool operator()(T &o)
+    template <typename T, typename TagT>
+    bool operator()(T &o, std::type_identity<TagT> tid)
     {
-        std::type_identity<T> tid{};
         if (!has(tid)) {
             return false;
         }

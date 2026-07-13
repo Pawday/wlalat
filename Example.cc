@@ -161,29 +161,29 @@ struct TypeFormatVis
         my_format(tag, v);
     }
 
-    void my_format(WlTags::wl_new_id, const wlalat::NewID &v)
+    void my_format(WlTags::wl_new_id, const uint_least32_t &v)
     {
-        std::format_to(O, "(new_id)@{}", v.raw());
+        std::format_to(O, "(new_id)@{}", v);
     }
 
-    void my_format(WlTags::wl_object, const wlalat::Object &v)
+    void my_format(WlTags::wl_object, const uint_least32_t &v)
     {
-        std::format_to(O, "(object)@{}", v.raw());
+        std::format_to(O, "(object)@{}", v);
     }
 
-    void my_format(WlTags::wl_int, const wlalat::Int &v)
+    void my_format(WlTags::wl_int, const int_least32_t &v)
     {
-        std::format_to(O, "(int){}", v.raw());
+        std::format_to(O, "(int){}", v);
     }
 
-    void my_format(WlTags::wl_array, const wlalat::Array &v)
+    void my_format(WlTags::wl_array, const std::span<const std::byte> &v)
     {
         std::format_to(O, "(array){}", hexdump(v));
     }
 
-    void my_format(WlTags::wl_uint, const wlalat::UInt &v)
+    void my_format(WlTags::wl_uint, const uint_least32_t &v)
     {
-        std::format_to(O, "(uint){}", v.raw());
+        std::format_to(O, "(uint){}", v);
     }
 
     void my_format(WlTags::wl_fd, const void *vp)
@@ -192,7 +192,7 @@ struct TypeFormatVis
         std::format_to(O, "(fd){}", *vip);
     }
 
-    void my_format(WlTags::wl_string, const wlalat::String &v)
+    void my_format(WlTags::wl_string, std::string_view v)
     {
         std::format_to(O, "\"{}\"", std::string_view{v});
     }
@@ -230,6 +230,11 @@ struct ObjectIDManager
         operator wlalat::Object() const
         {
             return wlalat::Object{raw()};
+        }
+
+        operator uint_least32_t() const
+        {
+            return raw();
         }
     };
 
@@ -430,8 +435,8 @@ struct Display
         auto obj = std::make_shared<Callback>(
             ObjectIDManager::ID{msg.callback}, done_msg);
         _disp.set_listener(
-            msg.callback.raw(), *obj, std::type_identity<Callback::Tag>{});
-        _sync_callbacks[msg.callback.raw()] = obj;
+            msg.callback, *obj, std::type_identity<Callback::Tag>{});
+        _sync_callbacks[msg.callback] = obj;
 
         std::println("-> wl_display@1.{}", dump_message(msg));
         _s.send(_id, msg);
@@ -446,10 +451,10 @@ struct Display
     void on(const wayland::wl_display::message_delete_id &m)
     {
         std::println("<- wl_display@1.{}", dump_message(m));
-        _disp.remove_listener(m.id.raw());
+        _disp.remove_listener(m.id);
         _id_manager.deallocate(ObjectIDManager::ID{m.id});
 
-        auto sync_obj_it = _sync_callbacks.find(m.id.raw());
+        auto sync_obj_it = _sync_callbacks.find(m.id);
         if (sync_obj_it != std::end(_sync_callbacks)) {
             _sync_callbacks.erase(sync_obj_it);
         }
@@ -727,7 +732,7 @@ struct XDGSurface
         configured = true;
     }
 
-    void ack_configure(wlalat::UInt serial)
+    void ack_configure(std::uint_least32_t serial)
     {
         xdg_shell::xdg_surface::message_ack_configure msg{};
         msg.serial = serial;
@@ -768,7 +773,7 @@ struct XDGBase
         pong(M.serial);
     }
 
-    void pong(wlalat::UInt serial)
+    void pong(std::uint_least32_t serial)
     {
         xdg_shell::xdg_wm_base::message_pong msg{};
         msg.serial = serial;
@@ -851,7 +856,7 @@ struct XDGDecorManager
         _s.send(_id, msg);
         O.emplace(ObjectIDManager::ID{msg.id}, _s);
         _disp.set_listener(
-            msg.id.raw(),
+            msg.id,
             O.value(),
             std::type_identity<
                 xdg_decoration_unstable_v1::zxdg_toplevel_decoration_v1>{});
