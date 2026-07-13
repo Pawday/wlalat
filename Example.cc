@@ -88,76 +88,116 @@ struct Tuple2Variant<std::tuple<>>
 template <typename TupleT>
 using Tuple2VariantT = typename Tuple2Variant<TupleT>::type;
 
+struct WlTags
+{
+    using wl_int = std::type_identity<wlalat::Int>;
+    using wl_uint = std::type_identity<wlalat::UInt>;
+    using wl_new_id = std::type_identity<wlalat::NewID>;
+    using wl_object = std::type_identity<wlalat::Object>;
+    using wl_string = std::type_identity<wlalat::String>;
+    using wl_array = std::type_identity<wlalat::Array>;
+    using wl_fd = std::type_identity<int>;
+};
+
 template <typename MsgT>
 struct TypeFormatVis
 {
-    TypeFormatVis(MsgT &M, std::span<const std::string_view> names)
-        : M{M}, names{names}
+    using MsgTraits = wlalat::Traits<std::remove_const_t<MsgT>>;
+    using MstTags = MsgTraits::template ArgTags<WlTags>;
+    using Indexes = std::make_index_sequence<std::tuple_size_v<MstTags>>;
+    static constexpr auto &ptrs = MsgTraits::args_tuple;
+    static constexpr auto &names = MsgTraits::arg_names;
+
+    TypeFormatVis(MsgT &M) : M{M}
     {
     }
 
-    template <typename... Ptrs>
-    void operator()(const Ptrs &...ptrs)
+    std::string format()
     {
-        ((apply_single(ptrs)), ...);
-    }
-
-    template <typename Ptr>
-    void apply_single(const Ptr &ptr)
-    {
-        if (_next_idx != 0) {
-            std::format_to(O, ", ");
-        }
-        std::format_to(O, "{}=", names[_next_idx]);
-        my_format(M.*(ptr));
-        _next_idx++;
-    }
-
-    std::string output() const
-    {
+        _output.clear();
+        MyFormatDispatcher<>{*this}.format();
         return _output;
     }
 
   private:
-    void my_format(const wlalat::NewID &v)
+    template <typename SEQ = Indexes>
+    struct MyFormatDispatcher;
+
+    template <size_t... FIDXS>
+    struct MyFormatDispatcher<std::index_sequence<FIDXS...>>
+    {
+        TypeFormatVis &V;
+
+        void format()
+        {
+            size_t max = std::index_sequence<FIDXS...>::size();
+            for (size_t idx = 0; idx != max; ++idx) {
+                (rt(std::integral_constant<size_t, FIDXS>{}, idx), ...);
+            }
+        }
+
+      private:
+        template <size_t IDX>
+        void rt(std::integral_constant<size_t, IDX>, size_t rt_idx)
+        {
+            if (IDX != rt_idx) {
+                return;
+            }
+            auto &ptr = std::get<IDX>(V.ptrs);
+            auto &name = V.names.at(IDX);
+            auto tag = std::tuple_element_t<IDX, MstTags>{};
+            V.my_format_taged(rt_idx, tag, V.M.*ptr, name);
+        }
+    };
+
+    template <typename TagT, typename ValueT>
+    void my_format_taged(
+        size_t idx, TagT tag, const ValueT &v, std::string_view name)
+    {
+        if (idx != 0) {
+            std::format_to(O, ", ");
+        }
+        std::format_to(O, "{}=", name);
+        my_format(tag, v);
+    }
+
+    void my_format(WlTags::wl_new_id, const wlalat::NewID &v)
     {
         std::format_to(O, "(new_id)@{}", v.raw());
     }
 
-    void my_format(const wlalat::Object &v)
+    void my_format(WlTags::wl_object, const wlalat::Object &v)
     {
         std::format_to(O, "(object)@{}", v.raw());
     }
 
-    void my_format(const wlalat::Int &v)
+    void my_format(WlTags::wl_int, const wlalat::Int &v)
     {
         std::format_to(O, "(int){}", v.raw());
     }
 
-    void my_format(const wlalat::Array &v)
+    void my_format(WlTags::wl_array, const wlalat::Array &v)
     {
         std::format_to(O, "(array){}", hexdump(v));
     }
 
-    void my_format(const wlalat::UInt &v)
+    void my_format(WlTags::wl_uint, const wlalat::UInt &v)
     {
         std::format_to(O, "(uint){}", v.raw());
     }
 
-    void my_format(const void *vp)
+    void my_format(WlTags::wl_fd, const void *vp)
     {
         const int *vip = static_cast<const int *>(vp);
         std::format_to(O, "(fd){}", *vip);
     }
 
-    void my_format(const wlalat::String &v)
+    void my_format(WlTags::wl_string, const wlalat::String &v)
     {
         std::format_to(O, "\"{}\"", std::string_view{v});
     }
 
     const MsgT &M;
-    std::span<const std::string_view> names;
-    size_t _next_idx = 0;
     std::string _output{};
     std::back_insert_iterator<std::string> O = std::back_inserter(_output);
 };
@@ -165,9 +205,7 @@ struct TypeFormatVis
 template <typename MsgT>
 std::string dump_message_args(const MsgT &M)
 {
-    TypeFormatVis V{M, wlalat::Traits<MsgT>::arg_names};
-    std::apply(V, wlalat::Traits<MsgT>::args_tuple);
-    return V.output();
+    return TypeFormatVis{M}.format();
 }
 
 template <typename MsgT>
