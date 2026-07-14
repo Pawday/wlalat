@@ -7,7 +7,6 @@
 #include <wlalat/MessageHeader.hh>
 #include <wlalat/MessageSerializer.hh>
 #include <wlalat/Parser.hh>
-#include <wlalat/Traits.hh>
 #include <wlalat/Types.hh>
 #include <wlalat/Unix/TypeTags.hh>
 

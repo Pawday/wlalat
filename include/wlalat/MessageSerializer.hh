@@ -2,7 +2,6 @@
 
 #include "Binary.hh"
 #include "Error.hh"
-#include "Traits.hh"
 #include "Types.hh"
 #include "Writer.hh"
 

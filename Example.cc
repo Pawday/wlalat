@@ -8,7 +8,6 @@
 #include <wlalat/MessageSerializer.hh>
 #include <wlalat/Parser.hh>
 #include <wlalat/StringParser.hh>
-#include <wlalat/Traits.hh>
 #include <wlalat/Types.hh>
 #include <wlalat/Unix/Socket.hh>
 #include <wlalat/Unix/TypeTags.hh>
