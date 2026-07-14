@@ -457,7 +457,7 @@ struct Generator
         }
 
         B0 += "template<typename TypeTagsT>";
-        B0 += "static constexpr auto args_meta = std::make_tuple";
+        B0 += "static constexpr auto args = std::make_tuple";
         B0 += "(";
         B1.clear();
         for (auto &meta_entry : meta_entries) {

@@ -91,8 +91,7 @@ using Tuple2VariantT = typename Tuple2Variant<TupleT>::type;
 template <typename MsgT>
 struct TypeFormatVis
 {
-    using MsgMeta =
-        decltype(MsgT::Meta::template args_meta<wlalat::Unix::WlTags>);
+    using MsgMeta = decltype(MsgT::Meta::template args<wlalat::Unix::WlTags>);
     using Indexes = std::make_index_sequence<std::tuple_size_v<MsgMeta>>;
 
     TypeFormatVis(MsgT &M) : M{M}
@@ -133,7 +132,7 @@ struct TypeFormatVis
                 return;
             }
 
-            constexpr auto &args_meta = MsgT::Meta::template args_meta<WlTags>;
+            constexpr auto &args_meta = MsgT::Meta::template args<WlTags>;
             constexpr auto &arg_meta = std::get<IDX>(args_meta);
 
             constexpr auto &tag = std::get<0>(arg_meta);
