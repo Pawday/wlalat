@@ -308,19 +308,56 @@ struct Generator
             O += gen_event(interface_name, ev, args, opcode);
         }
 
+        auto meta = gen_iface_meta(iface_node, name);
+        O += std::move(meta);
+
         O += std::format("}}; // struct {}", name);
 
         return O;
     }
 
-    LineList define_iface_traits(
+    [[deprecated]] LineList define_iface_traits(
         std::string_view proto_ns,
         const ProtocolParsing::InterfaceNode &iface_node,
         std::string_view iface_typename,
         std::string_view iface_name)
     {
         LineList O;
+        O += "template<>";
+        O += std::format(
+            "struct [[deprecated]] Traits<{}::{}>", proto_ns, iface_typename);
+        O += "{";
 
+        std::string message_type_prefix =
+            std::format("{}::{}::", proto_ns, iface_typename);
+
+        LineList B0 = define_iface_meta_content(
+            iface_node, message_type_prefix, iface_name);
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
+    }
+
+    LineList gen_iface_meta(
+        const ProtocolParsing::InterfaceNode &iface_node,
+        std::string_view iface_name)
+    {
+        LineList O;
+        O += "struct Meta";
+        O += "{";
+        LineList B0 = define_iface_meta_content(iface_node, "", iface_name);
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
+    }
+
+    LineList define_iface_meta_content(
+        const ProtocolParsing::InterfaceNode &iface_node,
+        std::string_view message_type_prefix,
+        std::string_view iface_name)
+    {
         std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
             requests;
         std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
@@ -361,10 +398,6 @@ struct Generator
             events_msg_types += ev_name;
         }
 
-        O += "template<>";
-
-        O += std::format("struct Traits<{}::{}>", proto_ns, iface_typename);
-        O += "{";
         LineList B0;
         B0 += std::format(
             "static constexpr std::string_view name = \"{}\";", iface_name);
@@ -372,9 +405,8 @@ struct Generator
         B0 += "<";
         LineList B1;
         for (auto &msg_type_name : events_msg_types) {
-            std::string full_qualified_msg_type = std::format(
-                "{}::{}::message_{}", proto_ns, iface_typename, msg_type_name);
-            B1 += std::format("{}", full_qualified_msg_type);
+            B1 +=
+                std::format("{}message_{}", message_type_prefix, msg_type_name);
         }
         comma_sep(B1);
         B1.indent();
@@ -385,20 +417,14 @@ struct Generator
         B0 += "<";
         B1.clear();
         for (auto &msg_type_name : requests_msg_types) {
-            std::string full_qualified_msg_type = std::format(
-                "{}::{}::message_{}", proto_ns, iface_typename, msg_type_name);
-            B1 += std::format("{}", full_qualified_msg_type);
+            B1 +=
+                std::format("{}message_{}", message_type_prefix, msg_type_name);
         }
         comma_sep(B1);
         B1.indent();
         B0 += std::move(B1);
         B0 += ">;";
-
-        B0.indent();
-        O += std::move(B0);
-        O += "};";
-
-        return O;
+        return B0;
     }
 
     LineList gen_args_meta(
