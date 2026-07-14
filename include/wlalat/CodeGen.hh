@@ -258,6 +258,7 @@ struct Generator
     {
         LineList O;
 
+        auto &interface_name = name;
         O += std::format("struct {}", name);
         O += "{";
 
@@ -294,7 +295,7 @@ struct Generator
             if (req.args) {
                 args = AmogusArg::collect_amogusified(req.args.value(), _view);
             }
-            O += gen_request(req, args, opcode);
+            O += gen_request(interface_name, req, args, opcode);
         }
 
         for (size_t i = 0; i != events.size(); ++i) {
@@ -304,7 +305,7 @@ struct Generator
             if (ev.args) {
                 args = AmogusArg::collect_amogusified(ev.args.value(), _view);
             }
-            O += gen_event(ev, args, opcode);
+            O += gen_event(interface_name, ev, args, opcode);
         }
 
         O += std::format("}}; // struct {}", name);
@@ -416,7 +417,7 @@ struct Generator
         return O;
     }
 
-    LineList gen_args_traits(
+    [[deprecated]] LineList gen_args_traits(
         std::string_view proto_ns,
         std::string_view iface_typename,
         std::string_view msg_name,
@@ -430,7 +431,8 @@ struct Generator
 
         std::string full_qualified_msg_type = std::format(
             "{}::{}::message_{}", proto_ns, iface_typename, msg_name);
-        O += std::format("struct Traits<{}>", full_qualified_msg_type);
+        O += std::format(
+            "struct [[deprecated]] Traits<{}>", full_qualified_msg_type);
         O += "{";
 
         std::string interface_type_using =
@@ -443,6 +445,25 @@ struct Generator
             is_event,
             full_qualified_msg_type,
             interface_type_using);
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
+    }
+
+    LineList gen_args_meta(
+        std::string_view msg_name,
+        const std::list<AmogusArg> &args,
+        size_t opcode,
+        bool is_event,
+        std::string_view type_using,
+        std::string_view interface_type_using)
+    {
+        LineList O;
+        O += "struct Meta";
+        O += "{";
+        LineList B0 = gen_args_meta_content(
+            msg_name, args, opcode, is_event, type_using, interface_type_using);
         B0.indent();
         O += std::move(B0);
         O += "};";
@@ -523,25 +544,29 @@ struct Generator
     }
 
     LineList gen_request(
+        std::string_view interface_name,
         const ProtocolParsing::RequestNode &req,
         std::list<AmogusArg> &args,
         size_t opcode)
     {
-        return gen_message(req.name, args, opcode);
+        return gen_message(interface_name, req.name, args, opcode, false);
     }
 
     LineList gen_event(
+        std::string_view interface_name,
         const ProtocolParsing::EventNode &ev,
         std::list<AmogusArg> &args,
         size_t opcode)
     {
-        return gen_message(ev.name, args, opcode);
+        return gen_message(interface_name, ev.name, args, opcode, true);
     }
 
     LineList gen_message(
+        std::string_view interface_name,
         const ProtocolParsing::AttrString &name_op,
         std::list<AmogusArg> &args,
-        size_t opcode)
+        size_t opcode,
+        bool is_event)
     {
         LineList O;
 
@@ -554,6 +579,12 @@ struct Generator
             B += define_arg(arg);
         }
 
+        B.indent();
+        O += std::move(B);
+
+        auto type_using = std::format("message_{}", name);
+        B = gen_args_meta(
+            name, args, opcode, is_event, type_using, interface_name);
         B.indent();
         O += std::move(B);
         O += "};";
