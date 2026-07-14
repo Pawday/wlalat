@@ -61,7 +61,7 @@ struct MessageSerializer
         uint32_t size_opcode_pair = 0;
         size_opcode_pair |= message_size;
         size_opcode_pair <<= 16;
-        size_opcode_pair |= wlalat::Traits<MessageT>::opcode;
+        size_opcode_pair |= MessageT::Meta::opcode;
         auto size_opcode_pair_data = tole32(size_opcode_pair);
         std::ranges::copy(size_opcode_pair_data, oiter);
 
@@ -147,8 +147,7 @@ struct MessageSerializer
     template <typename MessageT, typename UpstreamWriterT>
     static void write_args(const MessageT &M, UpstreamWriterT &W)
     {
-        using MsgTraits = wlalat::Traits<MessageT>;
-        auto &metas = MsgTraits::template args_meta<Unix::WlTags>;
+        auto &metas = MessageT::Meta::template args_meta<Unix::WlTags>;
         auto F = [&](auto... meta) { ((W(M.*(std::get<1>(meta)))), ...); };
         std::apply(F, metas);
     }

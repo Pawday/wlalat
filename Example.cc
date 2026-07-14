@@ -92,9 +92,8 @@ using Tuple2VariantT = typename Tuple2Variant<TupleT>::type;
 template <typename MsgT>
 struct TypeFormatVis
 {
-    using MsgTraits = wlalat::Traits<std::remove_const_t<MsgT>>;
     using MsgMeta =
-        decltype(MsgTraits::template args_meta<wlalat::Unix::WlTags>);
+        decltype(MsgT::Meta::template args_meta<wlalat::Unix::WlTags>);
     using Indexes = std::make_index_sequence<std::tuple_size_v<MsgMeta>>;
 
     TypeFormatVis(MsgT &M) : M{M}
@@ -135,7 +134,7 @@ struct TypeFormatVis
                 return;
             }
 
-            constexpr auto &args_meta = MsgTraits::template args_meta<WlTags>;
+            constexpr auto &args_meta = MsgT::Meta::template args_meta<WlTags>;
             constexpr auto &arg_meta = std::get<IDX>(args_meta);
 
             constexpr auto &tag = std::get<0>(arg_meta);
@@ -206,8 +205,7 @@ std::string dump_message_args(const MsgT &M)
 template <typename MsgT>
 std::string dump_message(const MsgT &M)
 {
-    return std::format(
-        "{}({})", wlalat::Traits<MsgT>::name, dump_message_args(M));
+    return std::format("{}({})", MsgT::Meta::name, dump_message_args(M));
 }
 
 template <typename... Alternatives>
@@ -346,7 +344,7 @@ struct SocketEventDispatcher
             template <typename MessageT>
             bool operator()(const std::type_identity<MessageT> M)
             {
-                if (opcode != wlalat::Traits<MessageT>::opcode) {
+                if (opcode != MessageT::Meta::opcode) {
                     return false;
                 }
                 auto m_op = s.recv_event(M);

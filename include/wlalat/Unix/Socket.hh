@@ -233,8 +233,7 @@ struct Socket
         EventMessageT M{};
         bool good = true;
 
-        using MsgTraits = wlalat::Traits<EventMessageT>;
-        auto &metas = MsgTraits::template args_meta<WlTags>;
+        auto &metas = EventMessageT::Meta::template args_meta<WlTags>;
         auto F = [&](auto... meta) {
             ((good = good && P(M.*(std::get<1>(meta)), std::get<0>(meta))),
              ...);
