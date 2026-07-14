@@ -132,8 +132,6 @@ struct Generator
 
         O += "#pragma once";
         O += "";
-        O += "#include <wlalat/Traits.hh>";
-        O += "";
         O += "#include <cstddef>";
         O += "#include <cstdint>";
         O += "";
@@ -230,26 +228,6 @@ struct Generator
 
         O += std::format("}}; // struct {}", name);
 
-        O += "namespace wlalat";
-        O += "{";
-
-        f = true;
-        for (const ProtocolParsing::InterfaceNode &iface_node : iface_nodes) {
-            std::string_view iface_name = iface_node.name.value();
-            std::string iface_typename{iface_name};
-            if (iface_typename == name) {
-                iface_typename = std::format("{}_interface", iface_typename);
-            }
-            if (!f) {
-                O += "";
-            }
-            f = false;
-            O += define_iface_traits(
-                name, iface_node, iface_typename, iface_name);
-        }
-
-        O += "} // namespace wlalat";
-
         return O;
     }
 
@@ -313,29 +291,6 @@ struct Generator
 
         O += std::format("}}; // struct {}", name);
 
-        return O;
-    }
-
-    [[deprecated]] LineList define_iface_traits(
-        std::string_view proto_ns,
-        const ProtocolParsing::InterfaceNode &iface_node,
-        std::string_view iface_typename,
-        std::string_view iface_name)
-    {
-        LineList O;
-        O += "template<>";
-        O += std::format(
-            "struct [[deprecated]] Traits<{}::{}>", proto_ns, iface_typename);
-        O += "{";
-
-        std::string message_type_prefix =
-            std::format("{}::{}::", proto_ns, iface_typename);
-
-        LineList B0 = define_iface_meta_content(
-            iface_node, message_type_prefix, iface_name);
-        B0.indent();
-        O += std::move(B0);
-        O += "};";
         return O;
     }
 
