@@ -137,7 +137,6 @@ struct Generator
         O += "#include <cstddef>";
         O += "#include <cstdint>";
         O += "";
-        O += "#include <array>";
         O += "#include <string_view>";
         O += "#include <tuple>";
         O += "#include <span>";
@@ -501,53 +500,6 @@ struct Generator
         B1.indent();
         B0 += std::move(B1);
         B0 += ");";
-
-        B0 += "using ArgMemberPointerTuple [[deprecated]] = std::tuple";
-        B0 += "<";
-        B1.clear();
-        for (auto &name : arg_names) {
-            B1 += std::format("decltype(&Type::{})", name);
-        }
-        comma_sep(B1);
-        B1.indent();
-        B0 += std::move(B1);
-        B0 += ">;";
-
-        B0 += "[[deprecated]] static constexpr ArgMemberPointerTuple args_tuple";
-        B0 += "{";
-        B1.clear();
-        for (auto &name : arg_names) {
-            B1 += std::format("&Type::{}", name);
-        }
-        comma_sep(B1);
-        B1.indent();
-        B0 += std::move(B1);
-        B0 += "};";
-
-        B0 += std::format(
-            "[[deprecated]] static constexpr std::array<std::string_view, {}> arg_names",
-            arg_names.size());
-        B0 += "{";
-        B1.clear();
-        for (auto &name : arg_names) {
-            B1 += std::format("\"{}\"", name);
-        }
-        comma_sep(B1);
-        B1.indent();
-        B0 += std::move(B1);
-        B0 += "};";
-
-        B0 += "template<typename TypeTagsT>";
-        B0 += "using ArgTags [[deprecated]] = std::tuple";
-        B0 += "<";
-        B1.clear();
-        for (auto &type : arg_types) {
-            B1 += std::format("typename TypeTagsT::wl_{}", type);
-        }
-        comma_sep(B1);
-        B1.indent();
-        B0 += std::move(B1);
-        B0 += ">;";
 
         B0.indent();
         O += std::move(B0);
