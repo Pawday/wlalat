@@ -11,6 +11,7 @@
 #include <wlalat/Traits.hh>
 #include <wlalat/Types.hh>
 #include <wlalat/Unix/Socket.hh>
+#include <wlalat/Unix/TypeTags.hh>
 #include <wlalat/Writer.hh>
 
 #include <fcntl.h>
@@ -88,22 +89,12 @@ struct Tuple2Variant<std::tuple<>>
 template <typename TupleT>
 using Tuple2VariantT = typename Tuple2Variant<TupleT>::type;
 
-struct WlTags
-{
-    using wl_int = std::type_identity<wlalat::Int>;
-    using wl_uint = std::type_identity<wlalat::UInt>;
-    using wl_new_id = std::type_identity<wlalat::NewID>;
-    using wl_object = std::type_identity<wlalat::Object>;
-    using wl_string = std::type_identity<wlalat::String>;
-    using wl_array = std::type_identity<wlalat::Array>;
-    using wl_fd = std::type_identity<int>;
-};
-
 template <typename MsgT>
 struct TypeFormatVis
 {
     using MsgTraits = wlalat::Traits<std::remove_const_t<MsgT>>;
-    using MsgMeta = decltype(MsgTraits::template args_meta<WlTags>);
+    using MsgMeta =
+        decltype(MsgTraits::template args_meta<wlalat::Unix::WlTags>);
     using Indexes = std::make_index_sequence<std::tuple_size_v<MsgMeta>>;
 
     TypeFormatVis(MsgT &M) : M{M}
@@ -118,6 +109,8 @@ struct TypeFormatVis
     }
 
   private:
+    using WlTags = wlalat::Unix::WlTags;
+
     template <typename SEQ = Indexes>
     struct MyFormatDispatcher;
 
