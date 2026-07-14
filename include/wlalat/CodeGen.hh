@@ -437,11 +437,34 @@ struct Generator
         O += std::format("struct Traits<{}>", full_qualified_msg_type);
         O += "{";
 
+        std::string interface_type_using =
+            std::format("{}::{};", proto_ns, iface_typename);
+
+        LineList B0 = gen_args_meta_content(
+            msg_name,
+            args,
+            opcode,
+            is_event,
+            full_qualified_msg_type,
+            interface_type_using);
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
+    }
+
+    LineList gen_args_meta_content(
+        std::string_view msg_name,
+        const std::list<AmogusArg> &args,
+        size_t opcode,
+        bool is_event,
+        std::string_view type_using,
+        std::string_view interface_type_using)
+    {
         LineList B0;
 
-        B0 += std::format("using Type = {};", full_qualified_msg_type);
-        B0 += std::format(
-            "using InterfaceTag = {}::{};", proto_ns, iface_typename);
+        B0 += std::format("using Type = {};", type_using);
+        B0 += std::format("using InterfaceTag = {};", interface_type_using);
         B0 += std::format(
             "static constexpr std::string_view name = \"{}\";", msg_name);
         B0 += std::format("static constexpr const size_t opcode = {};", opcode);
@@ -500,11 +523,7 @@ struct Generator
         B1.indent();
         B0 += std::move(B1);
         B0 += ");";
-
-        B0.indent();
-        O += std::move(B0);
-        O += "};";
-        return O;
+        return B0;
     }
 
     LineList gen_request(
