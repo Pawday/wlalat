@@ -6,6 +6,8 @@
 #include "Types.hh"
 #include "Writer.hh"
 
+#include "Unix/TypeTags.hh"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -145,8 +147,10 @@ struct MessageSerializer
     template <typename MessageT, typename UpstreamWriterT>
     static void write_args(const MessageT &M, UpstreamWriterT &W)
     {
-        auto F = [&](auto... ptrs) { ((W(M.*(ptrs))), ...); };
-        std::apply(F, wlalat::Traits<MessageT>::args_tuple);
+        using MsgTraits = wlalat::Traits<MessageT>;
+        auto &metas = MsgTraits::template args_meta<Unix::WlTags>;
+        auto F = [&](auto... meta) { ((W(M.*(std::get<1>(meta)))), ...); };
+        std::apply(F, metas);
     }
 
     std::pmr::vector<std::byte> data;

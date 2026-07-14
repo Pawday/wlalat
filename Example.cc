@@ -103,10 +103,8 @@ template <typename MsgT>
 struct TypeFormatVis
 {
     using MsgTraits = wlalat::Traits<std::remove_const_t<MsgT>>;
-    using MstTags = MsgTraits::template ArgTags<WlTags>;
-    using Indexes = std::make_index_sequence<std::tuple_size_v<MstTags>>;
-    static constexpr auto &ptrs = MsgTraits::args_tuple;
-    static constexpr auto &names = MsgTraits::arg_names;
+    using MsgMeta = decltype(MsgTraits::template args_meta<WlTags>);
+    using Indexes = std::make_index_sequence<std::tuple_size_v<MsgMeta>>;
 
     TypeFormatVis(MsgT &M) : M{M}
     {
@@ -143,9 +141,13 @@ struct TypeFormatVis
             if (IDX != rt_idx) {
                 return;
             }
-            auto &ptr = std::get<IDX>(V.ptrs);
-            auto &name = V.names.at(IDX);
-            auto tag = std::tuple_element_t<IDX, MstTags>{};
+
+            constexpr auto &args_meta = MsgTraits::template args_meta<WlTags>;
+            constexpr auto &arg_meta = std::get<IDX>(args_meta);
+
+            constexpr auto &tag = std::get<0>(arg_meta);
+            constexpr auto &ptr = std::get<1>(arg_meta);
+            constexpr auto &name = std::get<2>(arg_meta);
             V.my_format_taged(rt_idx, tag, V.M.*ptr, name);
         }
     };
