@@ -2,6 +2,7 @@
 
 #include "ProtocolParser.hh"
 
+#include <array>
 #include <cstddef>
 
 #include <algorithm>
@@ -458,7 +459,50 @@ struct Generator
             arg_types.push_back(arg_type);
         }
 
-        B0 += "using ArgMemberPointerTuple = std::tuple";
+        std::vector<std::array<std::string, 3>> meta_entries;
+        {
+            for (auto name_type_pair : std::views::zip(arg_names, arg_types)) {
+                auto name = std::get<0>(name_type_pair);
+                auto type = std::get<1>(name_type_pair);
+                std::array<std::string, 3> entry;
+                entry[0] = std::format("typename TypeTagsT::wl_{}{{}}", type);
+                entry[1] = std::format("&Type::{}", name);
+                entry[2] = std::format("\"{}\"", name);
+                meta_entries.push_back(std::move(entry));
+            }
+
+            std::array<size_t, 3> meta_entry_max_lens{};
+            for (auto &meta_entry : meta_entries) {
+                auto &max = meta_entry_max_lens;
+                max[0] = std::max(max[0], meta_entry[0].size());
+                max[1] = std::max(max[1], meta_entry[1].size());
+                max[2] = std::max(max[2], meta_entry[2].size());
+            }
+
+            for (auto &meta_entry : meta_entries) {
+                meta_entry[0].resize(meta_entry_max_lens[0], ' ');
+                meta_entry[1].resize(meta_entry_max_lens[1], ' ');
+                meta_entry[2].resize(meta_entry_max_lens[2], ' ');
+            }
+        }
+
+        B0 += "template<typename TypeTagsT>";
+        B0 += "static constexpr auto args_meta = std::make_tuple";
+        B0 += "(";
+        B1.clear();
+        for (auto &meta_entry : meta_entries) {
+            B1 += std::format(
+                "std::make_tuple({},{},{})",
+                meta_entry[0],
+                meta_entry[1],
+                meta_entry[2]);
+        }
+        comma_sep(B1);
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += ");";
+
+        B0 += "using ArgMemberPointerTuple [[deprecated]] = std::tuple";
         B0 += "<";
         B1.clear();
         for (auto &name : arg_names) {
@@ -469,7 +513,7 @@ struct Generator
         B0 += std::move(B1);
         B0 += ">;";
 
-        B0 += "static constexpr ArgMemberPointerTuple args_tuple";
+        B0 += "[[deprecated]] static constexpr ArgMemberPointerTuple args_tuple";
         B0 += "{";
         B1.clear();
         for (auto &name : arg_names) {
@@ -481,7 +525,7 @@ struct Generator
         B0 += "};";
 
         B0 += std::format(
-            "static constexpr std::array<std::string_view, {}> arg_names",
+            "[[deprecated]] static constexpr std::array<std::string_view, {}> arg_names",
             arg_names.size());
         B0 += "{";
         B1.clear();
@@ -494,7 +538,7 @@ struct Generator
         B0 += "};";
 
         B0 += "template<typename TypeTagsT>";
-        B0 += "using ArgTags = std::tuple";
+        B0 += "using ArgTags [[deprecated]] = std::tuple";
         B0 += "<";
         B1.clear();
         for (auto &type : arg_types) {
