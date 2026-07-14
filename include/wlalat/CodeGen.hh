@@ -287,7 +287,6 @@ struct Generator
             _view.chain_iterate(iface_node.events.value(), sink);
         }
 
-        bool req_has_fd = false;
         for (size_t i = 0; i != requests.size(); ++i) {
             auto opcode = i;
             std::list<AmogusArg> args;
@@ -295,11 +294,9 @@ struct Generator
             if (req.args) {
                 args = AmogusArg::collect_amogusified(req.args.value(), _view);
             }
-            req_has_fd = req_has_fd || has_fd(args);
             O += gen_request(req, args, opcode);
         }
 
-        bool ev_has_fd = false;
         for (size_t i = 0; i != events.size(); ++i) {
             auto opcode = i;
             const ProtocolParsing::EventNode &ev = events[i];
@@ -308,7 +305,6 @@ struct Generator
                 args = AmogusArg::collect_amogusified(ev.args.value(), _view);
             }
             O += gen_event(ev, args, opcode);
-            ev_has_fd = ev_has_fd || has_fd(args);
         }
 
         O += std::format("}}; // struct {}", name);
@@ -540,19 +536,6 @@ struct Generator
         size_t opcode)
     {
         return gen_message(ev.name, args, opcode);
-    }
-
-    static bool has_fd(const std::list<AmogusArg> &args)
-    {
-        bool has_fd = false;
-        auto &am_args = args;
-        auto is_fd = [](const AmogusArg &arg) {
-            if (!arg.type) {
-                return false;
-            }
-            return arg.type.value() == "fd";
-        };
-        return std::ranges::find_if(am_args, is_fd) != std::end(am_args);
     }
 
     LineList gen_message(
