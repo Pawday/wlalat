@@ -350,31 +350,15 @@ struct Generator
         LineList requests_msg_types;
         for (size_t idx = 0; idx != requests.size(); ++idx) {
             const ProtocolParsing::RequestNode &req = requests[idx];
-            std::list<AmogusArg> args;
             auto &req_name = req.name.value();
-            if (req.args) {
-                args = AmogusArg::collect_amogusified(req.args.value(), _view);
-            }
             requests_msg_types += req_name;
-            bool is_event = false;
-            size_t opcode = idx;
-            O += gen_args_traits(
-                proto_ns, iface_typename, req_name, args, opcode, is_event);
         }
 
         LineList events_msg_types;
         for (size_t idx = 0; idx != events.size(); ++idx) {
             const ProtocolParsing::EventNode &ev = events[idx];
-            std::list<AmogusArg> args;
             auto &ev_name = ev.name.value();
-            if (ev.args) {
-                args = AmogusArg::collect_amogusified(ev.args.value(), _view);
-            }
             events_msg_types += ev_name;
-            size_t opcode = idx;
-            bool is_event = true;
-            O += gen_args_traits(
-                proto_ns, iface_typename, ev_name, args, opcode, is_event);
         }
 
         O += "template<>";
@@ -414,40 +398,6 @@ struct Generator
         O += std::move(B0);
         O += "};";
 
-        return O;
-    }
-
-    [[deprecated]] LineList gen_args_traits(
-        std::string_view proto_ns,
-        std::string_view iface_typename,
-        std::string_view msg_name,
-        const std::list<AmogusArg> &args,
-        size_t opcode,
-        bool is_event)
-    {
-        LineList O;
-
-        O += "template<>";
-
-        std::string full_qualified_msg_type = std::format(
-            "{}::{}::message_{}", proto_ns, iface_typename, msg_name);
-        O += std::format(
-            "struct [[deprecated]] Traits<{}>", full_qualified_msg_type);
-        O += "{";
-
-        std::string interface_type_using =
-            std::format("{}::{};", proto_ns, iface_typename);
-
-        LineList B0 = gen_args_meta_content(
-            msg_name,
-            args,
-            opcode,
-            is_event,
-            full_qualified_msg_type,
-            interface_type_using);
-        B0.indent();
-        O += std::move(B0);
-        O += "};";
         return O;
     }
 
