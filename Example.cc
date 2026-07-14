@@ -278,8 +278,7 @@ struct SocketEventDispatcher
     void set_listener(
         uint_least32_t object_id, LType &L, std::type_identity<InterfaceT>)
     {
-        using VariantT =
-            Tuple2VariantT<typename wlalat::Traits<InterfaceT>::Events>;
+        using VariantT = Tuple2VariantT<typename InterfaceT::Meta::Events>;
         std::type_identity<VariantT> event_id{};
         _listeners.emplace(
             std::piecewise_construct,
@@ -1007,7 +1006,7 @@ try {
         if (!decor_manager) {
             using Tag = decltype(decor_manager)::value_type::Tag;
             using IdT = std::type_identity<Tag>;
-            auto id_op = registry.try_bind(wlalat::Traits<Tag>::name, {});
+            auto id_op = registry.try_bind(Tag::Meta::name, {});
             if (id_op) {
                 decor_manager.emplace(id_op.value(), s, id_manager, disp);
                 disp.set_listener(
@@ -1028,7 +1027,7 @@ try {
         if (!shm) {
             using Tag = decltype(shm)::value_type::Tag;
             using IdT = std::type_identity<Tag>;
-            auto id_op = registry.try_bind(wlalat::Traits<Tag>::name, {});
+            auto id_op = registry.try_bind(Tag::Meta::name, {});
             if (id_op) {
                 shm.emplace(s, id_op.value());
                 disp.set_listener(id_op.value().raw(), shm.value(), IdT{});
@@ -1038,7 +1037,7 @@ try {
         if (!compositor) {
             using Tag = decltype(compositor)::value_type::Tag;
             using IdT = std::type_identity<Tag>;
-            auto id_op = registry.try_bind(wlalat::Traits<Tag>::name, {});
+            auto id_op = registry.try_bind(Tag::Meta::name, {});
             if (id_op) {
                 compositor.emplace(id_op.value(), s);
                 disp.set_listener(
@@ -1049,7 +1048,7 @@ try {
         if (!xdg) {
             using Tag = decltype(xdg)::value_type::Tag;
             using IdT = std::type_identity<Tag>;
-            auto id_op = registry.try_bind(wlalat::Traits<Tag>::name, {});
+            auto id_op = registry.try_bind(Tag::Meta::name, {});
             if (id_op) {
                 xdg.emplace(id_op.value(), s);
                 using IdT = std::type_identity<decltype(xdg)::value_type::Tag>;
