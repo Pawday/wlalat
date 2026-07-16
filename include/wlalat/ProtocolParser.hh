@@ -1011,50 +1011,6 @@ struct ProtocolParser
         return {};
     }
 
-    [[nodiscard("Possible error message")]]
-    [[deprecated]] constexpr std::optional<std::string>
-        process()
-    {
-        if (_s.empty()) {
-            return "End of string";
-        }
-
-        auto tag_start = _s.find('<');
-        if (tag_start == _s.npos) {
-            on_data(_s);
-            _s = std::string_view{};
-            return {};
-        }
-
-        std::string_view data = _s.substr(0, tag_start);
-        on_data(data);
-        _s = _s.substr(tag_start);
-
-        auto tag_end_pos = _s.find('>');
-        if (tag_end_pos == _s.npos) {
-            return "Cannot find tag end";
-        }
-
-        std::string_view tag_string = _s.substr(0, tag_end_pos + 1);
-
-        bool is_comment = false;
-        if (tag_string.size() >= 4 && tag_string.substr(0, 4) == "<!--") {
-            is_comment = true;
-        }
-
-        if (is_comment) {
-            _s = _s.substr(tag_string.size());
-            return {};
-        }
-
-        auto err = process_tag_string(tag_string);
-        if (err) {
-            return err;
-        }
-        _s = _s.substr(tag_string.size());
-        return {};
-    }
-
     constexpr void on_data(std::string_view data)
     {
     }
