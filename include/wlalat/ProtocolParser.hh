@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CodeGenInfo.hh"
 #include "XML.hh"
 
 #include <cstddef>
@@ -492,6 +493,123 @@ struct ProtocolTreeView
                 sink(*proto_p);
             }
         }
+    }
+
+    constexpr std::vector<CodeGen::Protocol> collect()
+    {
+        std::vector<CodeGen::Protocol> O;
+
+        std::optional<std::reference_wrapper<CodeGen::Protocol>> active_proto;
+        std::optional<std::reference_wrapper<CodeGen::Interface>> active_iface;
+        std::optional<std::reference_wrapper<CodeGen::Event>> active_event;
+        std::optional<std::reference_wrapper<CodeGen::Request>> active_request;
+        std::optional<std::reference_wrapper<CodeGen::Enum>> active_enum;
+
+        auto collect_args = [&](IndexChainNode<ArgNode> args_chain) {
+            std::vector<CodeGen::Argument> O;
+            auto sink = [&](const ProtocolParsing::Node &arg_node_v) {
+                auto &arg_node = std::get<ProtocolParsing::ArgNode>(arg_node_v);
+                CodeGen::Argument arg{};
+                arg.name = arg_node.name;
+                arg.type = arg_node.type;
+                arg.interface = arg_node.interface;
+                O.push_back(std::move(arg));
+            };
+            chain_iterate(args_chain, sink);
+            return O;
+        };
+
+        auto collect_entries = [&](IndexChainNode<EntryNode> entry_chain) {
+            std::vector<CodeGen::EnumEntry> O;
+            auto sink = [&](const ProtocolParsing::Node &entry_node_v) {
+                auto &entry_node =
+                    std::get<ProtocolParsing::EntryNode>(entry_node_v);
+                CodeGen::EnumEntry entry{};
+                entry.name = entry_node.name;
+                entry.value = entry_node.value;
+                O.push_back(std::move(entry));
+            };
+            chain_iterate(entry_chain, sink);
+            return O;
+        };
+
+        auto event_sink = [&](const ProtocolParsing::Node &event_node_v) {
+            auto &event_node =
+                std::get<ProtocolParsing::EventNode>(event_node_v);
+            CodeGen::Event ev{};
+            ev.name = event_node.name;
+            if (event_node.args) {
+                ev.args = collect_args(event_node.args.value());
+            }
+            active_event = std::ref(ev);
+
+            CodeGen::Interface &target_iface = active_iface.value();
+            target_iface.events.push_back(std::move(ev));
+        };
+
+        auto request_sink = [&](const ProtocolParsing::Node &requst_node_v) {
+            auto &request_node =
+                std::get<ProtocolParsing::RequestNode>(requst_node_v);
+            CodeGen::Request req{};
+            req.name = request_node.name;
+            if (request_node.args) {
+                req.args = collect_args(request_node.args.value());
+            }
+            active_request = std::ref(req);
+
+            CodeGen::Interface &target_iface = active_iface.value();
+            target_iface.requests.push_back(std::move(req));
+        };
+
+        auto enum_sink = [&](const ProtocolParsing::Node &enum_node_v) {
+            auto &enum_node = std::get<ProtocolParsing::EnumNode>(enum_node_v);
+            CodeGen::Enum enum_v{};
+            enum_v.name = enum_node.name;
+            if (enum_node.entries) {
+                enum_v.entries = collect_entries(enum_node.entries.value());
+            }
+            active_enum = std::ref(enum_v);
+
+            CodeGen::Interface &target_iface = active_iface.value();
+            target_iface.enums.push_back(std::move(enum_v));
+        };
+
+        auto iface_sink = [&](const ProtocolParsing::Node &iface_node_v) {
+            auto &iface_node =
+                std::get<ProtocolParsing::InterfaceNode>(iface_node_v);
+            CodeGen::Interface iface{};
+            iface.name = iface_node.name;
+            active_iface = std::ref(iface);
+
+            if (iface_node.events) {
+                chain_iterate(iface_node.events.value(), event_sink);
+            }
+
+            if (iface_node.requests) {
+                chain_iterate(iface_node.requests.value(), request_sink);
+            }
+
+            if (iface_node.enums) {
+                chain_iterate(iface_node.enums.value(), enum_sink);
+            }
+
+            CodeGen::Protocol &target_proto = active_proto.value();
+            target_proto.interfaces.push_back(std::move(iface));
+        };
+
+        auto proto_sink = [&](const ProtocolParsing::ProtocolNode &proto_node) {
+            CodeGen::Protocol proto{};
+            proto.name = proto_node.name;
+            active_proto = std::ref(proto);
+            if (proto_node.interfaces) {
+                chain_iterate(proto_node.interfaces.value(), iface_sink);
+            }
+            O.push_back(std::move(proto));
+            active_proto.reset();
+        };
+        protos_iterate(proto_sink);
+
+        return O;
     }
 
   private:

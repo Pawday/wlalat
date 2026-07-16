@@ -1,8 +1,11 @@
+#include <wlalat/CodeGen.hh>
+#include <wlalat/CodeGenInfo.hh>
 #include <wlalat/ProtocolParser.hh>
 
 #include <cstddef>
 
 #include <exception>
+#include <format>
 #include <fstream>
 #include <functional>
 #include <ios>
@@ -10,7 +13,7 @@
 #include <print>
 #include <string>
 #include <string_view>
-#include <variant>
+#include <utility>
 #include <vector>
 
 constexpr auto test(std::string_view str)
@@ -23,9 +26,99 @@ constexpr auto test(std::string_view str)
 static_assert(test("<protocol>") == 1);
 static_assert(test("<protocol><interface>") == 2);
 
-void dump_proto(
-    wlalat::ProtocolParsing::ProtocolNode &proto,
-    wlalat::ProtocolParsing::ProtocolTree &tree);
+wlalat::CodeGen::LineList
+    dump(const std::vector<wlalat::CodeGen::Argument> &args)
+{
+    wlalat::CodeGen::LineList O;
+    for (auto &arg : args) {
+        O += std::format(
+            "Argument name=[{}] type=[{}] interface=[{}]",
+            arg.name.value_or("<null>"),
+            arg.type.value_or("<null>"),
+            arg.interface.value_or("<null>"));
+    }
+    return O;
+}
+
+wlalat::CodeGen::LineList
+    dump(const std::vector<wlalat::CodeGen::EnumEntry> &entries)
+{
+    wlalat::CodeGen::LineList O;
+    for (auto &entry : entries) {
+        O += std::format(
+            "Entry name=[{}] value=[{}]",
+            entry.name.value_or("<null>"),
+            entry.value.value_or("<null>"));
+    }
+    return O;
+}
+
+wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Enum &enum_v)
+{
+    wlalat::CodeGen::LineList O;
+    O += std::format("Enum [{}]", enum_v.name.value_or("<null>"));
+    auto entries = dump(enum_v.entries);
+    entries.indent();
+    O += std::move(entries);
+    return O;
+}
+
+wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Event &ev)
+{
+    wlalat::CodeGen::LineList O;
+    O += std::format("Event [{}]", ev.name.value_or("<null>"));
+    auto args = dump(ev.args);
+    args.indent();
+    O += std::move(args);
+    return O;
+}
+
+wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Request &req)
+{
+    wlalat::CodeGen::LineList O;
+    O += std::format("Request [{}]", req.name.value_or("<null>"));
+    auto args = dump(req.args);
+    args.indent();
+    O += std::move(args);
+    return O;
+}
+
+wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Interface &iface)
+{
+    wlalat::CodeGen::LineList O;
+    O += std::format("Interface [{}]", iface.name.value_or("<null>"));
+
+    for (auto &event : iface.events) {
+        auto E = dump(event);
+        E.indent();
+        O += std::move(E);
+    }
+
+    for (auto &request : iface.requests) {
+        auto R = dump(request);
+        R.indent();
+        O += std::move(R);
+    }
+
+    for (auto &enum_v : iface.enums) {
+        auto E = dump(enum_v);
+        E.indent();
+        O += std::move(E);
+    }
+    return O;
+}
+
+wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Protocol &proto)
+{
+    wlalat::CodeGen::LineList O;
+    O += std::format("Protocol [{}]", proto.name.value_or("<null>"));
+    for (auto &iface : proto.interfaces) {
+        auto I = dump(iface);
+        I.indent();
+        O += std::move(I);
+    }
+    return O;
+}
 
 int main(int argc, char **argv)
 try {
@@ -38,109 +131,16 @@ try {
 
     wlalat::ProtocolParsing::ProtocolParser p{content};
     wlalat::ProtocolParsing::ProtocolTree tree = p.parse();
+    auto view = tree.view();
+    auto protos_collect = view.collect();
 
-    using ProtoNodeRef =
-        std::reference_wrapper<wlalat::ProtocolParsing::ProtocolNode>;
-    std::vector<ProtoNodeRef> protos;
-
-    for (auto &node : tree) {
-        auto *proto_p =
-            std::get_if<wlalat::ProtocolParsing::ProtocolNode>(&node);
-        if (!proto_p) {
-            continue;
+    for (auto &proto : protos_collect) {
+        auto lines = dump(proto);
+        for (auto &line : lines) {
+            std::println("{}", line);
         }
-        protos.push_back(std::ref(*proto_p));
-    }
-
-    for (wlalat::ProtocolParsing::ProtocolNode &proto : protos) {
-        std::println("Protocol [{}]", proto.name.value_or("?"));
-        dump_proto(proto, tree);
     }
 
 } catch (std::exception &e) {
     std::println("std::exception::what() [{}]", e.what());
-}
-
-void dump_proto(
-    wlalat::ProtocolParsing::ProtocolNode &proto,
-    wlalat::ProtocolParsing::ProtocolTree &tree)
-{
-    using InterfaceNode = wlalat::ProtocolParsing::InterfaceNode;
-    using RequestNode = wlalat::ProtocolParsing::RequestNode;
-    using ArgNode = wlalat::ProtocolParsing::ArgNode;
-    using EventNode = wlalat::ProtocolParsing::EventNode;
-    using EnumNode = wlalat::ProtocolParsing::EnumNode;
-    using EntryNode = wlalat::ProtocolParsing::EntryNode;
-
-    auto chain_nodes = [&tree]<typename NodeT>(
-                           wlalat::ProtocolParsing::IndexChainNode<NodeT> idx) {
-        std::vector<std::reference_wrapper<const NodeT>> O;
-        auto view = tree.view();
-        auto sink = [&](const wlalat::ProtocolParsing::Node &n) {
-            const NodeT &t_node = std::get<NodeT>(n);
-            O.push_back(std::ref(t_node));
-        };
-        view.chain_iterate(idx.index(), sink);
-        return O;
-    };
-
-    {
-        if not consteval {
-            auto interfaces = chain_nodes(proto.interfaces.value());
-            for (const InterfaceNode &el : interfaces) {
-                std::println("__AA__ [{}]", el.name.value_or("?"));
-                if (el.requests) {
-                    auto reqs = chain_nodes(el.requests.value());
-                    for (const RequestNode &req : reqs) {
-                        std::println(
-                            "__AA__     req [{}]", req.name.value_or("?"));
-
-                        if (req.args) {
-                            auto args = chain_nodes(req.args.value());
-                            for (const ArgNode &arg : args) {
-                                std::println(
-                                    "__AA__         arg [{}]",
-                                    arg.name.value_or("?"));
-                            }
-                        }
-                    }
-                }
-
-                if (el.events) {
-                    auto evs = chain_nodes(el.events.value());
-                    for (const EventNode &ev : evs) {
-                        std::println(
-                            "__AA__     ev [{}]", ev.name.value_or("?"));
-
-                        if (ev.args) {
-                            auto args = chain_nodes(ev.args.value());
-                            for (const ArgNode &arg : args) {
-                                std::println(
-                                    "__AA__         arg [{}]",
-                                    arg.name.value_or("?"));
-                            }
-                        }
-                    }
-                }
-
-                if (el.enums) {
-                    auto ens = chain_nodes(el.enums.value());
-                    for (const EnumNode &en : ens) {
-                        std::println(
-                            "__AA__     en [{}]", en.name.value_or("?"));
-
-                        if (en.entries) {
-                            auto ens = chain_nodes(en.entries.value());
-                            for (const EntryNode &ent : ens) {
-                                std::println(
-                                    "__AA__         enr [{}] [{}]",
-                                    ent.name.value_or("?"),
-                                    ent.value.value_or("?"));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
