@@ -911,12 +911,12 @@ struct Registry
 
         wayland::wl_registry::message_bind bind_msg;
         bind_msg.name = wlalat::UInt{global.numeric_name};
-        bind_msg.id_interface_name_amogus_arg = interface_name;
+        bind_msg.id_interface = interface_name;
         wlalat::UInt bind_version{global.version};
         if (version) {
             bind_version = wlalat::UInt{version.value()};
         }
-        bind_msg.id_interface_version_amogus_arg = bind_version;
+        bind_msg.id_version = bind_version;
         ObjectIDManager::ID new_id = _id_manager.allocate();
         bind_msg.id = new_id;
         std::println("-> wl_registry@{}.{}", _id.raw(), dump_message(bind_msg));

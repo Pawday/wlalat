@@ -8,7 +8,6 @@
 
 #include <algorithm>
 #include <format>
-#include <list>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -63,16 +62,11 @@ static void comma_sep(LineList &lines)
 }
 
 // https://gitlab.freedesktop.org/wayland/wayland/-/commit/85a6a470873357089ffb968a176d5074fddd1756
-struct AmogusArg : Argument
+struct TypelessNewIdArgumentExpander
 {
-    AmogusArg(const Argument &arg) : Argument{arg}
+    static auto expand(const std::vector<Argument> &args)
     {
-    }
-
-    static std::list<AmogusArg>
-        collect_amogusified(const std::vector<CodeGen::Argument> args)
-    {
-        std::list<AmogusArg> O;
+        std::vector<Argument> O;
         for (auto &arg : args) {
             auto name = arg.name.value();
             auto type = arg.type.value();
@@ -83,12 +77,12 @@ struct AmogusArg : Argument
 
                 Argument am_tag{};
                 std::string am_name;
-                am_name = std::format("{}_interface_name_amogus_arg", name);
+                am_name = std::format("{}_interface", name);
                 am_tag.name = am_name;
                 am_tag.type = "string";
                 O.emplace_back(am_tag);
 
-                am_name = std::format("{}_interface_version_amogus_arg", name);
+                am_name = std::format("{}_version", name);
                 am_tag.name = am_name;
                 am_tag.type = "uint";
                 O.emplace_back(am_tag);
@@ -97,11 +91,6 @@ struct AmogusArg : Argument
         }
         return O;
     }
-
-    AmogusArg(const AmogusArg &) = delete;
-    AmogusArg(AmogusArg &&) = delete;
-    AmogusArg &operator=(const AmogusArg &) = delete;
-    AmogusArg &operator=(AmogusArg &&) = delete;
 };
 
 struct Generator
@@ -214,21 +203,15 @@ struct Generator
 
         for (size_t i = 0; i != requests.size(); ++i) {
             auto opcode = i;
-            std::list<AmogusArg> args;
             const Request &req = iface_node.requests[i];
-            if (!req.args.empty()) {
-                args = AmogusArg::collect_amogusified(req.args);
-            }
+            auto args = TypelessNewIdArgumentExpander::expand(req.args);
             O += gen_request(interface_name, req, args, opcode);
         }
 
         for (size_t i = 0; i != events.size(); ++i) {
             auto opcode = i;
             const Event &ev = events[i];
-            std::list<AmogusArg> args;
-            if (!ev.args.empty()) {
-                args = AmogusArg::collect_amogusified(ev.args);
-            }
+            auto args = TypelessNewIdArgumentExpander::expand(ev.args);
             O += gen_event(interface_name, ev, args, opcode);
         }
 
@@ -306,7 +289,7 @@ struct Generator
 
     LineList gen_args_meta(
         std::string_view msg_name,
-        const std::list<AmogusArg> &args,
+        const std::vector<Argument> &args,
         size_t opcode,
         bool is_event,
         std::string_view type_using,
@@ -325,7 +308,7 @@ struct Generator
 
     LineList gen_args_meta_content(
         std::string_view msg_name,
-        const std::list<AmogusArg> &args,
+        const std::vector<Argument> &args,
         size_t opcode,
         bool is_event,
         std::string_view type_using,
@@ -399,7 +382,7 @@ struct Generator
     LineList gen_request(
         std::string_view interface_name,
         const Request &req,
-        std::list<AmogusArg> &args,
+        std::vector<Argument> &args,
         size_t opcode)
     {
         return gen_message(interface_name, req.name, args, opcode, false);
@@ -408,7 +391,7 @@ struct Generator
     LineList gen_event(
         std::string_view interface_name,
         const Event &ev,
-        std::list<AmogusArg> &args,
+        std::vector<Argument> &args,
         size_t opcode)
     {
         return gen_message(interface_name, ev.name, args, opcode, true);
@@ -417,7 +400,7 @@ struct Generator
     LineList gen_message(
         std::string_view interface_name,
         const ProtocolParsing::AttrString &name_op,
-        std::list<AmogusArg> &args,
+        std::vector<Argument> &args,
         size_t opcode,
         bool is_event)
     {
