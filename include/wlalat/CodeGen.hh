@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CodeGenInfo.hh"
 #include "ProtocolParser.hh"
 
 #include <array>
@@ -7,16 +8,13 @@
 
 #include <algorithm>
 #include <format>
-#include <functional>
 #include <list>
 #include <optional>
 #include <ranges>
 #include <set>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace wlalat
@@ -65,30 +63,17 @@ static void comma_sep(LineList &lines)
 }
 
 // https://gitlab.freedesktop.org/wayland/wayland/-/commit/85a6a470873357089ffb968a176d5074fddd1756
-struct AmogusArg : ProtocolParsing::ArgRawTag
+struct AmogusArg : Argument
 {
-    AmogusArg(ProtocolParsing::ArgRawTag raw) : ProtocolParsing::ArgRawTag{raw}
+    AmogusArg(const Argument &arg) : Argument{arg}
     {
-        if (name) {
-            _name = name.value();
-            name = _name;
-        }
-
-        if (type) {
-            _type = type.value();
-            type = _type;
-        }
     }
-    std::string _name;
-    std::string _type;
 
-    static std::list<AmogusArg> collect_amogusified(
-        ProtocolParsing::IndexChainNode<ProtocolParsing::ArgNode> args_start,
-        ProtocolParsing::ProtocolTreeView view)
+    static std::list<AmogusArg>
+        collect_amogusified(const std::vector<CodeGen::Argument> args)
     {
         std::list<AmogusArg> O;
-        auto my_sink = [&](const ProtocolParsing::Node &node) {
-            auto &arg = std::get<ProtocolParsing::ArgNode>(node);
+        for (auto &arg : args) {
             auto name = arg.name.value();
             auto type = arg.type.value();
 
@@ -96,7 +81,7 @@ struct AmogusArg : ProtocolParsing::ArgRawTag
                 type == "new_id" && !arg.interface.has_value();
             if (is_amogus_new_id) {
 
-                ProtocolParsing::ArgRawTag am_tag{};
+                Argument am_tag{};
                 std::string am_name;
                 am_name = std::format("{}_interface_name_amogus_arg", name);
                 am_tag.name = am_name;
@@ -109,8 +94,7 @@ struct AmogusArg : ProtocolParsing::ArgRawTag
                 O.emplace_back(am_tag);
             }
             O.emplace_back(arg);
-        };
-        view.chain_iterate(args_start, my_sink);
+        }
         return O;
     }
 
@@ -141,14 +125,10 @@ struct Generator
         O += "";
 
         bool f = true;
-        auto sink = [&](const ProtocolParsing::ProtocolNode &node) {
-            if (!f) {
-                O += "";
-            }
-            f = false;
-            O += on_proto(node);
-        };
-        _view.protos_iterate(sink);
+        auto protos = _view.collect();
+        for (auto &proto : protos) {
+            O += on_proto(proto);
+        }
 
         for (auto &line : O) {
             auto white = [](auto c) {
@@ -190,10 +170,10 @@ struct Generator
         return mapped->second;
     }
 
-    LineList on_proto(const ProtocolParsing::ProtocolNode &proto_node)
+    LineList on_proto(const CodeGen::Protocol &proto_node)
     {
         LineList O;
-        if (!proto_node.interfaces) {
+        if (proto_node.interfaces.empty()) {
             return O;
         }
 
@@ -201,19 +181,8 @@ struct Generator
         O += std::format("struct {}", name);
         O += "{";
 
-        std::vector<
-            std::reference_wrapper<const ProtocolParsing::InterfaceNode>>
-            iface_nodes;
-
-        auto sink = [&](const ProtocolParsing::Node &node) {
-            const auto &iface_node =
-                std::get<ProtocolParsing::InterfaceNode>(node);
-            iface_nodes.push_back(std::ref(iface_node));
-        };
-        _view.chain_iterate(proto_node.interfaces.value(), sink);
-
         bool f = true;
-        for (const ProtocolParsing::InterfaceNode &iface_node : iface_nodes) {
+        for (auto &iface_node : proto_node.interfaces) {
             std::string_view iface_name = iface_node.name.value();
             std::string iface_typename{iface_name};
             if (iface_typename == name) {
@@ -232,7 +201,7 @@ struct Generator
     }
 
     LineList define_iface(
-        const ProtocolParsing::InterfaceNode &iface_node, std::string_view name)
+        const CodeGen::Interface &iface_node, std::string_view name)
     {
         LineList O;
 
@@ -240,48 +209,25 @@ struct Generator
         O += std::format("struct {}", name);
         O += "{";
 
-        std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
-            requests;
-        std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
-            events;
-
-        auto sink = [&](const ProtocolParsing::Node &node) {
-            const auto *req_node =
-                std::get_if<ProtocolParsing::RequestNode>(&node);
-            if (req_node) {
-                requests.push_back(*req_node);
-            }
-
-            const auto *ev_node =
-                std::get_if<ProtocolParsing::EventNode>(&node);
-            if (ev_node) {
-                events.push_back(*ev_node);
-            }
-        };
-        if (iface_node.requests) {
-            _view.chain_iterate(iface_node.requests.value(), sink);
-        }
-
-        if (iface_node.events) {
-            _view.chain_iterate(iface_node.events.value(), sink);
-        }
+        auto &requests = iface_node.requests;
+        auto &events = iface_node.events;
 
         for (size_t i = 0; i != requests.size(); ++i) {
             auto opcode = i;
             std::list<AmogusArg> args;
-            const ProtocolParsing::RequestNode &req = requests[i];
-            if (req.args) {
-                args = AmogusArg::collect_amogusified(req.args.value(), _view);
+            const Request &req = iface_node.requests[i];
+            if (!req.args.empty()) {
+                args = AmogusArg::collect_amogusified(req.args);
             }
             O += gen_request(interface_name, req, args, opcode);
         }
 
         for (size_t i = 0; i != events.size(); ++i) {
             auto opcode = i;
-            const ProtocolParsing::EventNode &ev = events[i];
+            const Event &ev = events[i];
             std::list<AmogusArg> args;
-            if (ev.args) {
-                args = AmogusArg::collect_amogusified(ev.args.value(), _view);
+            if (!ev.args.empty()) {
+                args = AmogusArg::collect_amogusified(ev.args);
             }
             O += gen_event(interface_name, ev, args, opcode);
         }
@@ -294,9 +240,8 @@ struct Generator
         return O;
     }
 
-    LineList gen_iface_meta(
-        const ProtocolParsing::InterfaceNode &iface_node,
-        std::string_view iface_name)
+    LineList
+        gen_iface_meta(const Interface &iface_node, std::string_view iface_name)
     {
         LineList O;
         O += "struct Meta";
@@ -309,46 +254,23 @@ struct Generator
     }
 
     LineList define_iface_meta_content(
-        const ProtocolParsing::InterfaceNode &iface_node,
+        const Interface &iface_node,
         std::string_view message_type_prefix,
         std::string_view iface_name)
     {
-        std::vector<std::reference_wrapper<const ProtocolParsing::RequestNode>>
-            requests;
-        std::vector<std::reference_wrapper<const ProtocolParsing::EventNode>>
-            events;
-
-        auto sink = [&](const ProtocolParsing::Node &node) {
-            const auto *req_node =
-                std::get_if<ProtocolParsing::RequestNode>(&node);
-            if (req_node) {
-                requests.push_back(*req_node);
-            }
-
-            const auto *ev_node =
-                std::get_if<ProtocolParsing::EventNode>(&node);
-            if (ev_node) {
-                events.push_back(*ev_node);
-            }
-        };
-        if (iface_node.requests) {
-            _view.chain_iterate(iface_node.requests.value(), sink);
-        }
-
-        if (iface_node.events) {
-            _view.chain_iterate(iface_node.events.value(), sink);
-        }
+        auto requests = iface_node.requests;
+        auto events = iface_node.events;
 
         LineList requests_msg_types;
         for (size_t idx = 0; idx != requests.size(); ++idx) {
-            const ProtocolParsing::RequestNode &req = requests[idx];
+            const Request &req = requests[idx];
             auto &req_name = req.name.value();
             requests_msg_types += req_name;
         }
 
         LineList events_msg_types;
         for (size_t idx = 0; idx != events.size(); ++idx) {
-            const ProtocolParsing::EventNode &ev = events[idx];
+            const Event &ev = events[idx];
             auto &ev_name = ev.name.value();
             events_msg_types += ev_name;
         }
@@ -476,7 +398,7 @@ struct Generator
 
     LineList gen_request(
         std::string_view interface_name,
-        const ProtocolParsing::RequestNode &req,
+        const Request &req,
         std::list<AmogusArg> &args,
         size_t opcode)
     {
@@ -485,7 +407,7 @@ struct Generator
 
     LineList gen_event(
         std::string_view interface_name,
-        const ProtocolParsing::EventNode &ev,
+        const Event &ev,
         std::list<AmogusArg> &args,
         size_t opcode)
     {
@@ -522,7 +444,7 @@ struct Generator
         return O;
     }
 
-    LineList define_arg(const ProtocolParsing::ArgRawTag &arg)
+    LineList define_arg(const Argument &arg)
     {
         LineList O;
         auto type = arg.type.value();
