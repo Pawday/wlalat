@@ -106,7 +106,8 @@ struct AmogusArg : Argument
 
 struct Generator
 {
-    Generator(ProtocolParsing::ProtocolTreeView view) : _view{view}
+    Generator(std::vector<CodeGen::Protocol> &&protocols)
+        : _protocols{std::move(protocols)}
     {
     }
 
@@ -125,8 +126,7 @@ struct Generator
         O += "";
 
         bool f = true;
-        auto protos = _view.collect();
-        for (auto &proto : protos) {
+        for (auto &proto : _protocols) {
             O += on_proto(proto);
         }
 
@@ -459,7 +459,7 @@ struct Generator
     }
 
   private:
-    ProtocolParsing::ProtocolTreeView _view;
+    std::vector<CodeGen::Protocol> _protocols;
 };
 }; // namespace CodeGen
 }; // namespace wlalat

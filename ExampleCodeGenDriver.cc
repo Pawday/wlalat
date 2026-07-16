@@ -32,7 +32,7 @@ try {
     wlalat::ProtocolParsing::ProtocolParser p{content};
     wlalat::ProtocolParsing::ProtocolTree tree = p.parse();
 
-    wlalat::CodeGen::Generator m{tree.view()};
+    wlalat::CodeGen::Generator m{tree.view().collect()};
     auto gen = m.generate();
     std::string gen_data;
     for (auto &l : gen) {
