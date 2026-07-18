@@ -1,9 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
+#include <iterator>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace wlalat
@@ -68,6 +71,134 @@ struct CommentBuffer // wlalat::xml
     }
 
     std::array<std::optional<char>, 4> _buf{};
+};
+
+struct TagParser // wlalat::xml
+{
+    constexpr TagParser(std::string_view string) : _s{string}
+    {
+    }
+
+    constexpr std::optional<std::string_view> name() const
+    {
+        auto s = _s;
+        if (s.empty()) {
+            return {};
+        }
+        s = s.substr(1);
+
+        if (s.empty()) {
+            return {};
+        }
+
+        if (s.front() == '>') {
+            return {};
+        }
+
+        switch (s.front()) {
+            case '?':
+            case '/':
+                s = s.substr(1);
+        }
+
+        auto name_end = std::ranges::find_if(s, white_or_name_end);
+        if (name_end == std::end(s)) {
+            return {};
+        }
+
+        auto name_len = std::distance(s.begin(), name_end);
+        return s.substr(0, name_len);
+    }
+
+    enum Type
+    {
+        UNPAIRED,
+        PAIR_START,
+        PAIR_END,
+    };
+
+    constexpr std::optional<Type> type() const
+    {
+        auto s = _s;
+        if (s.size() < 2) {
+            return {};
+        }
+
+        if (s[1] == '/') {
+            return Type::PAIR_END;
+        }
+
+        if (s[s.size() - 2] == '/') {
+            return Type::UNPAIRED;
+        }
+
+        return Type::PAIR_START;
+    }
+
+    template <typename AttrSinkT>
+    constexpr void attribs(AttrSinkT &sink) const
+    {
+        auto s = _s;
+        auto name_end = std::ranges::find_if(s, white);
+        if (name_end == std::end(s)) {
+            return;
+        }
+        s = s.substr(std::distance(s.begin(), name_end));
+
+        while (true) {
+            auto white_end = std::ranges::find_if_not(s, white);
+            if (white_end == std::end(s)) {
+                return;
+            }
+            s = s.substr(std::distance(s.begin(), white_end));
+
+            auto q0 = std::ranges::find(s, '"');
+            if (q0 == std::end(s)) {
+                return;
+            }
+            auto q1 = std::find(q0 + 1, s.end(), '"');
+            if (q1 == std::end(s)) {
+                return;
+            }
+
+            auto attr_end = q1 + 1;
+            if (attr_end == std::end(s)) {
+                return;
+            }
+            auto attr_len = std::distance(s.begin(), attr_end);
+
+            std::string_view attr = s.substr(0, attr_len);
+            sink(attr);
+            s = s.substr(attr_len);
+        }
+    }
+
+  private:
+    static constexpr bool white(char c)
+    {
+        switch (c) {
+            case ' ':
+            case '\n':
+            case '\r':
+            case '\t':
+                return true;
+        }
+
+        return false;
+    }
+
+    static constexpr bool white_or_name_end(char c)
+    {
+        switch (c) {
+            case '/':
+            case '>':
+                return true;
+        }
+
+        return white(c);
+    }
+
+    std::string_view _s;
 };
 
 template <typename ParserCallbackT>
