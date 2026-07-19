@@ -494,10 +494,16 @@ struct ProtocolTreeBuilder
         TypedNodeIndex<DstNodeT> dst_idx,
         std::vector<Index<NodeT>> DstNodeT::*dst_vec_ptr)
     {
-        _tree.reserve(_tree.size() + 1);
-        _active_tags.reserve(_active_tags.size() + 1);
+        auto ensure_size_for = []<typename T>(std::vector<T> &vec) {
+            if (vec.capacity() == vec.size()) {
+                vec.reserve(vec.size() * 2);
+            }
+        };
+
+        ensure_size_for(_tree);
+        ensure_size_for(_active_tags);
         std::vector<Index<NodeT>> &dst = (dst_idx.get(_tree).*dst_vec_ptr);
-        dst.reserve(dst.size() + 1);
+        ensure_size_for(dst);
 
         size_t index = _tree.size();
         _tree.push_back(Node{NodeT{tag}});
