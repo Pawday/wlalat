@@ -229,7 +229,7 @@ struct Generator
         LineList O;
         O += "struct Meta";
         O += "{";
-        LineList B0 = define_iface_meta_content(iface_node, "", iface_name);
+        LineList B0 = define_iface_meta_content(iface_node, iface_name);
         B0.indent();
         O += std::move(B0);
         O += "};";
@@ -237,26 +237,10 @@ struct Generator
     }
 
     LineList define_iface_meta_content(
-        const Interface &iface_node,
-        std::string_view message_type_prefix,
-        std::string_view iface_name)
+        const Interface &iface_node, std::string_view iface_name)
     {
         auto requests = iface_node.requests;
         auto events = iface_node.events;
-
-        LineList requests_msg_types;
-        for (size_t idx = 0; idx != requests.size(); ++idx) {
-            const Request &req = requests[idx];
-            auto &req_name = req.name.value();
-            requests_msg_types += req_name;
-        }
-
-        LineList events_msg_types;
-        for (size_t idx = 0; idx != events.size(); ++idx) {
-            const Event &ev = events[idx];
-            auto &ev_name = ev.name.value();
-            events_msg_types += ev_name;
-        }
 
         LineList B0;
         B0 += std::format(
@@ -264,9 +248,9 @@ struct Generator
         B0 += std::format("using Events = std::tuple");
         B0 += "<";
         LineList B1;
-        for (auto &msg_type_name : events_msg_types) {
-            B1 +=
-                std::format("{}message_{}", message_type_prefix, msg_type_name);
+        for (auto &ev : events) {
+            auto &msg_type_name = ev.name.value();
+            B1 += std::format("message_{}", msg_type_name);
         }
         comma_sep(B1);
         B1.indent();
@@ -276,9 +260,9 @@ struct Generator
         B0 += std::format("using Requests = std::tuple");
         B0 += "<";
         B1.clear();
-        for (auto &msg_type_name : requests_msg_types) {
-            B1 +=
-                std::format("{}message_{}", message_type_prefix, msg_type_name);
+        for (auto &req : requests) {
+            auto &msg_type_name = req.name.value();
+            B1 += std::format("message_{}", msg_type_name);
         }
         comma_sep(B1);
         B1.indent();
