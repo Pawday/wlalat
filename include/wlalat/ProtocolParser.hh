@@ -213,13 +213,13 @@ struct RawTagVariant : std::variant<
     }
 };
 
+template <typename T>
 struct Index
 {
     constexpr Index(size_t index) : _index{index}
     {
     }
 
-    template <typename T>
     constexpr T &get(std::span<T> C)
     {
         if (C.size() < _index) {
@@ -237,52 +237,46 @@ struct Index
     size_t _index;
 };
 
-template <typename T>
-struct IndexChainNode : Index
-{
-    std::optional<Index> next;
-};
-
-struct EntryNode : IndexChainNode<EntryNode>, EntryRawTag
+struct EntryNode : EntryRawTag
 {
 };
 
-struct EnumNode : IndexChainNode<EnumNode>, EnumRawTag
+struct EnumNode : EnumRawTag
 {
-    std::optional<IndexChainNode<EntryNode>> entries;
+    std::vector<Index<EntryNode>> entries;
 };
 
-struct ArgNode : IndexChainNode<ArgNode>, ArgRawTag
-{
-};
-
-struct EventNode : IndexChainNode<EventNode>, EventRawTag
-{
-    std::optional<IndexChainNode<ArgNode>> args;
-};
-
-struct RequestNode : IndexChainNode<RequestNode>, RequestRawTag
-{
-    std::optional<IndexChainNode<ArgNode>> args;
-};
-
-struct InterfaceNode : IndexChainNode<InterfaceNode>, InterfaceRawTag
-{
-    std::optional<IndexChainNode<RequestNode>> requests;
-    std::optional<IndexChainNode<EventNode>> events;
-    std::optional<IndexChainNode<EnumNode>> enums;
-};
-
-struct ProtocolNode : IndexChainNode<ProtocolNode>, ProtocolRawTag
-{
-    std::optional<IndexChainNode<InterfaceNode>> interfaces;
-};
-
-struct DescriptionNode : IndexChainNode<DescriptionNode>, DescriptionRawTag
+struct ArgNode : ArgRawTag
 {
 };
 
-struct CopyrightNode : IndexChainNode<CopyrightNode>, CopyrightRawTag
+struct EventNode : EventRawTag
+{
+    std::vector<Index<ArgNode>> args;
+};
+
+struct RequestNode : RequestRawTag
+{
+    std::vector<Index<ArgNode>> args;
+};
+
+struct InterfaceNode : InterfaceRawTag
+{
+    std::vector<Index<RequestNode>> requests;
+    std::vector<Index<EventNode>> events;
+    std::vector<Index<EnumNode>> enums;
+};
+
+struct ProtocolNode : ProtocolRawTag
+{
+    std::vector<Index<InterfaceNode>> interfaces;
+};
+
+struct DescriptionNode : DescriptionRawTag
+{
+};
+
+struct CopyrightNode : CopyrightRawTag
 {
 };
 
@@ -319,39 +313,12 @@ struct Node : std::variant<
         auto vis = []<typename Alt>(const Alt &) { return Alt::tag_name; };
         return std::visit(vis, *this);
     }
-
-    constexpr Index node_index() const
-    {
-        auto vis = []<typename Alt>(const Alt &alt) { return alt.index(); };
-        return std::visit(vis, *this);
-    }
-
-    constexpr std::optional<Index> node_index_next() const
-    {
-        auto v = []<typename AltT>(const AltT &alt) { return alt.next; };
-        return std::visit(v, *this);
-    }
 };
 
 struct ProtocolTreeView
 {
     constexpr ProtocolTreeView(std::span<const Node> nodes) : _nodes{nodes}
     {
-    }
-
-    template <typename SinkT>
-    constexpr void chain_iterate(Index start, SinkT &sink)
-    {
-        Index curr = start;
-        while (true) {
-            const Node &curr_node = curr.get(_nodes);
-            sink(curr_node);
-            auto next = curr_node.node_index_next();
-            if (!next) {
-                break;
-            }
-            curr = next.value();
-        }
     }
 
     template <typename SinkT>
@@ -376,92 +343,91 @@ struct ProtocolTreeView
         std::optional<std::reference_wrapper<CodeGen::Request>> active_request;
         std::optional<std::reference_wrapper<CodeGen::Enum>> active_enum;
 
-        auto collect_args = [&](IndexChainNode<ArgNode> args_chain) {
+        auto node_from_typed_index = [&]<typename T>(Index<T> idx) {
+            // TODO: Use TypedNodeIndex
+            if (idx.index() >= _nodes.size()) {
+                throw std::out_of_range{"node_from_typed_index"};
+            }
+            const Node &node = _nodes[idx.index()];
+            return std::get<T>(node);
+        };
+
+        using ArgsIndexes = std::vector<Index<ArgNode>>;
+        auto collect_args = [&](const ArgsIndexes &args) {
             std::vector<CodeGen::Argument> O;
-            auto sink = [&](const ProtocolParsing::Node &arg_node_v) {
-                auto &arg_node = std::get<ProtocolParsing::ArgNode>(arg_node_v);
+            auto sink = [&](const ArgNode &arg_node) {
                 CodeGen::Argument arg{};
                 arg.name = arg_node.name;
                 arg.type = arg_node.type;
                 arg.interface = arg_node.interface;
                 O.push_back(std::move(arg));
             };
-            chain_iterate(args_chain, sink);
+            for (auto &idx : args) {
+                sink(node_from_typed_index(idx));
+            }
             return O;
         };
 
-        auto collect_entries = [&](IndexChainNode<EntryNode> entry_chain) {
+        using EntryIndexes = std::vector<Index<EntryNode>>;
+        auto collect_entries = [&](const EntryIndexes &entries) {
             std::vector<CodeGen::EnumEntry> O;
-            auto sink = [&](const ProtocolParsing::Node &entry_node_v) {
-                auto &entry_node =
-                    std::get<ProtocolParsing::EntryNode>(entry_node_v);
+            auto sink = [&](const EntryNode &entry_node) {
                 CodeGen::EnumEntry entry{};
                 entry.name = entry_node.name;
                 entry.value = entry_node.value;
                 O.push_back(std::move(entry));
             };
-            chain_iterate(entry_chain, sink);
+            for (auto &entry : entries) {
+                sink(node_from_typed_index(entry));
+            }
             return O;
         };
 
-        auto event_sink = [&](const ProtocolParsing::Node &event_node_v) {
-            auto &event_node =
-                std::get<ProtocolParsing::EventNode>(event_node_v);
+        auto event_sink = [&](const EventNode &event_node) {
             CodeGen::Event ev{};
             ev.name = event_node.name;
-            if (event_node.args) {
-                ev.args = collect_args(event_node.args.value());
-            }
+            ev.args = collect_args(event_node.args);
             active_event = std::ref(ev);
 
             CodeGen::Interface &target_iface = active_iface.value();
             target_iface.events.push_back(std::move(ev));
         };
 
-        auto request_sink = [&](const ProtocolParsing::Node &requst_node_v) {
-            auto &request_node =
-                std::get<ProtocolParsing::RequestNode>(requst_node_v);
+        auto request_sink = [&](const RequestNode &request_node) {
             CodeGen::Request req{};
             req.name = request_node.name;
-            if (request_node.args) {
-                req.args = collect_args(request_node.args.value());
-            }
+            req.args = collect_args(request_node.args);
             active_request = std::ref(req);
 
             CodeGen::Interface &target_iface = active_iface.value();
             target_iface.requests.push_back(std::move(req));
         };
 
-        auto enum_sink = [&](const ProtocolParsing::Node &enum_node_v) {
-            auto &enum_node = std::get<ProtocolParsing::EnumNode>(enum_node_v);
+        auto enum_sink = [&](const EnumNode &enum_node) {
             CodeGen::Enum enum_v{};
             enum_v.name = enum_node.name;
-            if (enum_node.entries) {
-                enum_v.entries = collect_entries(enum_node.entries.value());
-            }
+            enum_v.entries = collect_entries(enum_node.entries);
             active_enum = std::ref(enum_v);
 
             CodeGen::Interface &target_iface = active_iface.value();
             target_iface.enums.push_back(std::move(enum_v));
         };
 
-        auto iface_sink = [&](const ProtocolParsing::Node &iface_node_v) {
-            auto &iface_node =
-                std::get<ProtocolParsing::InterfaceNode>(iface_node_v);
+        auto iface_sink = [&](const InterfaceNode &iface_node) {
             CodeGen::Interface iface{};
             iface.name = iface_node.name;
             active_iface = std::ref(iface);
 
-            if (iface_node.events) {
-                chain_iterate(iface_node.events.value(), event_sink);
+            for (auto &ev_idx : iface_node.events) {
+                event_sink(node_from_typed_index(ev_idx));
             }
 
-            if (iface_node.requests) {
-                chain_iterate(iface_node.requests.value(), request_sink);
+            for (auto &req_idx : iface_node.requests) {
+                request_sink(node_from_typed_index(req_idx));
             }
 
-            if (iface_node.enums) {
-                chain_iterate(iface_node.enums.value(), enum_sink);
+            for (auto &enum_idx : iface_node.enums) {
+                enum_sink(node_from_typed_index(enum_idx));
             }
 
             CodeGen::Protocol &target_proto = active_proto.value();
@@ -472,8 +438,8 @@ struct ProtocolTreeView
             CodeGen::Protocol proto{};
             proto.name = proto_node.name;
             active_proto = std::ref(proto);
-            if (proto_node.interfaces) {
-                chain_iterate(proto_node.interfaces.value(), iface_sink);
+            for (auto &iface_idx : proto_node.interfaces) {
+                iface_sink(node_from_typed_index(iface_idx));
             }
             O.push_back(std::move(proto));
             active_proto.reset();
@@ -518,20 +484,6 @@ struct ProtocolTreeBuilder
         return ProtocolTreeView{_tree};
     }
 
-    template <typename NodeT>
-    constexpr IndexChainNode<NodeT> chain_end(IndexChainNode<NodeT> node)
-    {
-        std::optional<Index> last;
-        auto sink = [&last](const Node &n) {
-            last = n.node_index();
-            if (!std::holds_alternative<NodeT>(n)) {
-                throw std::runtime_error{"Bad alternative in chain"};
-            }
-        };
-        view().chain_iterate(node.index(), sink);
-        return IndexChainNode<NodeT>{last.value()};
-    }
-
     template <typename T>
     struct TypedNodeIndex
     {
@@ -546,42 +498,35 @@ struct ProtocolTreeBuilder
         }
     };
 
-    template <typename RawTagT, typename DstNodeT>
+    template <
+        typename RawTagT,
+        typename DstNodeT,
+        typename NodeT = RawTagToNodeMapT<RawTagT>>
     constexpr void bind_chained(
         RawTagT &tag,
-        TypedNodeIndex<DstNodeT> &target_node_idx,
-        std::optional<IndexChainNode<RawTagToNodeMapT<RawTagT>>> DstNodeT::*
-            chain_dst_ptr)
+        TypedNodeIndex<DstNodeT> dst_idx,
+        std::vector<Index<NodeT>> DstNodeT::*dst_vec_ptr)
     {
-        using NodeT = RawTagToNodeMapT<RawTagT>;
-        NodeT node{_tree.size()};
-        static_cast<NodeT::RawTagT &>(node) = tag;
+        _tree.reserve(_tree.size() + 1);
+        _active_tags.reserve(_active_tags.size() + 1);
+        std::vector<Index<NodeT>> &dst = (dst_idx.get(_tree).*dst_vec_ptr);
+        dst.reserve(dst.size() + 1);
 
-        _tree.push_back(Node{node});
-        _active_tags.push_back(node);
-
-        DstNodeT &target_node = target_node_idx.get(_tree);
-
-        std::optional<IndexChainNode<NodeT>> &dst_chain =
-            std::invoke(chain_dst_ptr, target_node);
-        if (!dst_chain) {
-            dst_chain = node;
-            return;
-        }
-
-        auto end_idx = chain_end(dst_chain.value());
-        Node &end = end_idx.get(std::span{_tree});
-        NodeT &end_t = std::get<NodeT>(end);
-        end_t.next = node;
+        size_t index = _tree.size();
+        _tree.push_back(Node{NodeT{tag}});
+        _active_tags.push_back(Index<Node>{index});
+        dst.push_back(Index<NodeT>{index});
     }
 
-    template <typename NodeT>
-    constexpr void t_bind_stack_only(NodeT::RawTagT &tag)
+    template <typename RawTagT>
+    constexpr void t_bind_stack_only(RawTagT &tag)
     {
-        NodeT node{_tree.size()};
-        static_cast<NodeT::RawTagT &>(node) = tag;
+        using NodeT = std::remove_const_t<RawTagToNodeMapT<RawTagT>>;
+        _active_tags.reserve(_active_tags.size() + 1);
+        _tree.reserve(_tree.size() + 1);
+        _active_tags.push_back(Index<Node>{_tree.size()});
+        NodeT node{tag};
         _tree.push_back(Node{node});
-        _active_tags.push_back(node);
     }
 
     template <typename NodeT>
@@ -625,19 +570,19 @@ struct ProtocolTreeBuilder
 
     constexpr void bind(CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
     {
-        t_bind_stack_only<CopyrightNode>(raw_tag);
+        t_bind_stack_only(raw_tag);
     }
 
     template <typename DestNodeT>
     constexpr void bind(DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
     {
-        t_bind_stack_only<DescriptionNode>(raw_tag);
+        t_bind_stack_only(raw_tag);
     }
 
     constexpr void
         bind(DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
     {
-        t_bind_stack_only<DescriptionNode>(raw_tag);
+        t_bind_stack_only(raw_tag);
     }
 
     constexpr void
@@ -711,10 +656,10 @@ struct ProtocolTreeBuilder
                 throw std::runtime_error{"<protocol> must be a top level tag"};
             }
 
-            ProtocolNode node{B._tree.size()};
-            static_cast<ProtocolRawTag &>(node) = raw_proto;
+            ProtocolNode node{raw_proto};
+            Index<Node> index{B._tree.size()};
             B._tree.push_back(Node{node});
-            B._active_tags.push_back(node);
+            B._active_tags.push_back(index);
         }
     };
 
@@ -731,7 +676,7 @@ struct ProtocolTreeBuilder
         std::visit(visitor, raw_tag);
     }
 
-    constexpr Index active_tag_index()
+    constexpr Index<Node> active_tag_index()
     {
         if (_active_tags.empty()) {
             throw std::out_of_range{"unfinished_tag: empty stack"};
@@ -741,7 +686,7 @@ struct ProtocolTreeBuilder
 
   private:
     ProtocolTree _tree;
-    std::vector<Index> _active_tags;
+    std::vector<Index<Node>> _active_tags;
 };
 
 struct ProtocolParser
