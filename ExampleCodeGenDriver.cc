@@ -10,6 +10,7 @@
 #include <ios>
 #include <iterator>
 #include <print>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 
@@ -23,13 +24,15 @@ try {
     std::string o_file_arg{argv[2]};
 
     std::ifstream file{file_arg};
+    file >> std::noskipws;
     file.exceptions(std::ios::badbit);
-    file.exceptions(std::ios::failbit);
+    auto is = std::views::istream<char>(file);
 
-    std::string content{
-        std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>()};
+    wlalat::ProtocolParsing::ProtocolParser p;
+    for (char c : is) {
+        p.send(c);
+    }
 
-    wlalat::ProtocolParsing::ProtocolParser p{content};
     wlalat::CodeGen::Generator m{p.parse()};
     auto gen = m.generate();
     std::string gen_data;

@@ -678,15 +678,13 @@ struct ProtocolTreeBuilder
 
 struct ProtocolParser
 {
-    constexpr ProtocolParser(std::string_view string) : _s{string}
+    constexpr void send(char c)
     {
+        _xml.send(c);
     }
 
     constexpr std::vector<CodeGen::Protocol> parse()
     {
-        for (auto c : _s) {
-            _xml.send(c);
-        }
         _xml.finalize();
         return ProtocolTreeView{tree.build()}.collect();
     }
@@ -850,7 +848,6 @@ struct ProtocolParser
     CallbackObj _xml_callback{this};
     xml::Parser<CallbackObj> _xml{&_xml_callback};
 
-    std::string_view _s;
     ProtocolTreeBuilder tree;
 };
 

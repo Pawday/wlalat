@@ -7,18 +7,18 @@
 #include <exception>
 #include <format>
 #include <fstream>
-#include <functional>
 #include <ios>
-#include <iterator>
 #include <print>
-#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 constexpr auto test(std::string_view str)
 {
-    wlalat::ProtocolParsing::ProtocolParser p{str};
+    wlalat::ProtocolParsing::ProtocolParser p;
+    for (auto c : str) {
+        p.send(c);
+    }
     auto tree = p.parse();
     return tree.size();
 }
@@ -126,13 +126,16 @@ wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Protocol &proto)
 int main(int argc, char **argv)
 try {
     std::ifstream file{argv[1]};
+    file >> std::noskipws;
     file.exceptions(std::ios::badbit);
-    file.exceptions(std::ios::failbit);
+    auto is = std::views::istream<char>(file);
 
-    std::string content{
-        std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>()};
+    wlalat::ProtocolParsing::ProtocolParser p;
 
-    wlalat::ProtocolParsing::ProtocolParser p{content};
+    for (auto c : is) {
+        p.send(c);
+    }
+
     auto protos_collect = p.parse();
 
     for (auto &proto : protos_collect) {
