@@ -23,8 +23,11 @@ constexpr auto test(std::string_view str)
     return tree.size();
 }
 
-static_assert(test("<protocol>") == 1);
-static_assert(test("<protocol><interface>") == 2);
+static_assert(test("<protocol></protocol>") == 1);
+static_assert(
+    test(
+        "<protocol><interface></interface></protocol><protocol><interface></"
+        "interface></protocol>") == 2);
 
 wlalat::CodeGen::LineList
     dump(const std::vector<wlalat::CodeGen::Argument> &args)
@@ -130,9 +133,7 @@ try {
         std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>()};
 
     wlalat::ProtocolParsing::ProtocolParser p{content};
-    wlalat::ProtocolParsing::ProtocolTree tree = p.parse();
-    auto view = tree.view();
-    auto protos_collect = view.collect();
+    auto protos_collect = p.parse();
 
     for (auto &proto : protos_collect) {
         auto lines = dump(proto);

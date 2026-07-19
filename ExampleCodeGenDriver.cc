@@ -30,9 +30,7 @@ try {
         std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>()};
 
     wlalat::ProtocolParsing::ProtocolParser p{content};
-    wlalat::ProtocolParsing::ProtocolTree tree = p.parse();
-
-    wlalat::CodeGen::Generator m{tree.view().collect()};
+    wlalat::CodeGen::Generator m{p.parse()};
     auto gen = m.generate();
     std::string gen_data;
     for (auto &l : gen) {

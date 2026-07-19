@@ -453,14 +453,6 @@ struct ProtocolTreeView
     std::span<const Node> _nodes;
 };
 
-struct ProtocolTree : std::vector<Node>
-{
-    ProtocolTreeView view() const
-    {
-        return ProtocolTreeView{*this};
-    }
-};
-
 struct ProtocolTreeBuilder
 {
     constexpr void push(RawTagVariant raw_tag)
@@ -473,17 +465,12 @@ struct ProtocolTreeBuilder
         tag_end(raw_tag);
     }
 
-    constexpr ProtocolTree build() const
+    constexpr std::vector<Node> build() const
     {
         return _tree;
     }
 
   private:
-    ProtocolTreeView view() const
-    {
-        return ProtocolTreeView{_tree};
-    }
-
     template <typename T>
     struct TypedNodeIndex
     {
@@ -685,7 +672,7 @@ struct ProtocolTreeBuilder
     }
 
   private:
-    ProtocolTree _tree;
+    std::vector<Node> _tree;
     std::vector<Index<Node>> _active_tags;
 };
 
@@ -695,13 +682,13 @@ struct ProtocolParser
     {
     }
 
-    constexpr ProtocolTree parse()
+    constexpr std::vector<CodeGen::Protocol> parse()
     {
         for (auto c : _s) {
             _xml.send(c);
         }
         _xml.finalize();
-        return tree.build();
+        return ProtocolTreeView{tree.build()}.collect();
     }
 
   private:
