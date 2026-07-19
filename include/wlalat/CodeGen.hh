@@ -282,22 +282,6 @@ struct Generator
         LineList O;
         O += "struct Meta";
         O += "{";
-        LineList B0 = gen_args_meta_content(
-            msg_name, args, opcode, is_event, type_using, interface_type_using);
-        B0.indent();
-        O += std::move(B0);
-        O += "};";
-        return O;
-    }
-
-    LineList gen_args_meta_content(
-        std::string_view msg_name,
-        const std::vector<Argument> &args,
-        size_t opcode,
-        bool is_event,
-        std::string_view type_using,
-        std::string_view interface_type_using)
-    {
         LineList B0;
 
         B0 += std::format("using Type = {};", type_using);
@@ -360,7 +344,11 @@ struct Generator
         B1.indent();
         B0 += std::move(B1);
         B0 += ");";
-        return B0;
+
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
     }
 
     LineList gen_request(
