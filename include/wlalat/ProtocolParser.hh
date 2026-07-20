@@ -26,31 +26,25 @@ namespace wlalat
 namespace CodeGen
 {
 
-using AttrString = std::optional<std::string>;
+using AttrString = MetadataEntry;
 
 template <typename RawTagT>
 using MappingType = std::pair<std::string_view, AttrString RawTagT::*>;
 
-struct ProtocolRawTag
+struct ProtocolRawTag : ProtocolMetadata
 {
     using RawTagT = ProtocolRawTag;
     static constexpr std::string_view tag_name = "protocol";
-
-    AttrString name;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"name", &RawTagT::name},
     };
 };
 
-struct InterfaceRawTag
+struct InterfaceRawTag : InterfaceMetadata
 {
     using RawTagT = InterfaceRawTag;
     static constexpr std::string_view tag_name = "interface";
-
-    AttrString name;
-    AttrString version;
-    AttrString frozen;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"name", &RawTagT::name},
@@ -59,14 +53,10 @@ struct InterfaceRawTag
     };
 };
 
-struct RequestRawTag
+struct RequestRawTag : RequestMetadata
 {
     using RawTagT = RequestRawTag;
     static constexpr std::string_view tag_name = "request";
-
-    AttrString name;
-    AttrString type;
-    AttrString since;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"name", &RawTagT::name},
@@ -75,15 +65,10 @@ struct RequestRawTag
     };
 };
 
-struct EventRawTag
+struct EventRawTag : EventMetadata
 {
     using RawTagT = EventRawTag;
     static constexpr std::string_view tag_name = "event";
-
-    AttrString name;
-    AttrString since;
-    AttrString type;
-    AttrString deprecated_since;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"name", &RawTagT::name},
@@ -93,17 +78,11 @@ struct EventRawTag
     };
 };
 
-struct ArgRawTag
+struct ArgRawTag : ArgumentMetadata
 {
     using RawTagT = ArgRawTag;
 
     static constexpr std::string_view tag_name = "arg";
-    AttrString name;
-    AttrString type;
-    AttrString interface;
-    AttrString summary;
-    AttrString allow_null;
-    AttrString enum_name;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"name", &RawTagT::name},
@@ -115,14 +94,11 @@ struct ArgRawTag
     };
 };
 
-struct EnumRawTag
+struct EnumRawTag : EnumMetadata
 {
     using RawTagT = EnumRawTag;
 
     static constexpr std::string_view tag_name = "enum";
-    AttrString name;
-    AttrString since;
-    AttrString bitfield;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"name", &RawTagT::name},
@@ -131,16 +107,11 @@ struct EnumRawTag
     };
 };
 
-struct EntryRawTag
+struct EntryRawTag : EnumEntryMetadata
 {
     using RawTagT = EntryRawTag;
 
     static constexpr std::string_view tag_name = "entry";
-    AttrString name;
-    AttrString value;
-    AttrString summary;
-    AttrString since;
-    AttrString deprecated_since;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"name", &RawTagT::name},
@@ -338,8 +309,6 @@ struct ProtocolTreeView
 
         std::optional<std::reference_wrapper<CodeGen::Protocol>> active_proto;
         std::optional<std::reference_wrapper<CodeGen::Interface>> active_iface;
-        std::optional<std::reference_wrapper<CodeGen::Event>> active_event;
-        std::optional<std::reference_wrapper<CodeGen::Request>> active_request;
         std::optional<std::reference_wrapper<CodeGen::Enum>> active_enum;
 
         auto node_from_typed_index = [&]<typename T>(Index<T> idx) {
@@ -355,11 +324,7 @@ struct ProtocolTreeView
         auto collect_args = [&](const ArgsIndexes &args) {
             std::vector<CodeGen::Argument> O;
             auto sink = [&](const ArgNode &arg_node) {
-                CodeGen::Argument arg{};
-                arg.name = arg_node.name;
-                arg.type = arg_node.type;
-                arg.interface = arg_node.interface;
-                O.push_back(std::move(arg));
+                O.push_back(Argument{arg_node});
             };
             for (auto &idx : args) {
                 sink(node_from_typed_index(idx));
@@ -371,10 +336,7 @@ struct ProtocolTreeView
         auto collect_entries = [&](const EntryIndexes &entries) {
             std::vector<CodeGen::EnumEntry> O;
             auto sink = [&](const EntryNode &entry_node) {
-                CodeGen::EnumEntry entry{};
-                entry.name = entry_node.name;
-                entry.value = entry_node.value;
-                O.push_back(std::move(entry));
+                O.push_back(EnumEntry{entry_node});
             };
             for (auto &entry : entries) {
                 sink(node_from_typed_index(entry));
@@ -383,28 +345,21 @@ struct ProtocolTreeView
         };
 
         auto event_sink = [&](const EventNode &event_node) {
-            CodeGen::Event ev{};
-            ev.name = event_node.name;
+            CodeGen::Event ev{event_node};
             ev.args = collect_args(event_node.args);
-            active_event = std::ref(ev);
-
             CodeGen::Interface &target_iface = active_iface.value();
             target_iface.events.push_back(std::move(ev));
         };
 
         auto request_sink = [&](const RequestNode &request_node) {
-            CodeGen::Request req{};
-            req.name = request_node.name;
+            CodeGen::Request req{request_node};
             req.args = collect_args(request_node.args);
-            active_request = std::ref(req);
-
             CodeGen::Interface &target_iface = active_iface.value();
             target_iface.requests.push_back(std::move(req));
         };
 
         auto enum_sink = [&](const EnumNode &enum_node) {
-            CodeGen::Enum enum_v{};
-            enum_v.name = enum_node.name;
+            CodeGen::Enum enum_v{enum_node};
             enum_v.entries = collect_entries(enum_node.entries);
             active_enum = std::ref(enum_v);
 
@@ -413,8 +368,7 @@ struct ProtocolTreeView
         };
 
         auto iface_sink = [&](const InterfaceNode &iface_node) {
-            CodeGen::Interface iface{};
-            iface.name = iface_node.name;
+            CodeGen::Interface iface{iface_node};
             active_iface = std::ref(iface);
 
             for (auto &ev_idx : iface_node.events) {
@@ -434,8 +388,7 @@ struct ProtocolTreeView
         };
 
         auto proto_sink = [&](const ProtocolNode &proto_node) {
-            CodeGen::Protocol proto{};
-            proto.name = proto_node.name;
+            CodeGen::Protocol proto{proto_node};
             active_proto = std::ref(proto);
             for (auto &iface_idx : proto_node.interfaces) {
                 iface_sink(node_from_typed_index(iface_idx));

@@ -10,50 +10,93 @@ namespace wlalat
 namespace CodeGen
 {
 
-struct Argument
+using MetadataEntry = std::optional<std::string>;
+
+struct ArgumentMetadata
 {
-    std::optional<std::string> name;
-    std::optional<std::string> type;
-    std::optional<std::string> interface;
+    MetadataEntry name;
+    MetadataEntry type;
+    MetadataEntry interface;
+    MetadataEntry summary;
+    MetadataEntry allow_null;
+    MetadataEntry enum_name;
 };
 
-struct Message
+struct RequestMetadata
 {
-    std::optional<std::string> name;
+    MetadataEntry name;
+    MetadataEntry type;
+    MetadataEntry since;
+};
+
+struct EventMetadata
+{
+    MetadataEntry name;
+    MetadataEntry type;
+    MetadataEntry since;
+    MetadataEntry deprecated_since;
+};
+
+struct EnumEntryMetadata
+{
+    MetadataEntry name;
+    MetadataEntry value;
+    MetadataEntry summary;
+    MetadataEntry since;
+    MetadataEntry deprecated_since;
+};
+
+struct EnumMetadata
+{
+    MetadataEntry name;
+    MetadataEntry since;
+    MetadataEntry bitfield;
+};
+
+struct InterfaceMetadata
+{
+    MetadataEntry name;
+    MetadataEntry version;
+    MetadataEntry frozen;
+};
+
+struct ProtocolMetadata
+{
+    MetadataEntry name;
+};
+
+struct Argument : ArgumentMetadata
+{
+};
+
+struct Request : RequestMetadata
+{
     std::vector<Argument> args;
 };
 
-struct Request : Message
+struct Event : EventMetadata
+{
+    std::vector<Argument> args;
+};
+
+struct EnumEntry : EnumEntryMetadata
 {
 };
 
-struct Event : Message
+struct Enum : EnumMetadata
 {
-};
-
-struct EnumEntry
-{
-    std::optional<std::string> name;
-    std::optional<std::string> value;
-};
-
-struct Enum
-{
-    std::optional<std::string> name;
     std::vector<EnumEntry> entries;
 };
 
-struct Interface
+struct Interface : InterfaceMetadata
 {
-    std::optional<std::string> name;
     std::vector<Request> requests;
     std::vector<Event> events;
     std::vector<Enum> enums;
 };
 
-struct Protocol
+struct Protocol : ProtocolMetadata
 {
-    std::optional<std::string> name;
     std::vector<Interface> interfaces;
 };
 } // namespace CodeGen
