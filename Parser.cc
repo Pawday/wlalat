@@ -1,5 +1,6 @@
 #include <wlalat/CodeGen.hh>
 #include <wlalat/CodeGenInfo.hh>
+#include <wlalat/CodeGenInfoFormat.hh>
 #include <wlalat/ProtocolParser.hh>
 
 #include <cstddef>
@@ -33,11 +34,9 @@ wlalat::CodeGen::LineList
 {
     wlalat::CodeGen::LineList O;
     for (auto &arg : args) {
-        O += std::format(
-            "Argument name=[{}] type=[{}] interface=[{}]",
-            arg.name.value_or("<null>"),
-            arg.type.value_or("<null>"),
-            arg.interface.value_or("<null>"));
+        auto &meta =
+            static_cast<const wlalat::CodeGen::ArgumentMetadata &>(arg);
+        O += std::format("Argument {{{}}}", meta);
     }
     return O;
 }
@@ -47,10 +46,9 @@ wlalat::CodeGen::LineList
 {
     wlalat::CodeGen::LineList O;
     for (auto &entry : entries) {
-        O += std::format(
-            "Entry name=[{}] value=[{}]",
-            entry.name.value_or("<null>"),
-            entry.value.value_or("<null>"));
+        auto &meta =
+            static_cast<const wlalat::CodeGen::EnumEntryMetadata &>(entry);
+        O += std::format("Entry {{{}}}", meta);
     }
     return O;
 }
@@ -58,7 +56,8 @@ wlalat::CodeGen::LineList
 wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Enum &enum_v)
 {
     wlalat::CodeGen::LineList O;
-    O += std::format("Enum [{}]", enum_v.name.value_or("<null>"));
+    auto &meta = static_cast<const wlalat::CodeGen::EnumMetadata &>(enum_v);
+    O += std::format("Enum {{{}}}", meta);
     auto entries = dump(enum_v.entries);
     entries.indent();
     O += std::move(entries);
@@ -68,7 +67,8 @@ wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Enum &enum_v)
 wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Event &ev)
 {
     wlalat::CodeGen::LineList O;
-    O += std::format("Event [{}]", ev.name.value_or("<null>"));
+    auto &meta = static_cast<const wlalat::CodeGen::EventMetadata &>(ev);
+    O += std::format("Event {{{}}}", meta);
     auto args = dump(ev.args);
     args.indent();
     O += std::move(args);
@@ -78,7 +78,8 @@ wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Event &ev)
 wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Request &req)
 {
     wlalat::CodeGen::LineList O;
-    O += std::format("Request [{}]", req.name.value_or("<null>"));
+    auto &meta = static_cast<const wlalat::CodeGen::RequestMetadata &>(req);
+    O += std::format("Request {{{}}}", meta);
     auto args = dump(req.args);
     args.indent();
     O += std::move(args);
@@ -88,7 +89,8 @@ wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Request &req)
 wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Interface &iface)
 {
     wlalat::CodeGen::LineList O;
-    O += std::format("Interface [{}]", iface.name.value_or("<null>"));
+    auto &meta = static_cast<const wlalat::CodeGen::InterfaceMetadata &>(iface);
+    O += std::format("Interface {{{}}}", meta);
 
     for (auto &event : iface.events) {
         auto E = dump(event);
@@ -113,7 +115,8 @@ wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Interface &iface)
 wlalat::CodeGen::LineList dump(const wlalat::CodeGen::Protocol &proto)
 {
     wlalat::CodeGen::LineList O;
-    O += std::format("Protocol [{}]", proto.name.value_or("<null>"));
+    auto &meta = static_cast<const wlalat::CodeGen::ProtocolMetadata &>(proto);
+    O += std::format("Protocol {{{}}}", meta);
     for (auto &iface : proto.interfaces) {
         auto I = dump(iface);
         I.indent();
