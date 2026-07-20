@@ -15,7 +15,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -154,34 +153,16 @@ struct RawTagVariant : std::variant<
                            DescriptionRawTag,
                            CopyrightRawTag>
 {
-    static constexpr auto
-        from_tag_name(std::string_view tag_name) -> std::optional<RawTagVariant>
+    static constexpr auto from_tag_name(std::string_view tag_name)
+        -> std::optional<RawTagVariant>
     {
         std::optional<RawTagVariant> o;
-
-        auto match_name =
-            [&]<typename Alternative>(std::type_identity<Alternative>) {
-                if (o) {
-                    return;
-                }
-
-                if (Alternative::tag_name == tag_name) {
-                    o.emplace(Alternative{});
-                }
-            };
-
-        auto match_name_for_all = [&](auto... alternatives) {
-            (match_name(alternatives), ...);
-        };
-
-        auto make_alts = []<typename... Alt>(const std::variant<Alt...> &) {
-            return std::tuple<std::type_identity<Alt>...>{};
-        };
-
-        auto alts =
-            std::invoke_result_t<decltype(make_alts), RawTagVariant &>{};
-
-        std::apply(match_name_for_all, alts);
+        [&]<typename... Alts>(std::variant<Alts...> *) {
+            [[maybe_unused]] bool found =
+                ((Alts::tag_name == tag_name ? (o.emplace(Alts{}), true)
+                                             : false) ||
+                 ...);
+        }(static_cast<RawTagVariant *>(nullptr));
         return o;
     }
 };
