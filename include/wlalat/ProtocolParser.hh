@@ -409,12 +409,12 @@ struct ProtocolTreeView
 
 struct ProtocolTreeBuilder
 {
-    constexpr void push(RawTagVariant raw_tag)
+    constexpr void push(const RawTagVariant &raw_tag)
     {
         tag_start(raw_tag);
     }
 
-    constexpr void pop(RawTagVariant raw_tag)
+    constexpr void pop(const RawTagVariant &raw_tag)
     {
         tag_end(raw_tag);
     }
@@ -444,7 +444,7 @@ struct ProtocolTreeBuilder
         typename DstNodeT,
         typename NodeT = RawTagToNodeMapT<RawTagT>>
     constexpr void bind_chained(
-        RawTagT &tag,
+        const RawTagT &tag,
         TypedNodeIndex<DstNodeT> dst_idx,
         std::vector<Index<NodeT>> DstNodeT::*dst_vec_ptr)
     {
@@ -466,7 +466,7 @@ struct ProtocolTreeBuilder
     }
 
     template <typename RawTagT>
-    constexpr void t_bind_stack_only(RawTagT &tag)
+    constexpr void t_bind_stack_only(const RawTagT &tag)
     {
         using NodeT = std::remove_const_t<RawTagToNodeMapT<RawTagT>>;
         _active_tags.reserve(_active_tags.size() + 1);
@@ -496,7 +496,7 @@ struct ProtocolTreeBuilder
     }
 
     template <typename RawTagT, typename NodeT>
-    constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<NodeT>)
+    constexpr void bind(const RawTagT &raw_tag, TypedNodeIndex<NodeT>)
     {
         if not consteval {
             auto msg = std::format(
@@ -508,66 +508,66 @@ struct ProtocolTreeBuilder
     }
 
     template <typename RawTagT>
-    constexpr void bind(RawTagT &raw_tag, TypedNodeIndex<ProtocolNode>)
+    constexpr void bind(const RawTagT &raw_tag, TypedNodeIndex<ProtocolNode>)
     {
         auto msg =
             std::format("Cannot bind [{}] to protocol", RawTagT::tag_name);
         throw std::runtime_error{std::move(msg)};
     }
 
-    constexpr void bind(CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+    constexpr void bind(const CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
     {
         t_bind_stack_only(raw_tag);
     }
 
     template <typename DestNodeT>
-    constexpr void bind(DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
+    constexpr void bind(const DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
     {
         t_bind_stack_only(raw_tag);
     }
 
     constexpr void
-        bind(DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+        bind(const DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
     {
         t_bind_stack_only(raw_tag);
     }
 
     constexpr void
-        bind(InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &proto_idx)
+        bind(const InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &proto_idx)
     {
         bind_chained(raw_tag, proto_idx, &ProtocolNode::interfaces);
     }
 
     constexpr void
-        bind(EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+        bind(const EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
     {
         bind_chained(raw_tag, iface_idx, &InterfaceNode::enums);
     }
 
     constexpr void
-        bind(EntryRawTag &raw_tag, TypedNodeIndex<EnumNode> &enum_idx)
+        bind(const EntryRawTag &raw_tag, TypedNodeIndex<EnumNode> &enum_idx)
     {
         bind_chained(raw_tag, enum_idx, &EnumNode::entries);
     }
 
-    constexpr void bind(ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
+    constexpr void bind(const ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
     {
         bind_chained(raw_tag, req, &RequestNode::args);
     }
 
-    constexpr void bind(ArgRawTag &raw_tag, TypedNodeIndex<EventNode> &ev)
+    constexpr void bind(const ArgRawTag &raw_tag, TypedNodeIndex<EventNode> &ev)
     {
         bind_chained(raw_tag, ev, &EventNode::args);
     }
 
     constexpr void
-        bind(RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+        bind(const RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
     {
         bind_chained(raw_tag, iface_idx, &InterfaceNode::requests);
     }
 
     constexpr void
-        bind(EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+        bind(const EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
     {
         bind_chained(raw_tag, iface_idx, &InterfaceNode::events);
     }
@@ -578,7 +578,7 @@ struct ProtocolTreeBuilder
         ProtocolTreeBuilder &B;
 
         template <typename RawTagT>
-        constexpr void operator()(RawTagT &raw_tag)
+        constexpr void operator()(const RawTagT &raw_tag)
         {
             auto &active_tags = B._active_tags;
             if (active_tags.empty()) {
@@ -597,7 +597,7 @@ struct ProtocolTreeBuilder
             std::visit(visitor, node);
         }
 
-        constexpr void operator()(ProtocolRawTag &raw_proto)
+        constexpr void operator()(const ProtocolRawTag &raw_proto)
         {
             if (!B._active_tags.empty()) {
                 throw std::runtime_error{"<protocol> must be a top level tag"};
@@ -610,14 +610,14 @@ struct ProtocolTreeBuilder
         }
     };
 
-    constexpr void tag_start(RawTagVariant raw_tag)
+    constexpr void tag_start(const RawTagVariant &raw_tag)
     {
         std::visit(tag_start_visitor{*this}, raw_tag);
     }
 
-    constexpr void tag_end(RawTagVariant raw_tag)
+    constexpr void tag_end(const RawTagVariant &raw_tag)
     {
-        auto visitor = [&]<typename RawTagT>(RawTagT &) {
+        auto visitor = [&]<typename RawTagT>(const RawTagT &) {
             tag_end_delete_check_alt<RawTagToNodeMapT<RawTagT>>();
         };
         std::visit(visitor, raw_tag);
