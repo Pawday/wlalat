@@ -14,7 +14,10 @@ struct Formatter
 #define WLALAT_FORMATTER_MAKE_METADATA_OVERLOAD_FOR(TYPE)                      \
     constexpr auto operator()(const TYPE &M)                                   \
     {                                                                          \
-        return format_metadata(M);                                             \
+        it = std::format_to(it, "{{");                                         \
+        it = format_metadata(M);                                               \
+        it = std::format_to(it, "}}");                                         \
+        return it;                                                             \
     }
     WLALAT_FORMATTER_MAKE_METADATA_OVERLOAD_FOR(CodeGen::ProtocolMetadata);
     WLALAT_FORMATTER_MAKE_METADATA_OVERLOAD_FOR(CodeGen::InterfaceMetadata);
@@ -154,6 +157,10 @@ struct FormatterNoArgsBase
     constexpr ParseContext::iterator parse(ParseContext &ctx)
     {
         auto it = ctx.begin();
+        if (it == ctx.end()) {
+            return it;
+        }
+
         if (*it != '}') {
             throw std::format_error("Invalid format args");
         }
