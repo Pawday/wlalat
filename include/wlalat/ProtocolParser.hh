@@ -23,7 +23,7 @@
 namespace wlalat
 {
 
-namespace ProtocolParsing
+namespace CodeGen
 {
 
 using AttrString = std::optional<std::string>;
@@ -198,8 +198,8 @@ struct RawTagVariant : std::variant<
             RawTagVariant{Alternatives{}}...};
     }
 
-    static constexpr auto from_tag_name(std::string_view tag_name)
-        -> std::optional<RawTagVariant>
+    static constexpr auto
+        from_tag_name(std::string_view tag_name) -> std::optional<RawTagVariant>
     {
         auto name_match = [tag_name](RawTagVariant &v) {
             return v.tag_name() == tag_name;
@@ -325,8 +325,7 @@ struct ProtocolTreeView
     constexpr void protos_iterate(SinkT &sink)
     {
         for (auto &node : _nodes) {
-            auto *proto_p =
-                std::get_if<wlalat::ProtocolParsing::ProtocolNode>(&node);
+            auto *proto_p = std::get_if<ProtocolNode>(&node);
             if (proto_p) {
                 sink(*proto_p);
             }
@@ -434,7 +433,7 @@ struct ProtocolTreeView
             target_proto.interfaces.push_back(std::move(iface));
         };
 
-        auto proto_sink = [&](const ProtocolParsing::ProtocolNode &proto_node) {
+        auto proto_sink = [&](const ProtocolNode &proto_node) {
             CodeGen::Protocol proto{};
             proto.name = proto_node.name;
             active_proto = std::ref(proto);
@@ -857,5 +856,5 @@ struct ProtocolParser
     ProtocolTreeBuilder tree;
 };
 
-}; // namespace ProtocolParsing
+}; // namespace CodeGen
 }; // namespace wlalat

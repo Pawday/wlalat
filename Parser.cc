@@ -15,7 +15,7 @@
 
 constexpr auto test(std::string_view str)
 {
-    wlalat::ProtocolParsing::ProtocolParser p;
+    wlalat::CodeGen::ProtocolParser p;
     for (auto c : str) {
         p.send(c);
     }
@@ -25,9 +25,8 @@ constexpr auto test(std::string_view str)
 
 static_assert(test("<protocol></protocol>") == 1);
 static_assert(
-    test(
-        "<protocol><interface></interface></protocol><protocol><interface></"
-        "interface></protocol>") == 2);
+    test("<protocol><interface></interface></protocol><protocol><interface></"
+         "interface></protocol>") == 2);
 
 wlalat::CodeGen::LineList
     dump(const std::vector<wlalat::CodeGen::Argument> &args)
@@ -130,7 +129,7 @@ try {
     file.exceptions(std::ios::badbit);
     auto is = std::views::istream<char>(file);
 
-    wlalat::ProtocolParsing::ProtocolParser p;
+    wlalat::CodeGen::ProtocolParser p;
 
     for (auto c : is) {
         p.send(c);

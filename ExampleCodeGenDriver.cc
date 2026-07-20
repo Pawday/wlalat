@@ -28,7 +28,7 @@ try {
     file.exceptions(std::ios::badbit);
     auto is = std::views::istream<char>(file);
 
-    wlalat::ProtocolParsing::ProtocolParser p;
+    wlalat::CodeGen::ProtocolParser p;
     for (char c : is) {
         p.send(c);
     }
