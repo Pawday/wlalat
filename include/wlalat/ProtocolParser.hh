@@ -26,10 +26,8 @@ namespace wlalat
 namespace CodeGen
 {
 
-using AttrString = MetadataEntry;
-
 template <typename RawTagT>
-using MappingType = std::pair<std::string_view, AttrString RawTagT::*>;
+using MappingType = std::pair<std::string_view, MetadataEntry RawTagT::*>;
 
 struct ProtocolRawTag : ProtocolMetadata
 {
@@ -127,7 +125,7 @@ struct DescriptionRawTag
     using RawTagT = DescriptionRawTag;
 
     static constexpr std::string_view tag_name = "description";
-    AttrString summary;
+    MetadataEntry summary;
 
     static constexpr const MappingType<RawTagT> mappings[]{
         {"summary", &RawTagT::summary},
@@ -496,13 +494,15 @@ struct ProtocolTreeBuilder
         throw std::runtime_error{std::move(msg)};
     }
 
-    constexpr void bind(const CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+    constexpr void
+        bind(const CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
     {
         t_bind_stack_only(raw_tag);
     }
 
     template <typename DestNodeT>
-    constexpr void bind(const DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
+    constexpr void
+        bind(const DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
     {
         t_bind_stack_only(raw_tag);
     }
@@ -513,14 +513,14 @@ struct ProtocolTreeBuilder
         t_bind_stack_only(raw_tag);
     }
 
-    constexpr void
-        bind(const InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &proto_idx)
+    constexpr void bind(
+        const InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &proto_idx)
     {
         bind_chained(raw_tag, proto_idx, &ProtocolNode::interfaces);
     }
 
-    constexpr void
-        bind(const EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    constexpr void bind(
+        const EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
     {
         bind_chained(raw_tag, iface_idx, &InterfaceNode::enums);
     }
@@ -531,7 +531,8 @@ struct ProtocolTreeBuilder
         bind_chained(raw_tag, enum_idx, &EnumNode::entries);
     }
 
-    constexpr void bind(const ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
+    constexpr void
+        bind(const ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
     {
         bind_chained(raw_tag, req, &RequestNode::args);
     }
@@ -541,14 +542,14 @@ struct ProtocolTreeBuilder
         bind_chained(raw_tag, ev, &EventNode::args);
     }
 
-    constexpr void
-        bind(const RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    constexpr void bind(
+        const RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
     {
         bind_chained(raw_tag, iface_idx, &InterfaceNode::requests);
     }
 
-    constexpr void
-        bind(const EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    constexpr void bind(
+        const EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
     {
         bind_chained(raw_tag, iface_idx, &InterfaceNode::events);
     }
@@ -674,7 +675,7 @@ struct ProtocolParser
                     value);
                 throw std::runtime_error{std::move(msg)};
             }
-            AttrString &val = tag.*(mapping_it->second);
+            MetadataEntry &val = tag.*(mapping_it->second);
             if (val) {
                 auto msg = std::format(
                     "Tag [{}]: Duplicate attribute [{}]=[{}] (prev is [{}])",

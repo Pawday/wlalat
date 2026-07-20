@@ -371,7 +371,7 @@ struct Generator
 
     LineList gen_message(
         std::string_view interface_name,
-        const AttrString &name_op,
+        const MetadataEntry &name_op,
         std::vector<Argument> &args,
         size_t opcode,
         bool is_event)
