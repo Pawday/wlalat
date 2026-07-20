@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -153,34 +154,35 @@ struct RawTagVariant : std::variant<
                            DescriptionRawTag,
                            CopyrightRawTag>
 {
-    constexpr std::string_view tag_name() const
-    {
-        auto vis = []<typename Alt>(const Alt &) { return Alt::tag_name; };
-        return std::visit(vis, *this);
-    }
-
-    template <typename... Alternatives>
-    static constexpr auto
-        make_alternatives_array(const std::variant<Alternatives...> &arg)
-    {
-        return std::array<
-            RawTagVariant,
-            std::variant_size_v<std::remove_cvref_t<decltype(arg)>>>{
-            RawTagVariant{Alternatives{}}...};
-    }
-
     static constexpr auto
         from_tag_name(std::string_view tag_name) -> std::optional<RawTagVariant>
     {
-        auto name_match = [tag_name](RawTagVariant &v) {
-            return v.tag_name() == tag_name;
+        std::optional<RawTagVariant> o;
+
+        auto match_name =
+            [&]<typename Alternative>(std::type_identity<Alternative>) {
+                if (o) {
+                    return;
+                }
+
+                if (Alternative::tag_name == tag_name) {
+                    o.emplace(Alternative{});
+                }
+            };
+
+        auto match_name_for_all = [&](auto... alternatives) {
+            (match_name(alternatives), ...);
         };
-        auto array = make_alternatives_array(RawTagVariant{});
-        auto same_name_alternative_it = std::ranges::find_if(array, name_match);
-        if (same_name_alternative_it == std::end(array)) {
-            return {};
-        }
-        return *same_name_alternative_it;
+
+        auto make_alts = []<typename... Alt>(const std::variant<Alt...> &) {
+            return std::tuple<std::type_identity<Alt>...>{};
+        };
+
+        auto alts =
+            std::invoke_result_t<decltype(make_alts), RawTagVariant &>{};
+
+        std::apply(match_name_for_all, alts);
+        return o;
     }
 };
 
