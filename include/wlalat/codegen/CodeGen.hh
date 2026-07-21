@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CodeGenInfo.hh"
+#include "Types.hh"
 #include "LineList.hh"
 
 #include <array>

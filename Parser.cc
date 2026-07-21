@@ -1,7 +1,7 @@
 #include <wlalat/codegen/CodeGen.hh>
-#include <wlalat/codegen/CodeGenInfo.hh>
-#include <wlalat/codegen/CodeGenInfoFormat.hh>
+#include <wlalat/codegen/Format.hh>
 #include <wlalat/codegen/ProtocolParser.hh>
+#include <wlalat/codegen/Types.hh>
 
 #include <cstddef>
 
