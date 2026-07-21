@@ -283,7 +283,6 @@ struct ProtocolTreeView
         std::optional<std::reference_wrapper<CodeGen::Enum>> active_enum;
 
         auto node_from_typed_index = [&]<typename T>(Index<T> idx) {
-            // TODO: Use TypedNodeIndex
             if (idx.index() >= _nodes.size()) {
                 throw std::out_of_range{"node_from_typed_index"};
             }
@@ -394,40 +393,10 @@ struct ProtocolTreeBuilder
     }
 
   private:
-    template <typename T>
-    struct TypedNodeIndex
+    template <typename RawTagT, typename NodeT = RawTagToNodeMapT<RawTagT>>
+    constexpr void
+        bind_chained(const RawTagT &tag, std::vector<Index<NodeT>> &dst)
     {
-        size_t index;
-
-        constexpr T &get(std::span<Node> nodes)
-        {
-            if (index >= nodes.size()) {
-                throw std::out_of_range{"TypepedNodeIndex::get"};
-            }
-            return std::get<T>(nodes[index]);
-        }
-    };
-
-    template <
-        typename RawTagT,
-        typename DstNodeT,
-        typename NodeT = RawTagToNodeMapT<RawTagT>>
-    constexpr void bind_chained(
-        const RawTagT &tag,
-        TypedNodeIndex<DstNodeT> dst_idx,
-        std::vector<Index<NodeT>> DstNodeT::*dst_vec_ptr)
-    {
-        auto ensure_size_for = []<typename T>(std::vector<T> &vec) {
-            if (vec.capacity() == vec.size()) {
-                vec.reserve(vec.size() * 2);
-            }
-        };
-
-        ensure_size_for(_tree);
-        ensure_size_for(_active_tags);
-        std::vector<Index<NodeT>> &dst = (dst_idx.get(_tree).*dst_vec_ptr);
-        ensure_size_for(dst);
-
         size_t index = _tree.size();
         _tree.push_back(Node{NodeT{tag}});
         _active_tags.push_back(Index<Node>{index});
@@ -465,7 +434,7 @@ struct ProtocolTreeBuilder
     }
 
     template <typename RawTagT, typename NodeT>
-    constexpr void bind(const RawTagT &raw_tag, TypedNodeIndex<NodeT>)
+    constexpr void bind(const RawTagT &raw_tag, NodeT &)
     {
         if not consteval {
             auto msg = std::format(
@@ -477,71 +446,62 @@ struct ProtocolTreeBuilder
     }
 
     template <typename RawTagT>
-    constexpr void bind(const RawTagT &raw_tag, TypedNodeIndex<ProtocolNode>)
+    constexpr void bind(const RawTagT &raw_tag, ProtocolNode &)
     {
         auto msg =
             std::format("Cannot bind [{}] to protocol", RawTagT::tag_name);
         throw std::runtime_error{std::move(msg)};
     }
 
-    constexpr void
-        bind(const CopyrightRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+    constexpr void bind(const CopyrightRawTag &raw_tag, ProtocolNode &)
     {
         t_bind_stack_only(raw_tag);
     }
 
     template <typename DestNodeT>
-    constexpr void
-        bind(const DescriptionRawTag &raw_tag, TypedNodeIndex<DestNodeT>)
+    constexpr void bind(const DescriptionRawTag &raw_tag, DestNodeT &)
     {
         t_bind_stack_only(raw_tag);
     }
 
-    constexpr void
-        bind(const DescriptionRawTag &raw_tag, TypedNodeIndex<ProtocolNode>)
+    constexpr void bind(const DescriptionRawTag &raw_tag, ProtocolNode &)
     {
         t_bind_stack_only(raw_tag);
     }
 
-    constexpr void bind(
-        const InterfaceRawTag &raw_tag, TypedNodeIndex<ProtocolNode> &proto_idx)
+    constexpr void bind(const InterfaceRawTag &raw_tag, ProtocolNode &proto)
     {
-        bind_chained(raw_tag, proto_idx, &ProtocolNode::interfaces);
+        bind_chained(raw_tag, proto.interfaces);
     }
 
-    constexpr void bind(
-        const EnumRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    constexpr void bind(const EnumRawTag &raw_tag, InterfaceNode &iface)
     {
-        bind_chained(raw_tag, iface_idx, &InterfaceNode::enums);
+        bind_chained(raw_tag, iface.enums);
     }
 
-    constexpr void
-        bind(const EntryRawTag &raw_tag, TypedNodeIndex<EnumNode> &enum_idx)
+    constexpr void bind(const EntryRawTag &raw_tag, EnumNode &enum_node)
     {
-        bind_chained(raw_tag, enum_idx, &EnumNode::entries);
+        bind_chained(raw_tag, enum_node.entries);
     }
 
-    constexpr void
-        bind(const ArgRawTag &raw_tag, TypedNodeIndex<RequestNode> &req)
+    constexpr void bind(const ArgRawTag &raw_tag, RequestNode &req)
     {
-        bind_chained(raw_tag, req, &RequestNode::args);
+        bind_chained(raw_tag, req.args);
     }
 
-    constexpr void bind(const ArgRawTag &raw_tag, TypedNodeIndex<EventNode> &ev)
+    constexpr void bind(const ArgRawTag &raw_tag, EventNode &ev)
     {
-        bind_chained(raw_tag, ev, &EventNode::args);
+        bind_chained(raw_tag, ev.args);
     }
 
-    constexpr void bind(
-        const RequestRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    constexpr void bind(const RequestRawTag &raw_tag, InterfaceNode &iface)
     {
-        bind_chained(raw_tag, iface_idx, &InterfaceNode::requests);
+        bind_chained(raw_tag, iface.requests);
     }
 
-    constexpr void bind(
-        const EventRawTag &raw_tag, TypedNodeIndex<InterfaceNode> &iface_idx)
+    constexpr void bind(const EventRawTag &raw_tag, InterfaceNode &iface)
     {
-        bind_chained(raw_tag, iface_idx, &InterfaceNode::events);
+        bind_chained(raw_tag, iface.events);
     }
 
     friend struct tag_start_visitor;
@@ -559,10 +519,18 @@ struct ProtocolTreeBuilder
                 throw std::runtime_error{std::move(msg)};
             }
 
+            auto ensure_size_for = []<typename T>(std::vector<T> &vec) {
+                if (vec.capacity() == vec.size()) {
+                    vec.reserve(vec.size() * 2);
+                }
+            };
+
+            ensure_size_for(active_tags);
+            ensure_size_for(B._tree);
+
             Index active_tag = B.active_tag_index();
-            auto visitor = [&]<typename NodeT>(NodeT &) {
-                TypedNodeIndex<NodeT> node_idx{active_tag.index()};
-                B.bind(raw_tag, node_idx);
+            auto visitor = [&]<typename NodeT>(NodeT &node) {
+                B.bind(raw_tag, node);
             };
 
             Node &node = active_tag.get(std::span{B._tree});
