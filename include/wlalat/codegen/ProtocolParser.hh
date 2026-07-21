@@ -29,8 +29,17 @@ namespace CodeGen
 template <typename RawTagT>
 using MappingType = std::pair<std::string_view, MetadataEntry RawTagT::*>;
 
+template <typename RawTagT>
+struct TagTraits;
+
 struct ProtocolRawTag : ProtocolMetadata
 {
+};
+
+template <>
+struct TagTraits<ProtocolRawTag>
+{
+    using Type = ProtocolRawTag;
     static constexpr std::string_view tag_name = "protocol";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -40,6 +49,12 @@ struct ProtocolRawTag : ProtocolMetadata
 
 struct InterfaceRawTag : InterfaceMetadata
 {
+};
+
+template <>
+struct TagTraits<InterfaceRawTag>
+{
+    using Type = InterfaceRawTag;
     static constexpr std::string_view tag_name = "interface";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -51,6 +66,12 @@ struct InterfaceRawTag : InterfaceMetadata
 
 struct RequestRawTag : RequestMetadata
 {
+};
+
+template <>
+struct TagTraits<RequestRawTag>
+{
+    using Type = RequestRawTag;
     static constexpr std::string_view tag_name = "request";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -62,6 +83,12 @@ struct RequestRawTag : RequestMetadata
 
 struct EventRawTag : EventMetadata
 {
+};
+
+template <>
+struct TagTraits<EventRawTag>
+{
+    using Type = EventRawTag;
     static constexpr std::string_view tag_name = "event";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -74,6 +101,12 @@ struct EventRawTag : EventMetadata
 
 struct ArgRawTag : ArgumentMetadata
 {
+};
+
+template <>
+struct TagTraits<ArgRawTag>
+{
+    using Type = ArgRawTag;
     static constexpr std::string_view tag_name = "arg";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -88,6 +121,12 @@ struct ArgRawTag : ArgumentMetadata
 
 struct EnumRawTag : EnumMetadata
 {
+};
+
+template <>
+struct TagTraits<EnumRawTag>
+{
+    using Type = EnumRawTag;
     static constexpr std::string_view tag_name = "enum";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -99,6 +138,12 @@ struct EnumRawTag : EnumMetadata
 
 struct EntryRawTag : EnumEntryMetadata
 {
+};
+
+template <>
+struct TagTraits<EntryRawTag>
+{
+    using Type = EntryRawTag;
     static constexpr std::string_view tag_name = "entry";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -112,22 +157,32 @@ struct EntryRawTag : EnumEntryMetadata
 
 struct DescriptionRawTag
 {
-    using RawTagT = DescriptionRawTag;
+    MetadataEntry summary;
+};
+
+template <>
+struct TagTraits<DescriptionRawTag>
+{
+    using Type = DescriptionRawTag;
 
     static constexpr std::string_view tag_name = "description";
-    MetadataEntry summary;
 
-    static constexpr const MappingType<RawTagT> mappings[]{
-        {"summary", &RawTagT::summary},
+    static constexpr const MappingType<Type> mappings[]{
+        {"summary", &Type::summary},
     };
 };
 
 struct CopyrightRawTag
 {
-    using RawTagT = CopyrightRawTag;
+};
+
+template <>
+struct TagTraits<CopyrightRawTag>
+{
+    using Type = CopyrightRawTag;
 
     static constexpr std::string_view tag_name = "copyright";
-    static constexpr const MappingType<RawTagT> mappings[]{{}};
+    static constexpr const MappingType<Type> mappings[]{{}};
 };
 
 struct RawTagVariant : std::variant<
@@ -147,7 +202,7 @@ struct RawTagVariant : std::variant<
         std::optional<RawTagVariant> o;
         [&]<typename... Alts>(std::variant<Alts...> *) {
             [[maybe_unused]] bool found =
-                ((Alts::tag_name == tag_name ? (o.emplace(Alts{}), true)
+                ((TagTraits<Alts>::tag_name == tag_name ? (o.emplace(Alts{}), true)
                                              : false) ||
                  ...);
         }(static_cast<RawTagVariant *>(nullptr));
@@ -183,24 +238,34 @@ struct EntryNode : EntryRawTag
 {
 };
 
+template <> struct TagTraits<EntryNode> : TagTraits<EntryRawTag>{};
+
 struct EnumNode : EnumRawTag
 {
     std::vector<Index<EntryNode>> entries;
 };
 
+template <> struct TagTraits<EnumNode> : TagTraits<EnumRawTag>{};
+
 struct ArgNode : ArgRawTag
 {
 };
+
+template <> struct TagTraits<ArgNode> : TagTraits<ArgRawTag>{};
 
 struct EventNode : EventRawTag
 {
     std::vector<Index<ArgNode>> args;
 };
 
+template <> struct TagTraits<EventNode> : TagTraits<EventRawTag>{};
+
 struct RequestNode : RequestRawTag
 {
     std::vector<Index<ArgNode>> args;
 };
+
+template <> struct TagTraits<RequestNode> : TagTraits<RequestRawTag>{};
 
 struct InterfaceNode : InterfaceRawTag
 {
@@ -209,18 +274,26 @@ struct InterfaceNode : InterfaceRawTag
     std::vector<Index<EnumNode>> enums;
 };
 
+template <> struct TagTraits<InterfaceNode> : TagTraits<InterfaceRawTag>{};
+
 struct ProtocolNode : ProtocolRawTag
 {
     std::vector<Index<InterfaceNode>> interfaces;
 };
 
+template <> struct TagTraits<ProtocolNode> : TagTraits<ProtocolRawTag>{};
+
 struct DescriptionNode : DescriptionRawTag
 {
 };
 
+template <> struct TagTraits<DescriptionNode> : TagTraits<DescriptionRawTag>{};
+
 struct CopyrightNode : CopyrightRawTag
 {
 };
+
+template <> struct TagTraits<CopyrightNode> : TagTraits<CopyrightRawTag>{};
 
 // clang-format off
 template<typename RawTagT> struct RawTagToNodeMap;
@@ -252,7 +325,7 @@ struct Node : std::variant<
 {
     constexpr std::string_view tag_name() const
     {
-        auto vis = []<typename Alt>(const Alt &) { return Alt::tag_name; };
+        auto vis = []<typename Alt>(const Alt &) { return TagTraits<Alt>::tag_name; };
         return std::visit(vis, *this);
     }
 };
@@ -427,7 +500,7 @@ struct ProtocolTreeBuilder
             auto msg = std::format(
                 "Cannot end [{}] tag with [{}]",
                 node.tag_name(),
-                NodeT::tag_name);
+                TagTraits<NodeT>::tag_name);
             throw std::runtime_error{std::move(msg)};
         }
         _active_tags.pop_back();
@@ -439,8 +512,8 @@ struct ProtocolTreeBuilder
         if not consteval {
             auto msg = std::format(
                 "[generic binder] Cannot bind [{}] to [{}]",
-                RawTagT::tag_name,
-                NodeT::tag_name);
+                TagTraits<RawTagT>::tag_name,
+                TagTraits<NodeT>::tag_name);
             throw std::runtime_error{std::move(msg)};
         }
     }
@@ -449,7 +522,7 @@ struct ProtocolTreeBuilder
     constexpr void bind(const RawTagT &raw_tag, ProtocolNode &)
     {
         auto msg =
-            std::format("Cannot bind [{}] to protocol", RawTagT::tag_name);
+            std::format("Cannot bind [{}] to protocol", TagTraits<RawTagT>::tag_name);
         throw std::runtime_error{std::move(msg)};
     }
 
@@ -515,7 +588,8 @@ struct ProtocolTreeBuilder
             auto &active_tags = B._active_tags;
             if (active_tags.empty()) {
                 auto msg = std::format(
-                    "<{}> must not be a top level tag", RawTagT::tag_name);
+                    "<{}> must not be a top level tag",
+                    TagTraits<RawTagT>::tag_name);
                 throw std::runtime_error{std::move(msg)};
             }
 
@@ -620,7 +694,7 @@ struct ProtocolParser
         template <typename RawTagT>
         constexpr void bind(RawTagT &tag)
         {
-            auto &mappings = RawTagT::mappings;
+            auto &mappings = TagTraits<RawTagT>::mappings;
             auto same_key = [this](auto &mapping) {
                 return mapping.first == key;
             };
@@ -628,7 +702,7 @@ struct ProtocolParser
             if (mapping_it == std::end(mappings)) {
                 auto msg = std::format(
                     "Tag [{}]: Unknown attribute [{}]=[{}]",
-                    RawTagT::tag_name,
+                    TagTraits<RawTagT>::tag_name,
                     key,
                     value);
                 throw std::runtime_error{std::move(msg)};
@@ -637,7 +711,7 @@ struct ProtocolParser
             if (val) {
                 auto msg = std::format(
                     "Tag [{}]: Duplicate attribute [{}]=[{}] (prev is [{}])",
-                    RawTagT::tag_name,
+                    TagTraits<RawTagT>::tag_name,
                     key,
                     value,
                     val.value());
