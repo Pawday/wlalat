@@ -31,92 +31,82 @@ using MappingType = std::pair<std::string_view, MetadataEntry RawTagT::*>;
 
 struct ProtocolRawTag : ProtocolMetadata
 {
-    using RawTagT = ProtocolRawTag;
     static constexpr std::string_view tag_name = "protocol";
 
-    static constexpr const MappingType<RawTagT> mappings[]{
-        {"name", &RawTagT::name},
+    static constexpr const MappingType<Type> mappings[]{
+        {"name", &Type::name},
     };
 };
 
 struct InterfaceRawTag : InterfaceMetadata
 {
-    using RawTagT = InterfaceRawTag;
     static constexpr std::string_view tag_name = "interface";
 
-    static constexpr const MappingType<RawTagT> mappings[]{
-        {"name", &RawTagT::name},
-        {"version", &RawTagT::version},
-        {"frozen", &RawTagT::frozen},
+    static constexpr const MappingType<Type> mappings[]{
+        {"name", &Type::name},
+        {"version", &Type::version},
+        {"frozen", &Type::frozen},
     };
 };
 
 struct RequestRawTag : RequestMetadata
 {
-    using RawTagT = RequestRawTag;
     static constexpr std::string_view tag_name = "request";
 
-    static constexpr const MappingType<RawTagT> mappings[]{
-        {"name", &RawTagT::name},
-        {"type", &RawTagT::type},
-        {"since", &RawTagT::since},
+    static constexpr const MappingType<Type> mappings[]{
+        {"name", &Type::name},
+        {"type", &Type::type},
+        {"since", &Type::since},
     };
 };
 
 struct EventRawTag : EventMetadata
 {
-    using RawTagT = EventRawTag;
     static constexpr std::string_view tag_name = "event";
 
-    static constexpr const MappingType<RawTagT> mappings[]{
-        {"name", &RawTagT::name},
-        {"since", &RawTagT::since},
-        {"type", &RawTagT::type},
-        {"deprecated-since", &RawTagT::deprecated_since},
+    static constexpr const MappingType<Type> mappings[]{
+        {"name", &Type::name},
+        {"since", &Type::since},
+        {"type", &Type::type},
+        {"deprecated-since", &Type::deprecated_since},
     };
 };
 
 struct ArgRawTag : ArgumentMetadata
 {
-    using RawTagT = ArgRawTag;
-
     static constexpr std::string_view tag_name = "arg";
 
-    static constexpr const MappingType<RawTagT> mappings[]{
-        {"name", &RawTagT::name},
-        {"type", &RawTagT::type},
-        {"interface", &RawTagT::interface},
-        {"summary", &RawTagT::summary},
-        {"allow-null", &RawTagT::allow_null},
-        {"enum", &RawTagT::enum_name},
+    static constexpr const MappingType<Type> mappings[]{
+        {"name", &Type::name},
+        {"type", &Type::type},
+        {"interface", &Type::interface},
+        {"summary", &Type::summary},
+        {"allow-null", &Type::allow_null},
+        {"enum", &Type::enum_name},
     };
 };
 
 struct EnumRawTag : EnumMetadata
 {
-    using RawTagT = EnumRawTag;
-
     static constexpr std::string_view tag_name = "enum";
 
-    static constexpr const MappingType<RawTagT> mappings[]{
-        {"name", &RawTagT::name},
-        {"since", &RawTagT::since},
-        {"bitfield", &RawTagT::bitfield},
+    static constexpr const MappingType<Type> mappings[]{
+        {"name", &Type::name},
+        {"since", &Type::since},
+        {"bitfield", &Type::bitfield},
     };
 };
 
 struct EntryRawTag : EnumEntryMetadata
 {
-    using RawTagT = EntryRawTag;
-
     static constexpr std::string_view tag_name = "entry";
 
-    static constexpr const MappingType<RawTagT> mappings[]{
-        {"name", &RawTagT::name},
-        {"value", &RawTagT::value},
-        {"summary", &RawTagT::summary},
-        {"since", &RawTagT::since},
-        {"deprecated-since", &RawTagT::deprecated_since},
+    static constexpr const MappingType<Type> mappings[]{
+        {"name", &Type::name},
+        {"value", &Type::value},
+        {"summary", &Type::summary},
+        {"since", &Type::since},
+        {"deprecated-since", &Type::deprecated_since},
     };
 };
 
