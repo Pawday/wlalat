@@ -32,14 +32,10 @@ using MappingType = std::pair<std::string_view, MetadataEntry RawTagT::*>;
 template <typename RawTagT>
 struct TagTraits;
 
-struct ProtocolRawTag : ProtocolMetadata
-{
-};
-
 template <>
-struct TagTraits<ProtocolRawTag>
+struct TagTraits<ProtocolMetadata>
 {
-    using Type = ProtocolRawTag;
+    using Type = ProtocolMetadata;
     static constexpr std::string_view tag_name = "protocol";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -47,14 +43,10 @@ struct TagTraits<ProtocolRawTag>
     };
 };
 
-struct InterfaceRawTag : InterfaceMetadata
-{
-};
-
 template <>
-struct TagTraits<InterfaceRawTag>
+struct TagTraits<InterfaceMetadata>
 {
-    using Type = InterfaceRawTag;
+    using Type = InterfaceMetadata;
     static constexpr std::string_view tag_name = "interface";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -64,14 +56,10 @@ struct TagTraits<InterfaceRawTag>
     };
 };
 
-struct RequestRawTag : RequestMetadata
-{
-};
-
 template <>
-struct TagTraits<RequestRawTag>
+struct TagTraits<RequestMetadata>
 {
-    using Type = RequestRawTag;
+    using Type = RequestMetadata;
     static constexpr std::string_view tag_name = "request";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -81,14 +69,10 @@ struct TagTraits<RequestRawTag>
     };
 };
 
-struct EventRawTag : EventMetadata
-{
-};
-
 template <>
-struct TagTraits<EventRawTag>
+struct TagTraits<EventMetadata>
 {
-    using Type = EventRawTag;
+    using Type = EventMetadata;
     static constexpr std::string_view tag_name = "event";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -99,14 +83,10 @@ struct TagTraits<EventRawTag>
     };
 };
 
-struct ArgRawTag : ArgumentMetadata
-{
-};
-
 template <>
-struct TagTraits<ArgRawTag>
+struct TagTraits<ArgumentMetadata>
 {
-    using Type = ArgRawTag;
+    using Type = ArgumentMetadata;
     static constexpr std::string_view tag_name = "arg";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -119,14 +99,10 @@ struct TagTraits<ArgRawTag>
     };
 };
 
-struct EnumRawTag : EnumMetadata
-{
-};
-
 template <>
-struct TagTraits<EnumRawTag>
+struct TagTraits<EnumMetadata>
 {
-    using Type = EnumRawTag;
+    using Type = EnumMetadata;
     static constexpr std::string_view tag_name = "enum";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -136,14 +112,10 @@ struct TagTraits<EnumRawTag>
     };
 };
 
-struct EntryRawTag : EnumEntryMetadata
-{
-};
-
 template <>
-struct TagTraits<EntryRawTag>
+struct TagTraits<EnumEntryMetadata>
 {
-    using Type = EntryRawTag;
+    using Type = EnumEntryMetadata;
     static constexpr std::string_view tag_name = "entry";
 
     static constexpr const MappingType<Type> mappings[]{
@@ -186,13 +158,13 @@ struct TagTraits<CopyrightRawTag>
 };
 
 struct RawTagVariant : std::variant<
-                           ProtocolRawTag,
-                           InterfaceRawTag,
-                           RequestRawTag,
-                           EventRawTag,
-                           ArgRawTag,
-                           EnumRawTag,
-                           EntryRawTag,
+                           ProtocolMetadata,
+                           InterfaceMetadata,
+                           RequestMetadata,
+                           EventMetadata,
+                           ArgumentMetadata,
+                           EnumMetadata,
+                           EnumEntryMetadata,
                            DescriptionRawTag,
                            CopyrightRawTag>
 {
@@ -234,79 +206,106 @@ struct Index
     size_t _index;
 };
 
-struct EntryNode : EntryRawTag
+struct EnumEntryNode : EnumEntryMetadata
 {
 };
 
-template <> struct TagTraits<EntryNode> : TagTraits<EntryRawTag>{};
-
-struct EnumNode : EnumRawTag
-{
-    std::vector<Index<EntryNode>> entries;
-};
-
-template <> struct TagTraits<EnumNode> : TagTraits<EnumRawTag>{};
-
-struct ArgNode : ArgRawTag
+template <>
+struct TagTraits<EnumEntryNode> : TagTraits<EnumEntryMetadata>
 {
 };
 
-template <> struct TagTraits<ArgNode> : TagTraits<ArgRawTag>{};
-
-struct EventNode : EventRawTag
+struct EnumNode : EnumMetadata
 {
-    std::vector<Index<ArgNode>> args;
+    std::vector<Index<EnumEntryNode>> entries;
 };
 
-template <> struct TagTraits<EventNode> : TagTraits<EventRawTag>{};
-
-struct RequestNode : RequestRawTag
+template <>
+struct TagTraits<EnumNode> : TagTraits<EnumMetadata>
 {
-    std::vector<Index<ArgNode>> args;
 };
 
-template <> struct TagTraits<RequestNode> : TagTraits<RequestRawTag>{};
+struct ArgumentNode : ArgumentMetadata
+{
+};
 
-struct InterfaceNode : InterfaceRawTag
+template <>
+struct TagTraits<ArgumentNode> : TagTraits<ArgumentMetadata>
+{
+};
+
+struct EventNode : EventMetadata
+{
+    std::vector<Index<ArgumentNode>> args;
+};
+
+template <>
+struct TagTraits<EventNode> : TagTraits<EventMetadata>
+{
+};
+
+struct RequestNode : RequestMetadata
+{
+    std::vector<Index<ArgumentNode>> args;
+};
+
+template <>
+struct TagTraits<RequestNode> : TagTraits<RequestMetadata>
+{
+};
+
+struct InterfaceNode : InterfaceMetadata
 {
     std::vector<Index<RequestNode>> requests;
     std::vector<Index<EventNode>> events;
     std::vector<Index<EnumNode>> enums;
 };
 
-template <> struct TagTraits<InterfaceNode> : TagTraits<InterfaceRawTag>{};
+template <>
+struct TagTraits<InterfaceNode> : TagTraits<InterfaceMetadata>
+{
+};
 
-struct ProtocolNode : ProtocolRawTag
+struct ProtocolNode : ProtocolMetadata
 {
     std::vector<Index<InterfaceNode>> interfaces;
 };
 
-template <> struct TagTraits<ProtocolNode> : TagTraits<ProtocolRawTag>{};
+template <>
+struct TagTraits<ProtocolNode> : TagTraits<ProtocolMetadata>
+{
+};
 
 struct DescriptionNode : DescriptionRawTag
 {
 };
 
-template <> struct TagTraits<DescriptionNode> : TagTraits<DescriptionRawTag>{};
+template <>
+struct TagTraits<DescriptionNode> : TagTraits<DescriptionRawTag>
+{
+};
 
 struct CopyrightNode : CopyrightRawTag
 {
 };
 
-template <> struct TagTraits<CopyrightNode> : TagTraits<CopyrightRawTag>{};
+template <>
+struct TagTraits<CopyrightNode> : TagTraits<CopyrightRawTag>
+{
+};
 
 // clang-format off
 template<typename RawTagT> struct RawTagToNodeMap;
 
-template<> struct RawTagToNodeMap<ProtocolRawTag>    : std::type_identity<ProtocolNode> {};
-template<> struct RawTagToNodeMap<InterfaceRawTag>   : std::type_identity<InterfaceNode> {};
-template<> struct RawTagToNodeMap<RequestRawTag>     : std::type_identity<RequestNode> {};
-template<> struct RawTagToNodeMap<EventRawTag>       : std::type_identity<EventNode> {};
-template<> struct RawTagToNodeMap<ArgRawTag>         : std::type_identity<ArgNode> {};
-template<> struct RawTagToNodeMap<EnumRawTag>        : std::type_identity<EnumNode> {};
-template<> struct RawTagToNodeMap<EntryRawTag>       : std::type_identity<EntryNode> {};
-template<> struct RawTagToNodeMap<DescriptionRawTag> : std::type_identity<DescriptionNode> {};
-template<> struct RawTagToNodeMap<CopyrightRawTag>   : std::type_identity<CopyrightNode> {};
+template<> struct RawTagToNodeMap<ProtocolMetadata>    : std::type_identity<ProtocolNode> {};
+template<> struct RawTagToNodeMap<InterfaceMetadata>   : std::type_identity<InterfaceNode> {};
+template<> struct RawTagToNodeMap<RequestMetadata>     : std::type_identity<RequestNode> {};
+template<> struct RawTagToNodeMap<EventMetadata>       : std::type_identity<EventNode> {};
+template<> struct RawTagToNodeMap<ArgumentMetadata>    : std::type_identity<ArgumentNode> {};
+template<> struct RawTagToNodeMap<EnumMetadata>        : std::type_identity<EnumNode> {};
+template<> struct RawTagToNodeMap<EnumEntryMetadata>   : std::type_identity<EnumEntryNode> {};
+template<> struct RawTagToNodeMap<DescriptionRawTag>   : std::type_identity<DescriptionNode> {};
+template<> struct RawTagToNodeMap<CopyrightRawTag>     : std::type_identity<CopyrightNode> {};
 
 template<typename RawTagT>
 using RawTagToNodeMapT = typename RawTagToNodeMap<RawTagT>::type;
@@ -317,15 +316,17 @@ struct Node : std::variant<
                   InterfaceNode,
                   RequestNode,
                   EventNode,
-                  ArgNode,
+                  ArgumentNode,
                   EnumNode,
-                  EntryNode,
+                  EnumEntryNode,
                   DescriptionNode,
                   CopyrightNode>
 {
     constexpr std::string_view tag_name() const
     {
-        auto vis = []<typename Alt>(const Alt &) { return TagTraits<Alt>::tag_name; };
+        auto vis = []<typename Alt>(const Alt &) {
+            return TagTraits<Alt>::tag_name;
+        };
         return std::visit(vis, *this);
     }
 };
@@ -363,10 +364,10 @@ struct ProtocolTreeView
             return std::get<T>(node);
         };
 
-        using ArgsIndexes = std::vector<Index<ArgNode>>;
+        using ArgsIndexes = std::vector<Index<ArgumentNode>>;
         auto collect_args = [&](const ArgsIndexes &args) {
             std::vector<CodeGen::Argument> O;
-            auto sink = [&](const ArgNode &arg_node) {
+            auto sink = [&](const ArgumentNode &arg_node) {
                 O.push_back(Argument{arg_node});
             };
             for (auto &idx : args) {
@@ -375,10 +376,10 @@ struct ProtocolTreeView
             return O;
         };
 
-        using EntryIndexes = std::vector<Index<EntryNode>>;
+        using EntryIndexes = std::vector<Index<EnumEntryNode>>;
         auto collect_entries = [&](const EntryIndexes &entries) {
             std::vector<CodeGen::EnumEntry> O;
-            auto sink = [&](const EntryNode &entry_node) {
+            auto sink = [&](const EnumEntryNode &entry_node) {
                 O.push_back(EnumEntry{entry_node});
             };
             for (auto &entry : entries) {
@@ -521,8 +522,8 @@ struct ProtocolTreeBuilder
     template <typename RawTagT>
     constexpr void bind(const RawTagT &raw_tag, ProtocolNode &)
     {
-        auto msg =
-            std::format("Cannot bind [{}] to protocol", TagTraits<RawTagT>::tag_name);
+        auto msg = std::format(
+            "Cannot bind [{}] to protocol", TagTraits<RawTagT>::tag_name);
         throw std::runtime_error{std::move(msg)};
     }
 
@@ -542,37 +543,37 @@ struct ProtocolTreeBuilder
         t_bind_stack_only(raw_tag);
     }
 
-    constexpr void bind(const InterfaceRawTag &raw_tag, ProtocolNode &proto)
+    constexpr void bind(const InterfaceMetadata &raw_tag, ProtocolNode &proto)
     {
         bind_chained(raw_tag, proto.interfaces);
     }
 
-    constexpr void bind(const EnumRawTag &raw_tag, InterfaceNode &iface)
+    constexpr void bind(const EnumMetadata &raw_tag, InterfaceNode &iface)
     {
         bind_chained(raw_tag, iface.enums);
     }
 
-    constexpr void bind(const EntryRawTag &raw_tag, EnumNode &enum_node)
+    constexpr void bind(const EnumEntryMetadata &raw_tag, EnumNode &enum_node)
     {
         bind_chained(raw_tag, enum_node.entries);
     }
 
-    constexpr void bind(const ArgRawTag &raw_tag, RequestNode &req)
+    constexpr void bind(const ArgumentMetadata &raw_tag, RequestNode &req)
     {
         bind_chained(raw_tag, req.args);
     }
 
-    constexpr void bind(const ArgRawTag &raw_tag, EventNode &ev)
+    constexpr void bind(const ArgumentMetadata &raw_tag, EventNode &ev)
     {
         bind_chained(raw_tag, ev.args);
     }
 
-    constexpr void bind(const RequestRawTag &raw_tag, InterfaceNode &iface)
+    constexpr void bind(const RequestMetadata &raw_tag, InterfaceNode &iface)
     {
         bind_chained(raw_tag, iface.requests);
     }
 
-    constexpr void bind(const EventRawTag &raw_tag, InterfaceNode &iface)
+    constexpr void bind(const EventMetadata &raw_tag, InterfaceNode &iface)
     {
         bind_chained(raw_tag, iface.events);
     }
@@ -611,7 +612,7 @@ struct ProtocolTreeBuilder
             std::visit(visitor, node);
         }
 
-        constexpr void operator()(const ProtocolRawTag &raw_proto)
+        constexpr void operator()(const ProtocolMetadata &raw_proto)
         {
             if (!B._active_tags.empty()) {
                 throw std::runtime_error{"<protocol> must be a top level tag"};
