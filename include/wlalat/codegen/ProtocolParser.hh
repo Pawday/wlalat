@@ -36,10 +36,10 @@ struct EntryNode;
 struct DescriptionNode;
 struct CopyrightNode;
 
-template <typename RawTagT>
-using MappingType = std::pair<std::string_view, MetadataEntry RawTagT::*>;
+template <typename NodeT>
+using MappingType = std::pair<std::string_view, MetadataEntry NodeT::*>;
 
-template <typename RawTagT>
+template <typename NodeT>
 struct TagTraits;
 
 template <typename T>
@@ -389,9 +389,9 @@ struct ProtocolTreeView
 
 struct ProtocolTreeBuilder
 {
-    constexpr void push(const Node &raw_tag)
+    constexpr void push(Node &node)
     {
-        tag_start(raw_tag);
+        tag_start(node);
     }
 
     template <typename NodeT>
@@ -406,23 +406,21 @@ struct ProtocolTreeBuilder
     }
 
   private:
-    template <typename RawTagT, typename NodeT>
+    template <typename NodeT>
     constexpr void
-        bind_chained(const RawTagT &tag, std::vector<Index<NodeT>> &dst)
+        bind_chained(const NodeT &node, std::vector<Index<NodeT>> &dst)
     {
         size_t index = _tree.size();
-        _tree.push_back(Node{NodeT{tag}});
+        _tree.push_back(Node{std::move(node)});
         _active_tags.push_back(Index<Node>{index});
         dst.push_back(Index<NodeT>{index});
     }
 
     template <typename NodeT>
-    constexpr void t_bind_stack_only(const NodeT &tag)
+    constexpr void t_bind_stack_only(NodeT &node)
     {
-        _active_tags.reserve(_active_tags.size() + 1);
-        _tree.reserve(_tree.size() + 1);
         _active_tags.push_back(Index<Node>{_tree.size()});
-        _tree.push_back(Node{tag});
+        _tree.push_back(Node{std::move(node)});
     }
 
     template <typename NodeT>
@@ -444,75 +442,75 @@ struct ProtocolTreeBuilder
         _active_tags.pop_back();
     }
 
-    template <typename RawTagT, typename NodeT>
-    constexpr void bind(const RawTagT &raw_tag, NodeT &)
+    template <typename NodeT, typename TargetNodeT>
+    constexpr void bind(NodeT &, TargetNodeT &)
     {
         if not consteval {
             auto msg = std::format(
                 "[generic binder] Cannot bind [{}] to [{}]",
-                TagTraits<RawTagT>::tag_name,
-                TagTraits<NodeT>::tag_name);
+                TagTraits<NodeT>::tag_name,
+                TagTraits<TargetNodeT>::tag_name);
             throw std::runtime_error{std::move(msg)};
         }
     }
 
-    template <typename RawTagT>
-    constexpr void bind(const RawTagT &raw_tag, ProtocolNode &)
+    template <typename NodeT>
+    constexpr void bind(NodeT &node, ProtocolNode &)
     {
         auto msg = std::format(
-            "Cannot bind [{}] to protocol", TagTraits<RawTagT>::tag_name);
+            "Cannot bind [{}] to protocol", TagTraits<NodeT>::tag_name);
         throw std::runtime_error{std::move(msg)};
     }
 
-    constexpr void bind(const CopyrightNode &raw_tag, ProtocolNode &)
+    constexpr void bind(CopyrightNode &node, ProtocolNode &)
     {
-        t_bind_stack_only(raw_tag);
+        t_bind_stack_only(node);
     }
 
     template <typename DestNodeT>
-    constexpr void bind(const DescriptionNode &raw_tag, DestNodeT &)
+    constexpr void bind(DescriptionNode &node, DestNodeT &)
     {
-        t_bind_stack_only(raw_tag);
+        t_bind_stack_only(node);
     }
 
-    constexpr void bind(const DescriptionNode &raw_tag, ProtocolNode &)
+    constexpr void bind(DescriptionNode &node, ProtocolNode &)
     {
-        t_bind_stack_only(raw_tag);
+        t_bind_stack_only(node);
     }
 
-    constexpr void bind(const InterfaceNode &raw_tag, ProtocolNode &proto)
+    constexpr void bind(InterfaceNode &node, ProtocolNode &proto)
     {
-        bind_chained(raw_tag, proto.interfaces);
+        bind_chained(node, proto.interfaces);
     }
 
-    constexpr void bind(const EnumNode &raw_tag, InterfaceNode &iface)
+    constexpr void bind(EnumNode &node, InterfaceNode &iface)
     {
-        bind_chained(raw_tag, iface.enums);
+        bind_chained(node, iface.enums);
     }
 
-    constexpr void bind(const EntryNode &raw_tag, EnumNode &enum_node)
+    constexpr void bind(EntryNode &node, EnumNode &enum_node)
     {
-        bind_chained(raw_tag, enum_node.entries);
+        bind_chained(node, enum_node.entries);
     }
 
-    constexpr void bind(const ArgNode &raw_tag, RequestNode &req)
+    constexpr void bind(ArgNode &node, RequestNode &req)
     {
-        bind_chained(raw_tag, req.args);
+        bind_chained(node, req.args);
     }
 
-    constexpr void bind(const ArgNode &raw_tag, EventNode &ev)
+    constexpr void bind(ArgNode &node, EventNode &ev)
     {
-        bind_chained(raw_tag, ev.args);
+        bind_chained(node, ev.args);
     }
 
-    constexpr void bind(const RequestNode &raw_tag, InterfaceNode &iface)
+    constexpr void bind(RequestNode &node, InterfaceNode &iface)
     {
-        bind_chained(raw_tag, iface.requests);
+        bind_chained(node, iface.requests);
     }
 
-    constexpr void bind(const EventNode &raw_tag, InterfaceNode &iface)
+    constexpr void bind(EventNode &node, InterfaceNode &iface)
     {
-        bind_chained(raw_tag, iface.events);
+        bind_chained(node, iface.events);
     }
 
     friend struct tag_start_visitor;
@@ -520,14 +518,14 @@ struct ProtocolTreeBuilder
     {
         ProtocolTreeBuilder &B;
 
-        template <typename RawTagT>
-        constexpr void operator()(const RawTagT &raw_tag)
+        template <typename NodeT>
+        constexpr void operator()(NodeT &node)
         {
             auto &active_tags = B._active_tags;
             if (active_tags.empty()) {
                 auto msg = std::format(
                     "<{}> must not be a top level tag",
-                    TagTraits<RawTagT>::tag_name);
+                    TagTraits<NodeT>::tag_name);
                 throw std::runtime_error{std::move(msg)};
             }
 
@@ -541,30 +539,29 @@ struct ProtocolTreeBuilder
             ensure_size_for(B._tree);
 
             Index active_tag = B.active_tag_index();
-            auto visitor = [&]<typename NodeT>(NodeT &node) {
-                B.bind(raw_tag, node);
+            auto visitor = [&]<typename ActiveNodeT>(ActiveNodeT &active_node) {
+                B.bind(node, active_node);
             };
 
-            Node &node = active_tag.get(std::span{B._tree});
-            std::visit(visitor, node);
+            Node &active_node = active_tag.get(std::span{B._tree});
+            std::visit(visitor, active_node);
         }
 
-        constexpr void operator()(const ProtocolNode &raw_proto)
+        constexpr void operator()(ProtocolNode &node)
         {
             if (!B._active_tags.empty()) {
                 throw std::runtime_error{"<protocol> must be a top level tag"};
             }
 
-            ProtocolNode node{raw_proto};
             Index<Node> index{B._tree.size()};
-            B._tree.push_back(Node{node});
+            B._tree.push_back(Node{std::move(node)});
             B._active_tags.push_back(index);
         }
     };
 
-    constexpr void tag_start(const Node &raw_tag)
+    constexpr void tag_start(Node &node)
     {
-        std::visit(tag_start_visitor{*this}, raw_tag);
+        std::visit(tag_start_visitor{*this}, node);
     }
 
     template <typename NodeT>
@@ -627,10 +624,10 @@ struct ProtocolParser
             return o;
         }
 
-        template <typename RawTagT>
-        constexpr void bind(RawTagT &tag)
+        template <typename NodeT>
+        constexpr void bind(NodeT &node)
         {
-            auto &mappings = TagTraits<RawTagT>::mappings;
+            auto &mappings = TagTraits<NodeT>::mappings;
             auto same_key = [this](auto &mapping) {
                 return mapping.first == key;
             };
@@ -638,16 +635,16 @@ struct ProtocolParser
             if (mapping_it == std::end(mappings)) {
                 auto msg = std::format(
                     "Tag [{}]: Unknown attribute [{}]=[{}]",
-                    TagTraits<RawTagT>::tag_name,
+                    TagTraits<NodeT>::tag_name,
                     key,
                     value);
                 throw std::runtime_error{std::move(msg)};
             }
-            MetadataEntry &val = tag.*(mapping_it->second);
+            MetadataEntry &val = node.*(mapping_it->second);
             if (val) {
                 auto msg = std::format(
                     "Tag [{}]: Duplicate attribute [{}]=[{}] (prev is [{}])",
-                    TagTraits<RawTagT>::tag_name,
+                    TagTraits<NodeT>::tag_name,
                     key,
                     value,
                     val.value());
@@ -699,11 +696,11 @@ struct ProtocolParser
             return {};
         }
 
-        auto raw_tag_op = Node::from_tag_name(tag_name);
-        if (!raw_tag_op) {
+        auto node_op = Node::from_tag_name(tag_name);
+        if (!node_op) {
             return std::format("Unknown tag [{}]", tag_name);
         }
-        Node &node = raw_tag_op.value();
+        Node &node = node_op.value();
         auto node_type = node.type_identity_variant();
         auto pop_fn = [&]<typename NodeT>(std::type_identity<NodeT> id) {
             tree.pop(id);
