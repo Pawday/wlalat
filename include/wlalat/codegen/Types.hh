@@ -36,7 +36,7 @@ struct ArgumentMetadata
         {"allow_null", &Type::allow_null},
         {"enum_name", &Type::enum_name},
     };
-}; // namespace CodeGen
+};
 
 struct RequestMetadata
 {
