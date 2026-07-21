@@ -26,14 +26,49 @@ namespace wlalat
 namespace CodeGen
 {
 
+struct ProtocolNode;
+struct InterfaceNode;
+struct RequestNode;
+struct EventNode;
+struct ArgNode;
+struct EnumNode;
+struct EntryNode;
+struct DescriptionNode;
+struct CopyrightNode;
+
 template <typename RawTagT>
 using MappingType = std::pair<std::string_view, MetadataEntry RawTagT::*>;
 
 template <typename RawTagT>
 struct TagTraits;
 
+template <typename T>
+struct Index
+{
+    constexpr Index(size_t index) : _index{index}
+    {
+    }
+
+    constexpr T &get(std::span<T> C)
+    {
+        if (C.size() < _index) {
+            throw std::out_of_range{"Index::at"};
+        }
+        return C[_index];
+    }
+
+    constexpr size_t index() const
+    {
+        return _index;
+    }
+
+  private:
+    size_t _index;
+};
+
 struct ProtocolRawTag : ProtocolMetadata
 {
+    std::vector<Index<InterfaceNode>> interfaces;
 };
 
 template <>
@@ -49,6 +84,9 @@ struct TagTraits<ProtocolRawTag>
 
 struct InterfaceRawTag : InterfaceMetadata
 {
+    std::vector<Index<RequestNode>> requests;
+    std::vector<Index<EventNode>> events;
+    std::vector<Index<EnumNode>> enums;
 };
 
 template <>
@@ -66,6 +104,7 @@ struct TagTraits<InterfaceRawTag>
 
 struct RequestRawTag : RequestMetadata
 {
+    std::vector<Index<ArgNode>> args;
 };
 
 template <>
@@ -83,6 +122,7 @@ struct TagTraits<RequestRawTag>
 
 struct EventRawTag : EventMetadata
 {
+    std::vector<Index<ArgNode>> args;
 };
 
 template <>
@@ -121,6 +161,7 @@ struct TagTraits<ArgRawTag>
 
 struct EnumRawTag : EnumMetadata
 {
+    std::vector<Index<EntryNode>> entries;
 };
 
 template <>
@@ -210,30 +251,6 @@ struct RawTagVariant : std::variant<
     }
 };
 
-template <typename T>
-struct Index
-{
-    constexpr Index(size_t index) : _index{index}
-    {
-    }
-
-    constexpr T &get(std::span<T> C)
-    {
-        if (C.size() < _index) {
-            throw std::out_of_range{"Index::at"};
-        }
-        return C[_index];
-    }
-
-    constexpr size_t index() const
-    {
-        return _index;
-    }
-
-  private:
-    size_t _index;
-};
-
 struct EntryNode : EntryRawTag
 {
 };
@@ -242,7 +259,6 @@ template <> struct TagTraits<EntryNode> : TagTraits<EntryRawTag>{};
 
 struct EnumNode : EnumRawTag
 {
-    std::vector<Index<EntryNode>> entries;
 };
 
 template <> struct TagTraits<EnumNode> : TagTraits<EnumRawTag>{};
@@ -255,30 +271,24 @@ template <> struct TagTraits<ArgNode> : TagTraits<ArgRawTag>{};
 
 struct EventNode : EventRawTag
 {
-    std::vector<Index<ArgNode>> args;
 };
 
 template <> struct TagTraits<EventNode> : TagTraits<EventRawTag>{};
 
 struct RequestNode : RequestRawTag
 {
-    std::vector<Index<ArgNode>> args;
 };
 
 template <> struct TagTraits<RequestNode> : TagTraits<RequestRawTag>{};
 
 struct InterfaceNode : InterfaceRawTag
 {
-    std::vector<Index<RequestNode>> requests;
-    std::vector<Index<EventNode>> events;
-    std::vector<Index<EnumNode>> enums;
 };
 
 template <> struct TagTraits<InterfaceNode> : TagTraits<InterfaceRawTag>{};
 
 struct ProtocolNode : ProtocolRawTag
 {
-    std::vector<Index<InterfaceNode>> interfaces;
 };
 
 template <> struct TagTraits<ProtocolNode> : TagTraits<ProtocolRawTag>{};
@@ -327,6 +337,19 @@ struct Node : std::variant<
     {
         auto vis = []<typename Alt>(const Alt &) { return TagTraits<Alt>::tag_name; };
         return std::visit(vis, *this);
+    }
+
+    static constexpr auto from_tag_name(std::string_view tag_name)
+        -> std::optional<Node>
+    {
+        std::optional<Node> o;
+        [&]<typename... Alts>(std::variant<Alts...> *) {
+            [[maybe_unused]] bool found =
+                ((TagTraits<Alts>::tag_name == tag_name ? (o.emplace(Alts{}), true)
+                                             : false) ||
+                 ...);
+        }(static_cast<Node *>(nullptr));
+        return o;
     }
 };
 
