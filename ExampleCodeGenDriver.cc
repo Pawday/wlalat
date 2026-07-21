@@ -1,5 +1,5 @@
-#include <wlalat/CodeGen.hh>
-#include <wlalat/ProtocolParser.hh>
+#include <wlalat/codegen/CodeGen.hh>
+#include <wlalat/codegen/ProtocolParser.hh>
 
 #include <cstddef>
 #include <cstdlib>
