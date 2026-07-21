@@ -52,14 +52,15 @@ struct LineList : std::vector<std::string>
             s = std::format("    {}", s);
         }
     }
-};
 
-static void comma_sep(LineList &lines)
-{
-    auto need_comma_lines = lines | std::views::reverse | std::views::drop(1);
-    auto add_comma = [](std::string &line) { line.append(","); };
-    std::ranges::for_each(need_comma_lines, add_comma);
-}
+    void comma_sep()
+    {
+        auto need_comma_lines =
+            *this | std::views::reverse | std::views::drop(1);
+        auto add_comma = [](std::string &line) { line.append(","); };
+        std::ranges::for_each(need_comma_lines, add_comma);
+    }
+};
 
 // https://gitlab.freedesktop.org/wayland/wayland/-/commit/85a6a470873357089ffb968a176d5074fddd1756
 struct TypelessNewIdArgumentExpander
@@ -252,7 +253,7 @@ struct Generator
             auto &msg_type_name = ev.name.value();
             B1 += std::format("message_{}", msg_type_name);
         }
-        comma_sep(B1);
+        B1.comma_sep();
         B1.indent();
         B0 += std::move(B1);
         B0 += ">;";
@@ -264,7 +265,7 @@ struct Generator
             auto &msg_type_name = req.name.value();
             B1 += std::format("message_{}", msg_type_name);
         }
-        comma_sep(B1);
+        B1.comma_sep();
         B1.indent();
         B0 += std::move(B1);
         B0 += ">;";
@@ -340,7 +341,7 @@ struct Generator
                 meta_entry[1],
                 meta_entry[2]);
         }
-        comma_sep(B1);
+        B1.comma_sep();
         B1.indent();
         B0 += std::move(B1);
         B0 += ");";
