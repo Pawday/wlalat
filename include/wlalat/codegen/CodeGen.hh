@@ -192,16 +192,6 @@ struct Generator
         LineList O;
         O += "struct Meta";
         O += "{";
-        LineList B0 = define_iface_meta_content(iface_node, iface_name);
-        B0.indent();
-        O += std::move(B0);
-        O += "};";
-        return O;
-    }
-
-    LineList define_iface_meta_content(
-        const Interface &iface_node, std::string_view iface_name)
-    {
         auto requests = iface_node.requests;
         auto events = iface_node.events;
 
@@ -230,7 +220,10 @@ struct Generator
         B1.indent();
         B0 += std::move(B1);
         B0 += ">;";
-        return B0;
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
     }
 
     LineList gen_args_meta(
