@@ -209,6 +209,18 @@ struct Generator
         B0 += std::move(B1);
         B0 += ">;";
 
+        B0 += std::format("using EventViews = std::tuple");
+        B0 += "<";
+        B1.clear();
+        for (auto &ev : events) {
+            auto &msg_type_name = ev.name.value();
+            B1 += std::format("message_view_{}", msg_type_name);
+        }
+        B1.comma_sep();
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += ">;";
+
         B0 += std::format("using Requests = std::tuple");
         B0 += "<";
         B1.clear();
@@ -220,6 +232,19 @@ struct Generator
         B1.indent();
         B0 += std::move(B1);
         B0 += ">;";
+
+        B0 += std::format("using RequestViews = std::tuple");
+        B0 += "<";
+        B1.clear();
+        for (auto &req : requests) {
+            auto &msg_type_name = req.name.value();
+            B1 += std::format("message_view_{}", msg_type_name);
+        }
+        B1.comma_sep();
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += ">;";
+
         B0.indent();
         O += std::move(B0);
         O += "};";
