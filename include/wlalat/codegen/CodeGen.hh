@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Types.hh"
 #include "LineList.hh"
+#include "Types.hh"
 
 #include <array>
 #include <cstddef>
@@ -166,14 +166,16 @@ struct Generator
             auto opcode = i;
             const Request &req = iface_node.requests[i];
             auto args = TypelessNewIdArgumentExpander::expand(req.args);
-            O += gen_request(interface_name, req, args, opcode);
+            O += gen_request(interface_name, req, args, opcode, false);
+            O += gen_request(interface_name, req, args, opcode, true);
         }
 
         for (size_t i = 0; i != events.size(); ++i) {
             auto opcode = i;
             const Event &ev = events[i];
             auto args = TypelessNewIdArgumentExpander::expand(ev.args);
-            O += gen_event(interface_name, ev, args, opcode);
+            O += gen_event(interface_name, ev, args, opcode, false);
+            O += gen_event(interface_name, ev, args, opcode, true);
         }
 
         auto meta = gen_iface_meta(iface_node, name);
@@ -314,18 +316,20 @@ struct Generator
         std::string_view interface_name,
         const Request &req,
         std::vector<Argument> &args,
-        size_t opcode)
+        size_t opcode,
+        bool is_view_message)
     {
-        return gen_message(interface_name, req.name, args, opcode, false);
+        return gen_message(interface_name, req.name, args, opcode, false, is_view_message);
     }
 
     LineList gen_event(
         std::string_view interface_name,
         const Event &ev,
         std::vector<Argument> &args,
-        size_t opcode)
+        size_t opcode,
+        bool is_view_message)
     {
-        return gen_message(interface_name, ev.name, args, opcode, true);
+        return gen_message(interface_name, ev.name, args, opcode, true, is_view_message);
     }
 
     LineList gen_message(
@@ -333,23 +337,27 @@ struct Generator
         const MetadataEntry &name_op,
         std::vector<Argument> &args,
         size_t opcode,
-        bool is_event)
+        bool is_event,
+        bool is_view_message)
     {
         LineList O;
 
         auto name = name_op.value();
 
-        O += std::format("struct message_{}", name);
+        const char *view_name_prefix = is_view_message ? "_view" : "";
+        const char *deprecated_tag = !is_view_message ? " [[deprecated]]" : "";
+
+        O += std::format("struct{} message{}_{}", deprecated_tag, view_name_prefix, name);
         O += "{";
         LineList B;
         for (auto &arg : args) {
-            B += define_arg(arg);
+            B += define_arg(arg, is_view_message);
         }
 
         B.indent();
         O += std::move(B);
 
-        auto type_using = std::format("message_{}", name);
+        auto type_using = std::format("message{}_{}", view_name_prefix, name);
         B = gen_args_meta(
             name, args, opcode, is_event, type_using, interface_name);
         B.indent();
@@ -358,9 +366,12 @@ struct Generator
         return O;
     }
 
-    LineList define_arg(const Argument &arg)
+    std::string define_arg(const Argument &arg, bool is_view_message)
     {
-        LineList O;
+        if (is_view_message) {
+            return std::format("void *{};", arg.name.value());
+        }
+
         auto type = arg.type.value();
         auto type_str = std::format("void * /* UNMAPPED {} */", type);
         auto cxx_type_str_op = to_cxx_type(type);
@@ -368,8 +379,7 @@ struct Generator
             type_str = std::format("{}", cxx_type_str_op.value());
         }
 
-        O += std::format("{} {};", type_str, arg.name.value());
-        return O;
+        return std::format("{} {};", type_str, arg.name.value());
     }
 
   private:
