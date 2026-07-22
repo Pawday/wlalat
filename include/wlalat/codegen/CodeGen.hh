@@ -204,8 +204,7 @@ struct Generator
         auto events = iface_node.events;
 
         LineList B0;
-        B0 += std::format(
-            "static constexpr std::string_view name = \"{}\";", iface_name);
+        B0 += std::format("static constexpr char name[] = \"{}\";", iface_name);
         B0 += std::format("using Events = std::tuple");
         B0 += "<";
         LineList B1;
@@ -247,8 +246,7 @@ struct Generator
 
         B0 += std::format("using Type = {};", type_using);
         B0 += std::format("using InterfaceTag = {};", interface_type_using);
-        B0 += std::format(
-            "static constexpr std::string_view name = \"{}\";", msg_name);
+        B0 += std::format("static constexpr char name[] = \"{}\";", msg_name);
         B0 += std::format("static constexpr const size_t opcode = {};", opcode);
         B0 += std::format("static constexpr bool is_event = {};", is_event);
 
