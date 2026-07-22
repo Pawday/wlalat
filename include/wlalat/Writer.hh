@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <ranges>
+#include <type_traits>
 
 namespace wlalat
 {
@@ -26,7 +27,14 @@ struct Writer
         std::ranges::copy(N_data, _oiter);
     }
 
-    constexpr void write(const wlalat::String &S)
+    template <typename NumericTagT>
+    constexpr void write(const wlalat::Numeric &N, NumericTagT)
+    {
+        write(N);
+    }
+
+    constexpr void
+        write(const wlalat::String &S, std::type_identity<wlalat::String>)
     {
         namespace V = std::ranges::views;
         auto mkb = [](char c) {
@@ -56,10 +64,10 @@ struct Writer
         std::ranges::copy(zterm_pad, _oiter);
     }
 
-    template <typename T>
-    constexpr void operator()(const T &v)
+    template <typename T, typename TagT>
+    constexpr void operator()(const T &v, TagT id)
     {
-        write(v);
+        write(v, id);
     }
 
   private:

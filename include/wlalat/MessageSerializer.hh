@@ -16,6 +16,7 @@
 #include <memory_resource>
 #include <span>
 #include <tuple>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -126,20 +127,20 @@ struct MessageSerializer
             fds->push_back(fd);
         }
 
-        void operator()(const void *fd)
+        void operator()(const void *fd, Unix::WlTags::wl_fd)
         {
             write_fd(fd);
         };
 
-        void operator()(void *fd)
+        void operator()(void *fd, Unix::WlTags::wl_fd)
         {
             write_fd(fd);
         };
 
-        template <typename T>
-        void operator()(const T &v)
+        template <typename T, typename TagT>
+        void operator()(const T &v, TagT id)
         {
-            W(v);
+            W(v, id);
         }
     };
 
@@ -147,7 +148,9 @@ struct MessageSerializer
     static void write_args(const MessageT &M, UpstreamWriterT &W)
     {
         auto &metas = MessageT::Meta::template args<Unix::WlTags>;
-        auto F = [&](auto... meta) { ((W(M.*(std::get<1>(meta)))), ...); };
+        auto F = [&](auto... meta) {
+            (..., (W(M.*(std::get<1>(meta)), std::get<0>(meta))));
+        };
         std::apply(F, metas);
     }
 
