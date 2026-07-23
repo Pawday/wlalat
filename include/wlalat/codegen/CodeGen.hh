@@ -398,7 +398,7 @@ struct Generator
     std::string define_arg(const Argument &arg, bool is_view_message)
     {
         if (is_view_message) {
-            return std::format("void *{};", arg.name.value());
+            return std::format("const void *{};", arg.name.value());
         }
 
         auto type = arg.type.value();
