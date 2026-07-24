@@ -8,6 +8,7 @@
 #include <wlalat/MessageSerializer.hh>
 #include <wlalat/Parser.hh>
 #include <wlalat/Types.hh>
+#include <wlalat/ViewMessageFrom.hh>
 #include <wlalat/Unix/TypeTags.hh>
 
 #include <sys/socket.h>
@@ -107,7 +108,8 @@ struct Socket
     template <typename MessageT>
     void send(Object obj, const MessageT &msg)
     {
-        auto ser = _send_serializer(obj, msg);
+        auto msg_view = ViewMessageFrom{msg, std::type_identity<WlTags>{}}.value;
+        auto ser = _send_serializer(obj.raw(), msg_view);
         send_raw(ser.message, ser.fds);
     }
 
