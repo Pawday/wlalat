@@ -52,6 +52,23 @@ struct TypelessNewIdArgumentExpander
         }
         return O;
     }
+
+    static auto expand_at(std::vector<Protocol> &protos)
+    {
+        auto expand_at_message = []<typename MSG>(MSG &M) {
+            M.args = expand(M.args);
+        };
+
+        auto expand_at_iface = [&](Interface &iface) {
+            std::ranges::for_each(iface.requests, expand_at_message);
+        };
+
+        auto exand_at_proto = [&](Protocol &P) {
+            std::ranges::for_each(P.interfaces, expand_at_iface);
+        };
+
+        std::ranges::for_each(protos, exand_at_proto);
+    }
 };
 
 struct Generator
@@ -59,6 +76,7 @@ struct Generator
     Generator(std::vector<CodeGen::Protocol> &&protocols)
         : _protocols{std::move(protocols)}
     {
+        TypelessNewIdArgumentExpander::expand_at(_protocols);
     }
 
     LineList generate()
@@ -165,17 +183,15 @@ struct Generator
         for (size_t i = 0; i != requests.size(); ++i) {
             auto opcode = i;
             const Request &req = iface_node.requests[i];
-            auto args = TypelessNewIdArgumentExpander::expand(req.args);
-            O += gen_request(interface_name, req, args, opcode, true);
-            O += gen_request(interface_name, req, args, opcode, false);
+            O += gen_request(interface_name, req, opcode, true);
+            O += gen_request(interface_name, req, opcode, false);
         }
 
         for (size_t i = 0; i != events.size(); ++i) {
             auto opcode = i;
             const Event &ev = events[i];
-            auto args = TypelessNewIdArgumentExpander::expand(ev.args);
-            O += gen_event(interface_name, ev, args, opcode, true);
-            O += gen_event(interface_name, ev, args, opcode, false);
+            O += gen_event(interface_name, ev, opcode, true);
+            O += gen_event(interface_name, ev, opcode, false);
         }
 
         auto meta = gen_iface_meta(iface_node, name);
@@ -337,27 +353,25 @@ struct Generator
     LineList gen_request(
         std::string_view interface_name,
         const Request &req,
-        std::vector<Argument> &args,
         size_t opcode,
         bool is_view_message)
     {
-        return gen_message(interface_name, req.name, args, opcode, false, is_view_message);
+        return gen_message(interface_name, req.name, req.args, opcode, false, is_view_message);
     }
 
     LineList gen_event(
         std::string_view interface_name,
         const Event &ev,
-        std::vector<Argument> &args,
         size_t opcode,
         bool is_view_message)
     {
-        return gen_message(interface_name, ev.name, args, opcode, true, is_view_message);
+        return gen_message(interface_name, ev.name, ev.args, opcode, true, is_view_message);
     }
 
     LineList gen_message(
         std::string_view interface_name,
         const MetadataEntry &name_op,
-        std::vector<Argument> &args,
+        const std::vector<Argument> &args,
         size_t opcode,
         bool is_event,
         bool is_view_message)
