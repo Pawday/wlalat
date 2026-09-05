@@ -21,3 +21,7 @@ target_link_libraries(Example PRIVATE wlalat gena_wl)
 add_executable(Parser Parser.cc)
 target_cxx_version(Parser 23)
 target_link_libraries(Parser PRIVATE wlalat)
+
+add_executable(XML XML.cc)
+target_cxx_version(XML 23)
+target_link_libraries(XML PRIVATE wlalat)
