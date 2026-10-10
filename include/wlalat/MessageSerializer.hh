@@ -2,6 +2,7 @@
 
 #include "Binary.hh"
 #include "Error.hh"
+#include "Types.hh"
 #include "Writer.hh"
 
 #include "Unix/TypeTags.hh"
@@ -35,8 +36,8 @@ struct MessageSerializer
         std::span<const void *> fds;
     };
 
-    template <typename MessageViewT>
-    WriteOutputData operator()(uint_least32_t object_id, const MessageViewT &msg)
+    template <typename MessageT>
+    WriteOutputData operator()(Object object_id, const MessageT &msg)
     {
         data.clear();
         fds.clear();
@@ -54,13 +55,13 @@ struct MessageSerializer
             throw Error::from_cstring("payload is to big");
         }
 
-        auto msg_id_data = tole32(object_id);
+        auto msg_id_data = tole32(object_id.raw());
         std::ranges::copy(msg_id_data, oiter);
 
         uint32_t size_opcode_pair = 0;
         size_opcode_pair |= message_size;
         size_opcode_pair <<= 16;
-        size_opcode_pair |= MessageViewT::Meta::opcode;
+        size_opcode_pair |= MessageT::Meta::opcode;
         auto size_opcode_pair_data = tole32(size_opcode_pair);
         std::ranges::copy(size_opcode_pair_data, oiter);
 
@@ -123,7 +124,7 @@ struct MessageSerializer
             if (!fds) {
                 return;
             }
-            fds->push_back(*(void **)fd);
+            fds->push_back(fd);
         }
 
         void operator()(const void *fd, Unix::WlTags::wl_fd)

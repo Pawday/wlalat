@@ -21,28 +21,16 @@ struct Writer
     {
     }
 
-    constexpr void write_numeric(const wlalat::Numeric &N)
+    constexpr void write(const wlalat::Numeric &N)
     {
         auto N_data = tole32(N.raw());
         std::ranges::copy(N_data, _oiter);
     }
 
-#define NUMERIC_OVERLOAD(WL_TYPE)                                              \
-    constexpr void write(const void *N_ptr, std::type_identity<WL_TYPE>)       \
-    {                                                                          \
-        write_numeric(*static_cast<const wlalat::Numeric *>(N_ptr));           \
-    }
-    NUMERIC_OVERLOAD(wlalat::NewID);
-    NUMERIC_OVERLOAD(wlalat::Object);
-    NUMERIC_OVERLOAD(wlalat::Int);
-    NUMERIC_OVERLOAD(wlalat::UInt);
-#undef NUMERIC_OVERLOAD
-
-    constexpr void
-        write(const void *S_ptr, std::type_identity<wlalat::String> id)
+    template <typename NumericTagT>
+    constexpr void write(const wlalat::Numeric &N, NumericTagT)
     {
-        auto &S = *static_cast<const wlalat::String *>(S_ptr);
-        write(S, id);
+        write(N);
     }
 
     constexpr void
@@ -71,13 +59,13 @@ struct Writer
         std::ranges::copy(tail, zterm_pad.begin());
         zterm_pad[tsz] = std::byte{0};
 
-        write_numeric(S.size() + 1);
+        write(S.size() + 1);
         std::ranges::copy(lead, _oiter);
         std::ranges::copy(zterm_pad, _oiter);
     }
 
-    template <typename TagT>
-    constexpr void operator()(const void *v, TagT id)
+    template <typename T, typename TagT>
+    constexpr void operator()(const T &v, TagT id)
     {
         write(v, id);
     }
