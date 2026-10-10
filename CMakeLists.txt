@@ -5,9 +5,22 @@ project(WLalat)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(target_cxx_version)
+include(CMakeDependentOption)
 
 add_library(wlalat INTERFACE)
 target_include_directories(wlalat INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+set(HAS_EXPAT OFF)
+find_library(WLALAT_EXPAT_LIBRARY expat)
+if(WLALAT_EXPAT_LIBRARY)
+    set(HAS_EXPAT ON)
+endif()
+cmake_dependent_option(WLALAT_ENABLE_EXPAT_PARSER_DRIVER "" ON HAS_EXPAT OFF)
+if(WLALAT_ENABLE_EXPAT_PARSER_DRIVER)
+    add_executable(ExpatParserDriver ExpatParserDriver.cc)
+    target_cxx_version(ExpatParserDriver 23)
+    target_link_libraries(ExpatParserDriver PRIVATE wlalat ${WLALAT_EXPAT_LIBRARY})
+endif()
 
 add_executable(ExampleCodeGenDriver ExampleCodeGenDriver.cc)
 target_cxx_version(ExampleCodeGenDriver 23)
