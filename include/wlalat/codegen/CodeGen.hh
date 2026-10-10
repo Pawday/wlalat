@@ -248,7 +248,6 @@ struct Generator
         size_t opcode,
         bool is_event,
         std::string_view type_using,
-        std::optional<std::string_view> view_type_using,
         std::string_view interface_type_using)
     {
         LineList O;
@@ -257,9 +256,6 @@ struct Generator
         LineList B0;
 
         B0 += std::format("using Type = {};", type_using);
-        if (view_type_using) {
-            B0 += std::format("using ViewType = {};", view_type_using.value());
-        }
         B0 += std::format("using InterfaceTag = {};", interface_type_using);
         B0 += std::format("static constexpr char name[] = \"{}\";", msg_name);
         B0 += std::format("static constexpr const size_t opcode = {};", opcode);
@@ -355,13 +351,10 @@ struct Generator
 
         auto name = name_op.value();
 
+        const char *view_name_prefix = is_view_message ? "_view" : "";
         const char *deprecated_tag = !is_view_message ? " [[deprecated]]" : "";
 
-        auto view_type = std::format("message_view_{}", name);
-        auto non_view_type = std::format("message_{}", name);
-        std::string_view type = is_view_message ? view_type : non_view_type;
-
-        O += std::format("struct{} {}", deprecated_tag, type);
+        O += std::format("struct{} message{}_{}", deprecated_tag, view_name_prefix, name);
         O += "{";
         LineList B;
         for (auto &arg : args) {
@@ -371,13 +364,9 @@ struct Generator
         B.indent();
         O += std::move(B);
 
-        std::optional<std::string_view> view_type_using_op;
-        if (!is_view_message) {
-            view_type_using_op = view_type;
-        }
-
+        auto type_using = std::format("message{}_{}", view_name_prefix, name);
         B = gen_args_meta(
-            name, args, opcode, is_event, type, view_type_using_op, interface_name);
+            name, args, opcode, is_event, type_using, interface_name);
         B.indent();
         O += std::move(B);
         O += "};";
