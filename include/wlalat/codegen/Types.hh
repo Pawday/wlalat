@@ -36,6 +36,15 @@ struct ArgumentMetadata
         {"allow_null", &Type::allow_null},
         {"enum_name", &Type::enum_name},
     };
+
+    static constexpr MetadataStringMappingType<Type> xml_mappings[]{
+        {"name", &Type::name},
+        {"type", &Type::type},
+        {"interface", &Type::interface},
+        {"summary", &Type::summary},
+        {"allow-null", &Type::allow_null},
+        {"enum", &Type::enum_name},
+    };
 };
 
 struct RequestMetadata
@@ -47,6 +56,12 @@ struct RequestMetadata
     MetadataEntry since;
 
     static constexpr MetadataStringMappingType<Type> mappings[]{
+        {"name", &Type::name},
+        {"type", &Type::type},
+        {"since", &Type::since},
+    };
+
+    static constexpr MetadataStringMappingType<Type> xml_mappings[]{
         {"name", &Type::name},
         {"type", &Type::type},
         {"since", &Type::since},
@@ -68,6 +83,13 @@ struct EventMetadata
         {"since", &Type::since},
         {"deprecated_since", &Type::deprecated_since},
     };
+
+    static constexpr MetadataStringMappingType<Type> xml_mappings[]{
+        {"name", &Type::name},
+        {"since", &Type::since},
+        {"type", &Type::type},
+        {"deprecated-since", &Type::deprecated_since},
+    };
 };
 
 struct EnumEntryMetadata
@@ -87,6 +109,14 @@ struct EnumEntryMetadata
         {"since", &Type::since},
         {"deprecated_since", &Type::deprecated_since},
     };
+
+    static constexpr MetadataStringMappingType<Type> xml_mappings[]{
+        {"name", &Type::name},
+        {"value", &Type::value},
+        {"summary", &Type::summary},
+        {"since", &Type::since},
+        {"deprecated-since", &Type::deprecated_since},
+    };
 };
 
 struct EnumMetadata
@@ -98,6 +128,12 @@ struct EnumMetadata
     MetadataEntry bitfield;
 
     static constexpr MetadataStringMappingType<Type> mappings[]{
+        {"name", &Type::name},
+        {"since", &Type::since},
+        {"bitfield", &Type::bitfield},
+    };
+
+    static constexpr MetadataStringMappingType<Type> xml_mappings[]{
         {"name", &Type::name},
         {"since", &Type::since},
         {"bitfield", &Type::bitfield},
@@ -117,6 +153,12 @@ struct InterfaceMetadata
         {"version", &Type::version},
         {"frozen", &Type::frozen},
     };
+
+    static constexpr MetadataStringMappingType<Type> xml_mappings[]{
+        {"name", &Type::name},
+        {"version", &Type::version},
+        {"frozen", &Type::frozen},
+    };
 };
 
 struct ProtocolMetadata
@@ -126,6 +168,10 @@ struct ProtocolMetadata
     MetadataEntry name;
 
     static constexpr MetadataStringMappingType<Type> mappings[]{
+        {"name", &Type::name},
+    };
+
+    static constexpr MetadataStringMappingType<Type> xml_mappings[]{
         {"name", &Type::name},
     };
 };
