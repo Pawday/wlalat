@@ -30,6 +30,9 @@ static_assert(
 
 int main(int argc, char **argv)
 try {
+    if (argc < 2) {
+        throw std::invalid_argument{"Bad argc"};
+    }
     std::ifstream file{argv[1]};
     file >> std::noskipws;
     file.exceptions(std::ios::badbit);
