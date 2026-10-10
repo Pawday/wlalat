@@ -20,6 +20,10 @@ if(WLALAT_ENABLE_EXPAT_PARSER_DRIVER)
     add_executable(ExpatParserDriver ExpatParserDriver.cc)
     target_cxx_version(ExpatParserDriver 23)
     target_link_libraries(ExpatParserDriver PRIVATE wlalat ${WLALAT_EXPAT_LIBRARY})
+
+    add_executable(Parser Parser.cc)
+    target_cxx_version(Parser 23)
+    target_link_libraries(Parser PRIVATE wlalat ${WLALAT_EXPAT_LIBRARY})
 endif()
 
 add_executable(ExampleCodeGenDriver ExampleCodeGenDriver.cc)
@@ -30,10 +34,6 @@ add_subdirectory(protos)
 add_executable(Example Example.cc)
 target_cxx_version(Example 23)
 target_link_libraries(Example PRIVATE wlalat gena_wl)
-
-add_executable(Parser Parser.cc)
-target_cxx_version(Parser 23)
-target_link_libraries(Parser PRIVATE wlalat)
 
 add_executable(XML XML.cc)
 target_cxx_version(XML 23)

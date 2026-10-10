@@ -1,6 +1,7 @@
 #include <wlalat/codegen/CodeGen.hh>
+#include <wlalat/codegen/Converter.hh>
 #include <wlalat/codegen/Format.hh>
-#include <wlalat/codegen/ProtocolParser.hh>
+#include <wlalat/protocol/ExpatParser.hh>
 #include <wlalat/codegen/Types.hh>
 
 #include <cstddef>
@@ -10,23 +11,7 @@
 #include <fstream>
 #include <ios>
 #include <print>
-#include <string_view>
 #include <vector>
-
-constexpr auto test(std::string_view str)
-{
-    wlalat::CodeGen::ProtocolParser p;
-    for (auto c : str) {
-        p.send(c);
-    }
-    auto tree = p.parse();
-    return tree.size();
-}
-
-static_assert(test("<protocol></protocol>") == 1);
-static_assert(
-    test("<protocol><interface></interface></protocol><protocol><interface></"
-         "interface></protocol>") == 2);
 
 int main(int argc, char **argv)
 try {
@@ -38,13 +23,14 @@ try {
     file.exceptions(std::ios::badbit);
     auto is = std::views::istream<char>(file);
 
-    wlalat::CodeGen::ProtocolParser p;
+    wlalat::Protocol::ExpatParser p;
 
     for (auto c : is) {
         p.send(c);
     }
 
-    auto protos_collect = p.parse();
+    std::vector<wlalat::CodeGen::Protocol> protos_collect;
+    wlalat::CodeGen::Converter::convert(p.finalize(), protos_collect);
 
     bool f = true;
     std::print("[");
