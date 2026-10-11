@@ -42,9 +42,9 @@ try {
     for (auto c : stream_range) {
         p.send(c);
     }
+    p.finalize();
 
-    auto &protos = p.finalize();
-    auto &proto = protos[0];
+    auto &proto = p.proto().value();
 
     auto write_proto_to = [&proto](auto &stream) {
         std::ostream_iterator<char> iter{stream, ""};

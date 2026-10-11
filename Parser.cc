@@ -28,20 +28,11 @@ try {
     for (auto c : is) {
         p.send(c);
     }
+    p.finalize();
 
-    std::vector<wlalat::CodeGen::Protocol> protos_collect;
-    wlalat::CodeGen::Converter::convert(p.finalize(), protos_collect);
+    wlalat::Protocol::Protocol &proto = p.proto().value();
 
-    bool f = true;
-    std::print("[");
-    for (auto &proto : protos_collect) {
-        if (!f) {
-            std::print(",");
-        }
-        f = false;
-        std::print("{}", proto);
-    }
-    std::print("]");
+    std::print("{}", wlalat::CodeGen::Converter::convert(proto));
 
 } catch (std::exception &e) {
     std::println("std::exception::what() [{}]", e.what());

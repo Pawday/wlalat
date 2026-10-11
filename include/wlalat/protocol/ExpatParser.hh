@@ -49,19 +49,31 @@ struct ExpatParser
 
     void send(std::string_view data)
     {
+        if (_proto.has_value()) {
+            abort_parser("Done protocol");
+        }
+
         XML_Status status = XML_Parse(_p, data.data(), data.size(), false);
         if (XML_STATUS_OK != status) {
             throw std::runtime_error{format_parse_failure_message(status)};
         }
     }
 
-    std::vector<Protocol> &finalize()
+    void finalize()
     {
         auto status = XML_ParseBuffer(_p, 0, 1);
         if (XML_STATUS_OK != status) {
             throw std::runtime_error{format_parse_failure_message(status)};
         }
-        return _protos;
+
+        if (!_proto.has_value()) {
+            throw std::runtime_error{"No protocol parsed"};
+        }
+    }
+
+    std::optional<Protocol> &proto()
+    {
+        return _proto;
     }
 
     ~ExpatParser()
@@ -432,7 +444,7 @@ struct ExpatParser
 
         if (_tag_stack.empty()) {
             Protocol &proto = std::get<Protocol>(top);
-            _protos.push_back(std::move(proto));
+            _proto.emplace(std::move(proto));
             return;
         }
 
@@ -486,7 +498,7 @@ struct ExpatParser
     XML_Parser _p = nullptr;
 
     std::stack<Tag> _tag_stack;
-    std::vector<Protocol> _protos;
+    std::optional<Protocol> _proto;
 };
 
 } // namespace Protocol
