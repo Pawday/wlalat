@@ -5,35 +5,66 @@
 #include <wlalat/codegen/Types.hh>
 
 #include <cstddef>
+#include <cstdlib>
 
 #include <exception>
 #include <format>
 #include <fstream>
 #include <ios>
+#include <iostream>
+#include <iterator>
 #include <print>
-#include <vector>
+#include <ranges>
+#include <stdexcept>
+#include <string>
 
 int main(int argc, char **argv)
 try {
-    if (argc < 2) {
+    if (argc < 3) {
         throw std::invalid_argument{"Bad argc"};
     }
-    std::ifstream file{argv[1]};
-    file >> std::noskipws;
-    file.exceptions(std::ios::badbit);
-    auto is = std::views::istream<char>(file);
+
+    std::string file_arg{argv[1]};
+    std::string o_file_arg{argv[2]};
+
+    std::ifstream file;
+    std::istreambuf_iterator<char> stream;
+
+    if (file_arg == "-") {
+        stream = std::istreambuf_iterator<char>{std::cin};
+    } else {
+        file = std::ifstream{file_arg};
+        file >> std::noskipws;
+        file.exceptions(std::ios::badbit);
+        stream = std::istreambuf_iterator<char>{file};
+    }
 
     wlalat::Protocol::ExpatParser p;
 
-    for (auto c : is) {
+    auto stream_range =
+        std::ranges::subrange(stream, std::istreambuf_iterator<char>());
+    for (auto c : stream_range) {
         p.send(c);
     }
     p.finalize();
 
-    wlalat::Protocol::Protocol &proto = p.proto().value();
+    wlalat::CodeGen::Protocol proto =
+        wlalat::CodeGen::Converter::convert(p.proto().value());
 
-    std::print("{}", wlalat::CodeGen::Converter::convert(proto));
+    auto write_proto_to = [&proto](auto &stream) {
+        std::ostream_iterator<char> iter{stream, ""};
+        std::format_to(iter, "{}", proto);
+    };
 
+    if (o_file_arg == "-") {
+        write_proto_to(std::cout);
+        return EXIT_SUCCESS;
+    }
+
+    std::ofstream o_file{o_file_arg};
+    write_proto_to(o_file);
+    return EXIT_SUCCESS;
 } catch (std::exception &e) {
     std::println("std::exception::what() [{}]", e.what());
+    return EXIT_FAILURE;
 }
