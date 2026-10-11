@@ -13,6 +13,7 @@
 #include <ios>
 #include <iostream>
 #include <iterator>
+#include <optional>
 #include <print>
 #include <ranges>
 #include <stdexcept>
@@ -20,50 +21,63 @@
 
 int main(int argc, char **argv)
 try {
-    if (argc < 3) {
+    namespace V = std::views;
+
+    if (argc < 0) {
         throw std::invalid_argument{"Bad argc"};
     }
 
-    std::string file_arg{argv[1]};
-    std::string o_file_arg{argv[2]};
+    std::vector<std::string> args_vec;
+    for (size_t i = 0; i != argc; ++i) {
+        args_vec.push_back(argv[i]);
+    }
 
-    std::ifstream file;
-    std::istreambuf_iterator<char> stream;
+    auto args = args_vec | V::drop(1);
+    if (args.size() < 2) {
+        throw std::invalid_argument{
+            "Bad args: expected input(s) and single output"};
+    }
+    auto in_files_args = args | V::take(args.size() - 1);
+    auto o_file_arg = (args | V::drop(args.size() - 1)).front();
 
-    if (file_arg == "-") {
-        stream = std::istreambuf_iterator<char>{std::cin};
-    } else {
-        file = std::ifstream{file_arg};
+    std::optional<std::ofstream> ofile_stream;
+    std::ostream_iterator<char> O = [&]() {
+        if (o_file_arg == "-") {
+            return std::ostream_iterator<char>{std::cout, ""};
+        }
+        ofile_stream.emplace(o_file_arg);
+        return std::ostream_iterator<char>{ofile_stream.value(), ""};
+    }();
+
+    bool f = true;
+    std::format_to(O, "[");
+    for (auto file_arg : in_files_args) {
+
+        std::ifstream file{file_arg};
         file >> std::noskipws;
         file.exceptions(std::ios::badbit);
-        stream = std::istreambuf_iterator<char>{file};
+        auto if_stream = std::istreambuf_iterator<char>{file};
+
+        wlalat::Protocol::ExpatParser p;
+
+        auto if_stream_char =
+            std::ranges::subrange(if_stream, std::istreambuf_iterator<char>());
+        for (char c : if_stream_char) {
+            p.send(c);
+        }
+        p.finalize();
+
+        auto &proto_op = p.proto();
+        auto &proto = proto_op.value();
+        auto cg_proto = wlalat::CodeGen::Converter::convert(proto);
+
+        if (!f) {
+            std::format_to(O, ",");
+        }
+        f = false;
+        std::format_to(O, "{}", cg_proto);
     }
-
-    wlalat::Protocol::ExpatParser p;
-
-    auto stream_range =
-        std::ranges::subrange(stream, std::istreambuf_iterator<char>());
-    for (auto c : stream_range) {
-        p.send(c);
-    }
-    p.finalize();
-
-    wlalat::CodeGen::Protocol proto =
-        wlalat::CodeGen::Converter::convert(p.proto().value());
-
-    auto write_proto_to = [&proto](auto &stream) {
-        std::ostream_iterator<char> iter{stream, ""};
-        std::format_to(iter, "{}", proto);
-    };
-
-    if (o_file_arg == "-") {
-        write_proto_to(std::cout);
-        return EXIT_SUCCESS;
-    }
-
-    std::ofstream o_file{o_file_arg};
-    write_proto_to(o_file);
-    return EXIT_SUCCESS;
+    std::format_to(O, "]");
 } catch (std::exception &e) {
     std::println("std::exception::what() [{}]", e.what());
     return EXIT_FAILURE;

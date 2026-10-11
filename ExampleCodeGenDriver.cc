@@ -14,34 +14,58 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 int main(int argc, char **argv)
 try {
-    if (argc < 3) {
+    namespace V = std::views;
+
+    if (argc < 0) {
         throw std::invalid_argument{"Bad argc"};
     }
 
-    std::string file_arg{argv[1]};
-    std::string o_file_arg{argv[2]};
-
-    std::ifstream file{file_arg};
-    file >> std::noskipws;
-    file.exceptions(std::ios::badbit);
-    auto is = std::views::istream<char>(file);
-
-    wlalat::CodeGen::ProtocolParser p;
-    for (char c : is) {
-        p.send(c);
+    std::vector<std::string> args_vec;
+    for (size_t i = 0; i != argc; ++i) {
+        args_vec.push_back(argv[i]);
     }
 
-    auto protos = p.parse();
-    auto &proto = protos.at(0);
+    auto args = args_vec | V::drop(1);
+    if (args.size() < 2) {
+        throw std::invalid_argument{
+            "Bad args: expected input(s) and single output"};
+    }
+    auto in_files_args = args | V::take(args.size() - 1);
+    auto o_file_arg = (args | V::drop(args.size() - 1)).front();
 
-    wlalat::CodeGen::Generator m{std::move(proto)};
-    auto gen = m.generate();
     std::string gen_data;
-    for (auto &l : gen) {
-        std::format_to(std::back_inserter(gen_data), "{}\n", l);
+
+    bool f = true;
+    for (auto file_arg : in_files_args) {
+        auto O = std::back_inserter(gen_data);
+
+        if (!f) {
+            std::format_to(O, "\n");
+        }
+        f = false;
+
+        std::ifstream file{file_arg};
+        file >> std::noskipws;
+        file.exceptions(std::ios::badbit);
+        auto is = std::views::istream<char>(file);
+
+        wlalat::CodeGen::ProtocolParser p;
+        for (char c : is) {
+            p.send(c);
+        }
+
+        auto protos = p.parse();
+        auto &proto = protos.at(0);
+
+        wlalat::CodeGen::Generator m{std::move(proto)};
+        auto gen = m.generate();
+        for (auto &l : gen) {
+            std::format_to(O, "{}\n", l);
+        }
     }
 
     if (o_file_arg == "-") {
