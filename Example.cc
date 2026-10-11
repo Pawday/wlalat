@@ -1,6 +1,4 @@
-#include "wayland.xml.hh"
-#include "xdg-decoration-unstable-v1.xml.hh"
-#include "xdg-shell.xml.hh"
+#include "gena_wl.hh"
 
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
