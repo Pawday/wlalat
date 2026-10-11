@@ -1,3 +1,4 @@
+#include <wlalat/codegen/Types.hh>
 #include <wlalat/codegen/CodeGen.hh>
 #include <wlalat/codegen/ProtocolParser.hh>
 
@@ -37,17 +38,9 @@ try {
     auto in_files_args = args | V::take(args.size() - 1);
     auto o_file_arg = (args | V::drop(args.size() - 1)).front();
 
-    std::string gen_data;
+    std::vector<wlalat::CodeGen::Protocol> protos;
 
-    bool f = true;
     for (auto file_arg : in_files_args) {
-        auto O = std::back_inserter(gen_data);
-
-        if (!f) {
-            std::format_to(O, "\n");
-        }
-        f = false;
-
         std::ifstream file{file_arg};
         file >> std::noskipws;
         file.exceptions(std::ios::badbit);
@@ -58,14 +51,17 @@ try {
             p.send(c);
         }
 
-        auto protos = p.parse();
-        auto &proto = protos.at(0);
-
-        wlalat::CodeGen::Generator m{std::move(proto)};
-        auto gen = m.generate();
-        for (auto &l : gen) {
-            std::format_to(O, "{}\n", l);
+        auto parsed = p.parse();
+        for (auto &proto : parsed) {
+            protos.push_back(std::move(proto));
         }
+    }
+
+    wlalat::CodeGen::Generator m{std::move(protos)};
+    auto gen = m.generate();
+    std::string gen_data;
+    for (auto &l : gen) {
+        std::format_to(std::back_inserter(gen_data), "{}\n", l);
     }
 
     if (o_file_arg == "-") {
