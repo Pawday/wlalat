@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Types.hh"
 #include "LineList.hh"
+#include "Types.hh"
 
 #include <array>
 #include <cstddef>
@@ -53,7 +53,7 @@ struct TypelessNewIdArgumentExpander
         return O;
     }
 
-    static auto expand_at(std::vector<Protocol> &protos)
+    static auto expand_at(Protocol &proto)
     {
         auto expand_at_message = []<typename MSG>(MSG &M) {
             M.args = expand(M.args);
@@ -67,16 +67,15 @@ struct TypelessNewIdArgumentExpander
             std::ranges::for_each(P.interfaces, expand_at_iface);
         };
 
-        std::ranges::for_each(protos, exand_at_proto);
+        exand_at_proto(proto);
     }
 };
 
 struct Generator
 {
-    Generator(std::vector<CodeGen::Protocol> &&protocols)
-        : _protocols{std::move(protocols)}
+    Generator(CodeGen::Protocol &&protocol) : _protocol{std::move(protocol)}
     {
-        TypelessNewIdArgumentExpander::expand_at(_protocols);
+        TypelessNewIdArgumentExpander::expand_at(_protocol);
     }
 
     LineList generate()
@@ -93,25 +92,7 @@ struct Generator
         O += "#include <span>";
         O += "";
 
-        bool f = true;
-        for (auto &proto : _protocols) {
-            O += on_proto(proto);
-        }
-
-        for (auto &line : O) {
-            auto white = [](auto c) {
-                switch (c) {
-                    case ' ':
-                    case '\n':
-                        return true;
-                }
-                return false;
-            };
-            auto non_space = std::ranges::find_if_not(line, white);
-            if (non_space == std::end(line)) {
-                line.clear();
-            }
-        }
+        O += on_proto(_protocol);
 
         return O;
     }
@@ -320,17 +301,13 @@ struct Generator
     }
 
     LineList gen_request(
-        std::string_view interface_name,
-        const Request &req,
-        size_t opcode)
+        std::string_view interface_name, const Request &req, size_t opcode)
     {
         return gen_message(interface_name, req.name, req.args, opcode, false);
     }
 
     LineList gen_event(
-        std::string_view interface_name,
-        const Event &ev,
-        size_t opcode)
+        std::string_view interface_name, const Event &ev, size_t opcode)
     {
         return gen_message(interface_name, ev.name, ev.args, opcode, true);
     }
@@ -380,7 +357,7 @@ struct Generator
     }
 
   private:
-    std::vector<CodeGen::Protocol> _protocols;
+    CodeGen::Protocol _protocol;
 };
 }; // namespace CodeGen
 }; // namespace wlalat

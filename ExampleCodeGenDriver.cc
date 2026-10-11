@@ -13,6 +13,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 int main(int argc, char **argv)
 try {
@@ -33,7 +34,10 @@ try {
         p.send(c);
     }
 
-    wlalat::CodeGen::Generator m{p.parse()};
+    auto protos = p.parse();
+    auto &proto = protos.at(0);
+
+    wlalat::CodeGen::Generator m{std::move(proto)};
     auto gen = m.generate();
     std::string gen_data;
     for (auto &l : gen) {
