@@ -35,7 +35,3 @@ add_subdirectory(protos)
 add_executable(Example Example.cc)
 target_cxx_version(Example 23)
 target_link_libraries(Example PRIVATE wlalat generated_protocols)
-
-add_executable(XML XML.cc)
-target_cxx_version(XML 23)
-target_link_libraries(XML PRIVATE wlalat)
