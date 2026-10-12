@@ -1,6 +1,7 @@
-#include <wlalat/codegen/Types.hh>
 #include <wlalat/codegen/CodeGen.hh>
-#include <wlalat/codegen/ProtocolParser.hh>
+#include <wlalat/codegen/Converter.hh>
+#include <wlalat/codegen/Types.hh>
+#include <wlalat/protocol/ExpatParser.hh>
 
 #include <cstddef>
 #include <cstdlib>
@@ -46,15 +47,14 @@ try {
         file.exceptions(std::ios::badbit);
         auto is = std::views::istream<char>(file);
 
-        wlalat::CodeGen::ProtocolParser p;
+        wlalat::Protocol::ExpatParser p;
         for (char c : is) {
             p.send(c);
         }
+        p.finalize();
 
-        auto parsed = p.parse();
-        for (auto &proto : parsed) {
-            protos.push_back(std::move(proto));
-        }
+        auto &proto = p.proto().value();
+        protos.push_back(wlalat::CodeGen::Converter::convert(proto));
     }
 
     wlalat::CodeGen::Generator m{std::move(protos)};

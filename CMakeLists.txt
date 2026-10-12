@@ -27,7 +27,7 @@ cmake_dependent_option(WLALAT_CODEGEN_IN_SOURCE "" OFF WLALAT_ENABLE_CODEGEN OFF
 if(WLALAT_ENABLE_CODEGEN)
     add_executable(ExampleCodeGenDriver ExampleCodeGenDriver.cc)
     target_cxx_version(ExampleCodeGenDriver 23)
-    target_link_libraries(ExampleCodeGenDriver PRIVATE wlalat)
+    target_link_libraries(ExampleCodeGenDriver PRIVATE wlalat ${WLALAT_EXPAT_LIBRARY})
 endif()
 
 add_subdirectory(protos)
