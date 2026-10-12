@@ -1,4 +1,4 @@
-#include "gena_wl.hh"
+#include "generated_protocols.hh"
 
 #include <wlalat/Binary.hh>
 #include <wlalat/Error.hh>
