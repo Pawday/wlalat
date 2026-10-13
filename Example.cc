@@ -89,9 +89,6 @@ using Tuple2VariantT = typename Tuple2Variant<TupleT>::type;
 template <typename MsgT>
 struct TypeFormatVis
 {
-    using MsgMeta = decltype(MsgT::Meta::template args<wlalat::Unix::WlTags>);
-    using Indexes = std::make_index_sequence<std::tuple_size_v<MsgMeta>>;
-
     TypeFormatVis(MsgT &M) : M{M}
     {
     }
@@ -99,25 +96,36 @@ struct TypeFormatVis
     std::string format()
     {
         _output.clear();
-        MyFormatDispatcher<>{*this}.format();
+        MyFormatDispatcher{*this, MsgT::Meta::template args<wlalat::Unix::WlTags>}.format();
         return _output;
     }
 
   private:
     using WlTags = wlalat::Unix::WlTags;
 
-    template <typename SEQ = Indexes>
-    struct MyFormatDispatcher;
-
-    template <size_t... FIDXS>
-    struct MyFormatDispatcher<std::index_sequence<FIDXS...>>
+    template <typename... Args>
+    struct MyFormatDispatcher
     {
-        TypeFormatVis &V;
+        using TupleType = std::tuple<Args...>;
+        using IndexesT =
+            decltype(std::make_index_sequence<std::tuple_size_v<TupleType>>());
+
+        MyFormatDispatcher(TypeFormatVis<MsgT> &V, const std::tuple<Args...> &args) : _v{V}, _args{args}
+        {
+        }
+
+        TypeFormatVis &_v;
+        const TupleType &_args;
 
         void format()
         {
-            size_t max = std::index_sequence<FIDXS...>::size();
-            for (size_t idx = 0; idx != max; ++idx) {
+            return format(std::make_index_sequence<std::tuple_size_v<TupleType>>());
+        }
+
+        template <size_t... FIDXS>
+        void format(std::index_sequence<FIDXS...>)
+        {
+            for (size_t idx = 0; idx != sizeof...(FIDXS); ++idx) {
                 (rt(std::integral_constant<size_t, FIDXS>{}, idx), ...);
             }
         }
@@ -130,13 +138,12 @@ struct TypeFormatVis
                 return;
             }
 
-            constexpr auto &args_meta = MsgT::Meta::template args<WlTags>;
-            constexpr auto &arg_meta = std::get<IDX>(args_meta);
+            auto &arg_meta = std::get<IDX>(_args);
 
-            constexpr auto &tag = std::get<0>(arg_meta);
-            constexpr auto &ptr = std::get<1>(arg_meta);
-            constexpr auto &name = std::get<2>(arg_meta);
-            V.my_format_taged(rt_idx, tag, V.M.*ptr, name);
+            auto &tag = std::get<0>(arg_meta);
+            auto &ptr = std::get<1>(arg_meta);
+            auto &name = std::get<2>(arg_meta);
+            _v.my_format_taged(rt_idx, tag, _v.M.*ptr, name);
         }
     };
 
