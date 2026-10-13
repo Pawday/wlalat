@@ -78,6 +78,9 @@ struct Formatter
         _i = format_array(info.interfaces, "Interface");
         *(_i++) = ',';
         _i = newline_and_indent();
+        _i = format(info.description);
+        *(_i++) = ',';
+        _i = newline_and_indent();
         _i = format(info.copyright);
         _i = pop_indent();
         _i = std::format_to(_i, "}}");

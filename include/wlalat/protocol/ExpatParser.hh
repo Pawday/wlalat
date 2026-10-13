@@ -283,6 +283,11 @@ struct ExpatParser
             bind_point.interfaces.push_back(std::move(top));
         }
 
+        void bind(Protocol &bind_point, Description &top)
+        {
+            bind_point.description = std::move(top);
+        }
+
         void bind(Protocol &bind_point, Copyright &top)
         {
             bind_point.copyright = std::move(top);

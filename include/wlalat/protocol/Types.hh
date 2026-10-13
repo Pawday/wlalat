@@ -72,6 +72,7 @@ struct Protocol
 {
     std::vector<Attribute> attributes;
     std::vector<Interface> interfaces;
+    Description description;
     Copyright copyright;
 };
 
