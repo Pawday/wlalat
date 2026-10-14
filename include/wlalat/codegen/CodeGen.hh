@@ -85,8 +85,6 @@ struct Generator
 
         O += "#pragma once";
         O += "";
-        O += "#include <cstddef>";
-        O += "";
         O += "#include <tuple>";
         O += "";
 
@@ -218,7 +216,7 @@ struct Generator
         B0 += std::format("using Type = {};", type_using);
         B0 += std::format("using InterfaceTag = {};", interface_type_using);
         B0 += std::format("static constexpr char name[] = \"{}\";", msg_name);
-        B0 += std::format("static constexpr const size_t opcode = {};", opcode);
+        B0 += std::format("static constexpr const unsigned short opcode = {};", opcode);
         B0 += std::format("static constexpr bool is_event = {};", is_event);
 
         LineList B1;

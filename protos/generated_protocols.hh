@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstddef>
-
 #include <tuple>
 
 template<typename PMeta>
@@ -19,7 +17,7 @@ struct message_sync
         using Type = message_sync;
         using InterfaceTag = wl_display;
         static constexpr char name[] = "sync";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -36,7 +34,7 @@ struct message_get_registry
         using Type = message_get_registry;
         using InterfaceTag = wl_display;
         static constexpr char name[] = "get_registry";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -55,7 +53,7 @@ struct message_error
         using Type = message_error;
         using InterfaceTag = wl_display;
         static constexpr char name[] = "error";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -74,7 +72,7 @@ struct message_delete_id
         using Type = message_delete_id;
         using InterfaceTag = wl_display;
         static constexpr char name[] = "delete_id";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -112,7 +110,7 @@ struct message_bind
         using Type = message_bind;
         using InterfaceTag = wl_registry;
         static constexpr char name[] = "bind";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -134,7 +132,7 @@ struct message_global
         using Type = message_global;
         using InterfaceTag = wl_registry;
         static constexpr char name[] = "global";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -153,7 +151,7 @@ struct message_global_remove
         using Type = message_global_remove;
         using InterfaceTag = wl_registry;
         static constexpr char name[] = "global_remove";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -187,7 +185,7 @@ struct message_done
         using Type = message_done;
         using InterfaceTag = wl_callback;
         static constexpr char name[] = "done";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -219,7 +217,7 @@ struct message_create_surface
         using Type = message_create_surface;
         using InterfaceTag = wl_compositor;
         static constexpr char name[] = "create_surface";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -236,7 +234,7 @@ struct message_create_region
         using Type = message_create_region;
         using InterfaceTag = wl_compositor;
         static constexpr char name[] = "create_region";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -252,7 +250,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_compositor;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -290,7 +288,7 @@ struct message_create_buffer
         using Type = message_create_buffer;
         using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "create_buffer";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -311,7 +309,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -327,7 +325,7 @@ struct message_resize
         using Type = message_resize;
         using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "resize";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -363,7 +361,7 @@ struct message_create_pool
         using Type = message_create_pool;
         using InterfaceTag = wl_shm;
         static constexpr char name[] = "create_pool";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -381,7 +379,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_shm;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -397,7 +395,7 @@ struct message_format
         using Type = message_format;
         using InterfaceTag = wl_shm;
         static constexpr char name[] = "format";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -430,7 +428,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_buffer;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -445,7 +443,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_buffer;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -478,7 +476,7 @@ struct message_accept
         using Type = message_accept;
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "accept";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -497,7 +495,7 @@ struct message_receive
         using Type = message_receive;
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "receive";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -514,7 +512,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -529,7 +527,7 @@ struct message_finish
         using Type = message_finish;
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "finish";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -546,7 +544,7 @@ struct message_set_actions
         using Type = message_set_actions;
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "set_actions";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -564,7 +562,7 @@ struct message_offer
         using Type = message_offer;
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "offer";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -581,7 +579,7 @@ struct message_source_actions
         using Type = message_source_actions;
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "source_actions";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -598,7 +596,7 @@ struct message_action
         using Type = message_action;
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "action";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -637,7 +635,7 @@ struct message_offer
         using Type = message_offer;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "offer";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -653,7 +651,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -669,7 +667,7 @@ struct message_set_actions
         using Type = message_set_actions;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "set_actions";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -686,7 +684,7 @@ struct message_target
         using Type = message_target;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "target";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -704,7 +702,7 @@ struct message_send
         using Type = message_send;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "send";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -721,7 +719,7 @@ struct message_cancelled
         using Type = message_cancelled;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "cancelled";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -736,7 +734,7 @@ struct message_dnd_drop_performed
         using Type = message_dnd_drop_performed;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "dnd_drop_performed";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -751,7 +749,7 @@ struct message_dnd_finished
         using Type = message_dnd_finished;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "dnd_finished";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -767,7 +765,7 @@ struct message_action
         using Type = message_action;
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "action";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -810,7 +808,7 @@ struct message_start_drag
         using Type = message_start_drag;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "start_drag";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -831,7 +829,7 @@ struct message_set_selection
         using Type = message_set_selection;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "set_selection";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -848,7 +846,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -864,7 +862,7 @@ struct message_data_offer
         using Type = message_data_offer;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "data_offer";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -885,7 +883,7 @@ struct message_enter
         using Type = message_enter;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "enter";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -905,7 +903,7 @@ struct message_leave
         using Type = message_leave;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "leave";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -923,7 +921,7 @@ struct message_motion
         using Type = message_motion;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "motion";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -941,7 +939,7 @@ struct message_drop
         using Type = message_drop;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "drop";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -957,7 +955,7 @@ struct message_selection
         using Type = message_selection;
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "selection";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -997,7 +995,7 @@ struct message_create_data_source
         using Type = message_create_data_source;
         using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "create_data_source";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1015,7 +1013,7 @@ struct message_get_data_device
         using Type = message_get_data_device;
         using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "get_data_device";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1032,7 +1030,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1066,7 +1064,7 @@ struct message_get_shell_surface
         using Type = message_get_shell_surface;
         using InterfaceTag = wl_shell;
         static constexpr char name[] = "get_shell_surface";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1099,7 +1097,7 @@ struct message_pong
         using Type = message_pong;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "pong";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1117,7 +1115,7 @@ struct message_move
         using Type = message_move;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "move";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1137,7 +1135,7 @@ struct message_resize
         using Type = message_resize;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "resize";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1155,7 +1153,7 @@ struct message_set_toplevel
         using Type = message_set_toplevel;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_toplevel";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1174,7 +1172,7 @@ struct message_set_transient
         using Type = message_set_transient;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_transient";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1196,7 +1194,7 @@ struct message_set_fullscreen
         using Type = message_set_fullscreen;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_fullscreen";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1220,7 +1218,7 @@ struct message_set_popup
         using Type = message_set_popup;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_popup";
-        static constexpr const size_t opcode = 6;
+        static constexpr const unsigned short opcode = 6;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1242,7 +1240,7 @@ struct message_set_maximized
         using Type = message_set_maximized;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_maximized";
-        static constexpr const size_t opcode = 7;
+        static constexpr const unsigned short opcode = 7;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1259,7 +1257,7 @@ struct message_set_title
         using Type = message_set_title;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_title";
-        static constexpr const size_t opcode = 8;
+        static constexpr const unsigned short opcode = 8;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1276,7 +1274,7 @@ struct message_set_class
         using Type = message_set_class;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_class";
-        static constexpr const size_t opcode = 9;
+        static constexpr const unsigned short opcode = 9;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1293,7 +1291,7 @@ struct message_ping
         using Type = message_ping;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "ping";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1312,7 +1310,7 @@ struct message_configure
         using Type = message_configure;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "configure";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1330,7 +1328,7 @@ struct message_popup_done
         using Type = message_popup_done;
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "popup_done";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1372,7 +1370,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1390,7 +1388,7 @@ struct message_attach
         using Type = message_attach;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "attach";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1412,7 +1410,7 @@ struct message_damage
         using Type = message_damage;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "damage";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1432,7 +1430,7 @@ struct message_frame
         using Type = message_frame;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "frame";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1449,7 +1447,7 @@ struct message_set_opaque_region
         using Type = message_set_opaque_region;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_opaque_region";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1466,7 +1464,7 @@ struct message_set_input_region
         using Type = message_set_input_region;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_input_region";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1482,7 +1480,7 @@ struct message_commit
         using Type = message_commit;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "commit";
-        static constexpr const size_t opcode = 6;
+        static constexpr const unsigned short opcode = 6;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1498,7 +1496,7 @@ struct message_set_buffer_transform
         using Type = message_set_buffer_transform;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_buffer_transform";
-        static constexpr const size_t opcode = 7;
+        static constexpr const unsigned short opcode = 7;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1515,7 +1513,7 @@ struct message_set_buffer_scale
         using Type = message_set_buffer_scale;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_buffer_scale";
-        static constexpr const size_t opcode = 8;
+        static constexpr const unsigned short opcode = 8;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1535,7 +1533,7 @@ struct message_damage_buffer
         using Type = message_damage_buffer;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "damage_buffer";
-        static constexpr const size_t opcode = 9;
+        static constexpr const unsigned short opcode = 9;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1556,7 +1554,7 @@ struct message_offset
         using Type = message_offset;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "offset";
-        static constexpr const size_t opcode = 10;
+        static constexpr const unsigned short opcode = 10;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1574,7 +1572,7 @@ struct message_get_release
         using Type = message_get_release;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "get_release";
-        static constexpr const size_t opcode = 11;
+        static constexpr const unsigned short opcode = 11;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1591,7 +1589,7 @@ struct message_enter
         using Type = message_enter;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "enter";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1608,7 +1606,7 @@ struct message_leave
         using Type = message_leave;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "leave";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1625,7 +1623,7 @@ struct message_preferred_buffer_scale
         using Type = message_preferred_buffer_scale;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "preferred_buffer_scale";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1642,7 +1640,7 @@ struct message_preferred_buffer_transform
         using Type = message_preferred_buffer_transform;
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "preferred_buffer_transform";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1689,7 +1687,7 @@ struct message_get_pointer
         using Type = message_get_pointer;
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_pointer";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1706,7 +1704,7 @@ struct message_get_keyboard
         using Type = message_get_keyboard;
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_keyboard";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1723,7 +1721,7 @@ struct message_get_touch
         using Type = message_get_touch;
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_touch";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1739,7 +1737,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1755,7 +1753,7 @@ struct message_capabilities
         using Type = message_capabilities;
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "capabilities";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1772,7 +1770,7 @@ struct message_name
         using Type = message_name;
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "name";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1812,7 +1810,7 @@ struct message_set_cursor
         using Type = message_set_cursor;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "set_cursor";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1831,7 +1829,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1850,7 +1848,7 @@ struct message_enter
         using Type = message_enter;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "enter";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1871,7 +1869,7 @@ struct message_leave
         using Type = message_leave;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "leave";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1891,7 +1889,7 @@ struct message_motion
         using Type = message_motion;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "motion";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1913,7 +1911,7 @@ struct message_button
         using Type = message_button;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "button";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1935,7 +1933,7 @@ struct message_axis
         using Type = message_axis;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1953,7 +1951,7 @@ struct message_frame
         using Type = message_frame;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "frame";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1969,7 +1967,7 @@ struct message_axis_source
         using Type = message_axis_source;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_source";
-        static constexpr const size_t opcode = 6;
+        static constexpr const unsigned short opcode = 6;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -1987,7 +1985,7 @@ struct message_axis_stop
         using Type = message_axis_stop;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_stop";
-        static constexpr const size_t opcode = 7;
+        static constexpr const unsigned short opcode = 7;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2006,7 +2004,7 @@ struct message_axis_discrete
         using Type = message_axis_discrete;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_discrete";
-        static constexpr const size_t opcode = 8;
+        static constexpr const unsigned short opcode = 8;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2025,7 +2023,7 @@ struct message_axis_value120
         using Type = message_axis_value120;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_value120";
-        static constexpr const size_t opcode = 9;
+        static constexpr const unsigned short opcode = 9;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2044,7 +2042,7 @@ struct message_axis_relative_direction
         using Type = message_axis_relative_direction;
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_relative_direction";
-        static constexpr const size_t opcode = 10;
+        static constexpr const unsigned short opcode = 10;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2088,7 +2086,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2106,7 +2104,7 @@ struct message_keymap
         using Type = message_keymap;
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "keymap";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2127,7 +2125,7 @@ struct message_enter
         using Type = message_enter;
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "enter";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2147,7 +2145,7 @@ struct message_leave
         using Type = message_leave;
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "leave";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2168,7 +2166,7 @@ struct message_key
         using Type = message_key;
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "key";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2192,7 +2190,7 @@ struct message_modifiers
         using Type = message_modifiers;
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "modifiers";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2214,7 +2212,7 @@ struct message_repeat_info
         using Type = message_repeat_info;
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "repeat_info";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2252,7 +2250,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2273,7 +2271,7 @@ struct message_down
         using Type = message_down;
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "down";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2297,7 +2295,7 @@ struct message_up
         using Type = message_up;
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "up";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2319,7 +2317,7 @@ struct message_motion
         using Type = message_motion;
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "motion";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2338,7 +2336,7 @@ struct message_frame
         using Type = message_frame;
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "frame";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2353,7 +2351,7 @@ struct message_cancel
         using Type = message_cancel;
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "cancel";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2371,7 +2369,7 @@ struct message_shape
         using Type = message_shape;
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "shape";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2391,7 +2389,7 @@ struct message_orientation
         using Type = message_orientation;
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "orientation";
-        static constexpr const size_t opcode = 6;
+        static constexpr const unsigned short opcode = 6;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2430,7 +2428,7 @@ struct message_release
         using Type = message_release;
         using InterfaceTag = wl_output;
         static constexpr char name[] = "release";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2453,7 +2451,7 @@ struct message_geometry
         using Type = message_geometry;
         using InterfaceTag = wl_output;
         static constexpr char name[] = "geometry";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2480,7 +2478,7 @@ struct message_mode
         using Type = message_mode;
         using InterfaceTag = wl_output;
         static constexpr char name[] = "mode";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2499,7 +2497,7 @@ struct message_done
         using Type = message_done;
         using InterfaceTag = wl_output;
         static constexpr char name[] = "done";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2515,7 +2513,7 @@ struct message_scale
         using Type = message_scale;
         using InterfaceTag = wl_output;
         static constexpr char name[] = "scale";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2532,7 +2530,7 @@ struct message_name
         using Type = message_name;
         using InterfaceTag = wl_output;
         static constexpr char name[] = "name";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2549,7 +2547,7 @@ struct message_description
         using Type = message_description;
         using InterfaceTag = wl_output;
         static constexpr char name[] = "description";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2586,7 +2584,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_region;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2605,7 +2603,7 @@ struct message_add
         using Type = message_add;
         using InterfaceTag = wl_region;
         static constexpr char name[] = "add";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2628,7 +2626,7 @@ struct message_subtract
         using Type = message_subtract;
         using InterfaceTag = wl_region;
         static constexpr char name[] = "subtract";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2664,7 +2662,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_subcompositor;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2682,7 +2680,7 @@ struct message_get_subsurface
         using Type = message_get_subsurface;
         using InterfaceTag = wl_subcompositor;
         static constexpr char name[] = "get_subsurface";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2716,7 +2714,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2733,7 +2731,7 @@ struct message_set_position
         using Type = message_set_position;
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_position";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2751,7 +2749,7 @@ struct message_place_above
         using Type = message_place_above;
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "place_above";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2768,7 +2766,7 @@ struct message_place_below
         using Type = message_place_below;
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "place_below";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2784,7 +2782,7 @@ struct message_set_sync
         using Type = message_set_sync;
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_sync";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2799,7 +2797,7 @@ struct message_set_desync
         using Type = message_set_desync;
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_desync";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2834,7 +2832,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = wl_fixes;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2850,7 +2848,7 @@ struct message_destroy_registry
         using Type = message_destroy_registry;
         using InterfaceTag = wl_fixes;
         static constexpr char name[] = "destroy_registry";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2868,7 +2866,7 @@ struct message_ack_global_remove
         using Type = message_ack_global_remove;
         using InterfaceTag = wl_fixes;
         static constexpr char name[] = "ack_global_remove";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2904,7 +2902,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = zxdg_decoration_manager_v1;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2921,7 +2919,7 @@ struct message_get_toplevel_decoration
         using Type = message_get_toplevel_decoration;
         using InterfaceTag = zxdg_decoration_manager_v1;
         static constexpr char name[] = "get_toplevel_decoration";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2954,7 +2952,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2970,7 +2968,7 @@ struct message_set_mode
         using Type = message_set_mode;
         using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "set_mode";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -2986,7 +2984,7 @@ struct message_unset_mode
         using Type = message_unset_mode;
         using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "unset_mode";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3002,7 +3000,7 @@ struct message_configure
         using Type = message_configure;
         using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "configure";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3038,7 +3036,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3054,7 +3052,7 @@ struct message_create_positioner
         using Type = message_create_positioner;
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "create_positioner";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3072,7 +3070,7 @@ struct message_get_xdg_surface
         using Type = message_get_xdg_surface;
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "get_xdg_surface";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3090,7 +3088,7 @@ struct message_pong
         using Type = message_pong;
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "pong";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3107,7 +3105,7 @@ struct message_ping
         using Type = message_ping;
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "ping";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3142,7 +3140,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3159,7 +3157,7 @@ struct message_set_size
         using Type = message_set_size;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_size";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3180,7 +3178,7 @@ struct message_set_anchor_rect
         using Type = message_set_anchor_rect;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_anchor_rect";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3200,7 +3198,7 @@ struct message_set_anchor
         using Type = message_set_anchor;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_anchor";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3217,7 +3215,7 @@ struct message_set_gravity
         using Type = message_set_gravity;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_gravity";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3234,7 +3232,7 @@ struct message_set_constraint_adjustment
         using Type = message_set_constraint_adjustment;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_constraint_adjustment";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3252,7 +3250,7 @@ struct message_set_offset
         using Type = message_set_offset;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_offset";
-        static constexpr const size_t opcode = 6;
+        static constexpr const unsigned short opcode = 6;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3269,7 +3267,7 @@ struct message_set_reactive
         using Type = message_set_reactive;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_reactive";
-        static constexpr const size_t opcode = 7;
+        static constexpr const unsigned short opcode = 7;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3286,7 +3284,7 @@ struct message_set_parent_size
         using Type = message_set_parent_size;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_parent_size";
-        static constexpr const size_t opcode = 8;
+        static constexpr const unsigned short opcode = 8;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3304,7 +3302,7 @@ struct message_set_parent_configure
         using Type = message_set_parent_configure;
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_parent_configure";
-        static constexpr const size_t opcode = 9;
+        static constexpr const unsigned short opcode = 9;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3344,7 +3342,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3360,7 +3358,7 @@ struct message_get_toplevel
         using Type = message_get_toplevel;
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "get_toplevel";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3379,7 +3377,7 @@ struct message_get_popup
         using Type = message_get_popup;
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "get_popup";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3401,7 +3399,7 @@ struct message_set_window_geometry
         using Type = message_set_window_geometry;
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "set_window_geometry";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3421,7 +3419,7 @@ struct message_ack_configure
         using Type = message_ack_configure;
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "ack_configure";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3438,7 +3436,7 @@ struct message_configure
         using Type = message_configure;
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "configure";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3474,7 +3472,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3490,7 +3488,7 @@ struct message_set_parent
         using Type = message_set_parent;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_parent";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3507,7 +3505,7 @@ struct message_set_title
         using Type = message_set_title;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_title";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3524,7 +3522,7 @@ struct message_set_app_id
         using Type = message_set_app_id;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_app_id";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3544,7 +3542,7 @@ struct message_show_window_menu
         using Type = message_show_window_menu;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "show_window_menu";
-        static constexpr const size_t opcode = 4;
+        static constexpr const unsigned short opcode = 4;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3565,7 +3563,7 @@ struct message_move
         using Type = message_move;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "move";
-        static constexpr const size_t opcode = 5;
+        static constexpr const unsigned short opcode = 5;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3585,7 +3583,7 @@ struct message_resize
         using Type = message_resize;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "resize";
-        static constexpr const size_t opcode = 6;
+        static constexpr const unsigned short opcode = 6;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3605,7 +3603,7 @@ struct message_set_max_size
         using Type = message_set_max_size;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_max_size";
-        static constexpr const size_t opcode = 7;
+        static constexpr const unsigned short opcode = 7;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3624,7 +3622,7 @@ struct message_set_min_size
         using Type = message_set_min_size;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_min_size";
-        static constexpr const size_t opcode = 8;
+        static constexpr const unsigned short opcode = 8;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3641,7 +3639,7 @@ struct message_set_maximized
         using Type = message_set_maximized;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_maximized";
-        static constexpr const size_t opcode = 9;
+        static constexpr const unsigned short opcode = 9;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3656,7 +3654,7 @@ struct message_unset_maximized
         using Type = message_unset_maximized;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "unset_maximized";
-        static constexpr const size_t opcode = 10;
+        static constexpr const unsigned short opcode = 10;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3672,7 +3670,7 @@ struct message_set_fullscreen
         using Type = message_set_fullscreen;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_fullscreen";
-        static constexpr const size_t opcode = 11;
+        static constexpr const unsigned short opcode = 11;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3688,7 +3686,7 @@ struct message_unset_fullscreen
         using Type = message_unset_fullscreen;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "unset_fullscreen";
-        static constexpr const size_t opcode = 12;
+        static constexpr const unsigned short opcode = 12;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3703,7 +3701,7 @@ struct message_set_minimized
         using Type = message_set_minimized;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_minimized";
-        static constexpr const size_t opcode = 13;
+        static constexpr const unsigned short opcode = 13;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3721,7 +3719,7 @@ struct message_configure
         using Type = message_configure;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "configure";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3739,7 +3737,7 @@ struct message_close
         using Type = message_close;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "close";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3756,7 +3754,7 @@ struct message_configure_bounds
         using Type = message_configure_bounds;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "configure_bounds";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3774,7 +3772,7 @@ struct message_wm_capabilities
         using Type = message_wm_capabilities;
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "wm_capabilities";
-        static constexpr const size_t opcode = 3;
+        static constexpr const unsigned short opcode = 3;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3822,7 +3820,7 @@ struct message_destroy
         using Type = message_destroy;
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "destroy";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3839,7 +3837,7 @@ struct message_grab
         using Type = message_grab;
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "grab";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3858,7 +3856,7 @@ struct message_reposition
         using Type = message_reposition;
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "reposition";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = false;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3879,7 +3877,7 @@ struct message_configure
         using Type = message_configure;
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "configure";
-        static constexpr const size_t opcode = 0;
+        static constexpr const unsigned short opcode = 0;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3898,7 +3896,7 @@ struct message_popup_done
         using Type = message_popup_done;
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "popup_done";
-        static constexpr const size_t opcode = 1;
+        static constexpr const unsigned short opcode = 1;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
@@ -3914,7 +3912,7 @@ struct message_repositioned
         using Type = message_repositioned;
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "repositioned";
-        static constexpr const size_t opcode = 2;
+        static constexpr const unsigned short opcode = 2;
         static constexpr bool is_event = true;
         template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
