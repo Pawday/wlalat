@@ -71,6 +71,14 @@ std::string hexdump(std::span<const std::byte> data)
 
 struct PMeta
 {
+    using int_t = std::int_least32_t;
+    using uint_t = std::uint_least32_t;
+    using new_id_t = std::uint_least32_t;
+    using object_t = std::uint_least32_t;
+    using string_t = std::string_view;
+    using fixed_t = std::uint_least32_t;
+    using array_t = std::span<const std::byte>;
+    using fd_t = void *;
 };
 
 using GroupT = protocols<PMeta>;

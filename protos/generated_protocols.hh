@@ -1,11 +1,8 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 
-#include <string_view>
 #include <tuple>
-#include <span>
 
 template<typename PMeta>
 struct protocols
@@ -16,7 +13,7 @@ struct wl_display
 {
 struct message_sync
 {
-    std::uint_least32_t callback;
+    PMeta::new_id_t callback;
     struct Meta
     {
         using Type = message_sync;
@@ -33,7 +30,7 @@ struct message_sync
 };
 struct message_get_registry
 {
-    std::uint_least32_t registry;
+    PMeta::new_id_t registry;
     struct Meta
     {
         using Type = message_get_registry;
@@ -50,9 +47,9 @@ struct message_get_registry
 };
 struct message_error
 {
-    std::uint_least32_t object_id;
-    std::uint_least32_t code;
-    std::string_view message;
+    PMeta::object_t object_id;
+    PMeta::uint_t code;
+    PMeta::string_t message;
     struct Meta
     {
         using Type = message_error;
@@ -71,7 +68,7 @@ struct message_error
 };
 struct message_delete_id
 {
-    std::uint_least32_t id;
+    PMeta::uint_t id;
     struct Meta
     {
         using Type = message_delete_id;
@@ -106,10 +103,10 @@ struct wl_registry
 {
 struct message_bind
 {
-    std::uint_least32_t name;
-    std::string_view id_interface;
-    std::uint_least32_t id_version;
-    std::uint_least32_t id;
+    PMeta::uint_t name;
+    PMeta::string_t id_interface;
+    PMeta::uint_t id_version;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_bind;
@@ -129,9 +126,9 @@ struct message_bind
 };
 struct message_global
 {
-    std::uint_least32_t name;
-    std::string_view interface;
-    std::uint_least32_t version;
+    PMeta::uint_t name;
+    PMeta::string_t interface;
+    PMeta::uint_t version;
     struct Meta
     {
         using Type = message_global;
@@ -150,7 +147,7 @@ struct message_global
 };
 struct message_global_remove
 {
-    std::uint_least32_t name;
+    PMeta::uint_t name;
     struct Meta
     {
         using Type = message_global_remove;
@@ -184,7 +181,7 @@ struct wl_callback
 {
 struct message_done
 {
-    std::uint_least32_t callback_data;
+    PMeta::uint_t callback_data;
     struct Meta
     {
         using Type = message_done;
@@ -216,7 +213,7 @@ struct wl_compositor
 {
 struct message_create_surface
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_create_surface;
@@ -233,7 +230,7 @@ struct message_create_surface
 };
 struct message_create_region
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_create_region;
@@ -282,12 +279,12 @@ struct wl_shm_pool
 {
 struct message_create_buffer
 {
-    std::uint_least32_t id;
-    std::int_least32_t offset;
-    std::int_least32_t width;
-    std::int_least32_t height;
-    std::int_least32_t stride;
-    std::uint_least32_t format;
+    PMeta::new_id_t id;
+    PMeta::int_t offset;
+    PMeta::int_t width;
+    PMeta::int_t height;
+    PMeta::int_t stride;
+    PMeta::uint_t format;
     struct Meta
     {
         using Type = message_create_buffer;
@@ -324,7 +321,7 @@ struct message_destroy
 };
 struct message_resize
 {
-    std::int_least32_t size;
+    PMeta::int_t size;
     struct Meta
     {
         using Type = message_resize;
@@ -358,9 +355,9 @@ struct wl_shm
 {
 struct message_create_pool
 {
-    std::uint_least32_t id;
-    void * fd;
-    std::int_least32_t size;
+    PMeta::new_id_t id;
+    PMeta::fd_t fd;
+    PMeta::int_t size;
     struct Meta
     {
         using Type = message_create_pool;
@@ -394,7 +391,7 @@ struct message_release
 };
 struct message_format
 {
-    std::uint_least32_t format;
+    PMeta::uint_t format;
     struct Meta
     {
         using Type = message_format;
@@ -474,8 +471,8 @@ struct wl_data_offer
 {
 struct message_accept
 {
-    std::uint_least32_t serial;
-    std::string_view mime_type;
+    PMeta::uint_t serial;
+    PMeta::string_t mime_type;
     struct Meta
     {
         using Type = message_accept;
@@ -493,8 +490,8 @@ struct message_accept
 };
 struct message_receive
 {
-    std::string_view mime_type;
-    void * fd;
+    PMeta::string_t mime_type;
+    PMeta::fd_t fd;
     struct Meta
     {
         using Type = message_receive;
@@ -542,8 +539,8 @@ struct message_finish
 };
 struct message_set_actions
 {
-    std::uint_least32_t dnd_actions;
-    std::uint_least32_t preferred_action;
+    PMeta::uint_t dnd_actions;
+    PMeta::uint_t preferred_action;
     struct Meta
     {
         using Type = message_set_actions;
@@ -561,7 +558,7 @@ struct message_set_actions
 };
 struct message_offer
 {
-    std::string_view mime_type;
+    PMeta::string_t mime_type;
     struct Meta
     {
         using Type = message_offer;
@@ -578,7 +575,7 @@ struct message_offer
 };
 struct message_source_actions
 {
-    std::uint_least32_t source_actions;
+    PMeta::uint_t source_actions;
     struct Meta
     {
         using Type = message_source_actions;
@@ -595,7 +592,7 @@ struct message_source_actions
 };
 struct message_action
 {
-    std::uint_least32_t dnd_action;
+    PMeta::uint_t dnd_action;
     struct Meta
     {
         using Type = message_action;
@@ -634,7 +631,7 @@ struct wl_data_source
 {
 struct message_offer
 {
-    std::string_view mime_type;
+    PMeta::string_t mime_type;
     struct Meta
     {
         using Type = message_offer;
@@ -666,7 +663,7 @@ struct message_destroy
 };
 struct message_set_actions
 {
-    std::uint_least32_t dnd_actions;
+    PMeta::uint_t dnd_actions;
     struct Meta
     {
         using Type = message_set_actions;
@@ -683,7 +680,7 @@ struct message_set_actions
 };
 struct message_target
 {
-    std::string_view mime_type;
+    PMeta::string_t mime_type;
     struct Meta
     {
         using Type = message_target;
@@ -700,8 +697,8 @@ struct message_target
 };
 struct message_send
 {
-    std::string_view mime_type;
-    void * fd;
+    PMeta::string_t mime_type;
+    PMeta::fd_t fd;
     struct Meta
     {
         using Type = message_send;
@@ -764,7 +761,7 @@ struct message_dnd_finished
 };
 struct message_action
 {
-    std::uint_least32_t dnd_action;
+    PMeta::uint_t dnd_action;
     struct Meta
     {
         using Type = message_action;
@@ -804,10 +801,10 @@ struct wl_data_device
 {
 struct message_start_drag
 {
-    std::uint_least32_t source;
-    std::uint_least32_t origin;
-    std::uint_least32_t icon;
-    std::uint_least32_t serial;
+    PMeta::object_t source;
+    PMeta::object_t origin;
+    PMeta::object_t icon;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_start_drag;
@@ -827,8 +824,8 @@ struct message_start_drag
 };
 struct message_set_selection
 {
-    std::uint_least32_t source;
-    std::uint_least32_t serial;
+    PMeta::object_t source;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_set_selection;
@@ -861,7 +858,7 @@ struct message_release
 };
 struct message_data_offer
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_data_offer;
@@ -878,11 +875,11 @@ struct message_data_offer
 };
 struct message_enter
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t surface;
-    std::uint_least32_t x;
-    std::uint_least32_t y;
-    std::uint_least32_t id;
+    PMeta::uint_t serial;
+    PMeta::object_t surface;
+    PMeta::fixed_t x;
+    PMeta::fixed_t y;
+    PMeta::object_t id;
     struct Meta
     {
         using Type = message_enter;
@@ -918,9 +915,9 @@ struct message_leave
 };
 struct message_motion
 {
-    std::uint_least32_t time;
-    std::uint_least32_t x;
-    std::uint_least32_t y;
+    PMeta::uint_t time;
+    PMeta::fixed_t x;
+    PMeta::fixed_t y;
     struct Meta
     {
         using Type = message_motion;
@@ -954,7 +951,7 @@ struct message_drop
 };
 struct message_selection
 {
-    std::uint_least32_t id;
+    PMeta::object_t id;
     struct Meta
     {
         using Type = message_selection;
@@ -994,7 +991,7 @@ struct wl_data_device_manager
 {
 struct message_create_data_source
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_create_data_source;
@@ -1011,8 +1008,8 @@ struct message_create_data_source
 };
 struct message_get_data_device
 {
-    std::uint_least32_t id;
-    std::uint_least32_t seat;
+    PMeta::new_id_t id;
+    PMeta::object_t seat;
     struct Meta
     {
         using Type = message_get_data_device;
@@ -1062,8 +1059,8 @@ struct wl_shell
 {
 struct message_get_shell_surface
 {
-    std::uint_least32_t id;
-    std::uint_least32_t surface;
+    PMeta::new_id_t id;
+    PMeta::object_t surface;
     struct Meta
     {
         using Type = message_get_shell_surface;
@@ -1096,7 +1093,7 @@ struct wl_shell_surface
 {
 struct message_pong
 {
-    std::uint_least32_t serial;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_pong;
@@ -1113,8 +1110,8 @@ struct message_pong
 };
 struct message_move
 {
-    std::uint_least32_t seat;
-    std::uint_least32_t serial;
+    PMeta::object_t seat;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_move;
@@ -1132,9 +1129,9 @@ struct message_move
 };
 struct message_resize
 {
-    std::uint_least32_t seat;
-    std::uint_least32_t serial;
-    std::uint_least32_t edges;
+    PMeta::object_t seat;
+    PMeta::uint_t serial;
+    PMeta::uint_t edges;
     struct Meta
     {
         using Type = message_resize;
@@ -1168,10 +1165,10 @@ struct message_set_toplevel
 };
 struct message_set_transient
 {
-    std::uint_least32_t parent;
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::uint_least32_t flags;
+    PMeta::object_t parent;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::uint_t flags;
     struct Meta
     {
         using Type = message_set_transient;
@@ -1191,9 +1188,9 @@ struct message_set_transient
 };
 struct message_set_fullscreen
 {
-    std::uint_least32_t method;
-    std::uint_least32_t framerate;
-    std::uint_least32_t output;
+    PMeta::uint_t method;
+    PMeta::uint_t framerate;
+    PMeta::object_t output;
     struct Meta
     {
         using Type = message_set_fullscreen;
@@ -1212,12 +1209,12 @@ struct message_set_fullscreen
 };
 struct message_set_popup
 {
-    std::uint_least32_t seat;
-    std::uint_least32_t serial;
-    std::uint_least32_t parent;
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::uint_least32_t flags;
+    PMeta::object_t seat;
+    PMeta::uint_t serial;
+    PMeta::object_t parent;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::uint_t flags;
     struct Meta
     {
         using Type = message_set_popup;
@@ -1239,7 +1236,7 @@ struct message_set_popup
 };
 struct message_set_maximized
 {
-    std::uint_least32_t output;
+    PMeta::object_t output;
     struct Meta
     {
         using Type = message_set_maximized;
@@ -1256,7 +1253,7 @@ struct message_set_maximized
 };
 struct message_set_title
 {
-    std::string_view title;
+    PMeta::string_t title;
     struct Meta
     {
         using Type = message_set_title;
@@ -1273,7 +1270,7 @@ struct message_set_title
 };
 struct message_set_class
 {
-    std::string_view class_;
+    PMeta::string_t class_;
     struct Meta
     {
         using Type = message_set_class;
@@ -1290,7 +1287,7 @@ struct message_set_class
 };
 struct message_ping
 {
-    std::uint_least32_t serial;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_ping;
@@ -1307,9 +1304,9 @@ struct message_ping
 };
 struct message_configure
 {
-    std::uint_least32_t edges;
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::uint_t edges;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_configure;
@@ -1385,9 +1382,9 @@ struct message_destroy
 };
 struct message_attach
 {
-    std::uint_least32_t buffer;
-    std::int_least32_t x;
-    std::int_least32_t y;
+    PMeta::object_t buffer;
+    PMeta::int_t x;
+    PMeta::int_t y;
     struct Meta
     {
         using Type = message_attach;
@@ -1406,10 +1403,10 @@ struct message_attach
 };
 struct message_damage
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_damage;
@@ -1429,7 +1426,7 @@ struct message_damage
 };
 struct message_frame
 {
-    std::uint_least32_t callback;
+    PMeta::new_id_t callback;
     struct Meta
     {
         using Type = message_frame;
@@ -1446,7 +1443,7 @@ struct message_frame
 };
 struct message_set_opaque_region
 {
-    std::uint_least32_t region;
+    PMeta::object_t region;
     struct Meta
     {
         using Type = message_set_opaque_region;
@@ -1463,7 +1460,7 @@ struct message_set_opaque_region
 };
 struct message_set_input_region
 {
-    std::uint_least32_t region;
+    PMeta::object_t region;
     struct Meta
     {
         using Type = message_set_input_region;
@@ -1495,7 +1492,7 @@ struct message_commit
 };
 struct message_set_buffer_transform
 {
-    std::int_least32_t transform;
+    PMeta::int_t transform;
     struct Meta
     {
         using Type = message_set_buffer_transform;
@@ -1512,7 +1509,7 @@ struct message_set_buffer_transform
 };
 struct message_set_buffer_scale
 {
-    std::int_least32_t scale;
+    PMeta::int_t scale;
     struct Meta
     {
         using Type = message_set_buffer_scale;
@@ -1529,10 +1526,10 @@ struct message_set_buffer_scale
 };
 struct message_damage_buffer
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_damage_buffer;
@@ -1552,8 +1549,8 @@ struct message_damage_buffer
 };
 struct message_offset
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
+    PMeta::int_t x;
+    PMeta::int_t y;
     struct Meta
     {
         using Type = message_offset;
@@ -1571,7 +1568,7 @@ struct message_offset
 };
 struct message_get_release
 {
-    std::uint_least32_t callback;
+    PMeta::new_id_t callback;
     struct Meta
     {
         using Type = message_get_release;
@@ -1588,7 +1585,7 @@ struct message_get_release
 };
 struct message_enter
 {
-    std::uint_least32_t output;
+    PMeta::object_t output;
     struct Meta
     {
         using Type = message_enter;
@@ -1605,7 +1602,7 @@ struct message_enter
 };
 struct message_leave
 {
-    std::uint_least32_t output;
+    PMeta::object_t output;
     struct Meta
     {
         using Type = message_leave;
@@ -1622,7 +1619,7 @@ struct message_leave
 };
 struct message_preferred_buffer_scale
 {
-    std::int_least32_t factor;
+    PMeta::int_t factor;
     struct Meta
     {
         using Type = message_preferred_buffer_scale;
@@ -1639,7 +1636,7 @@ struct message_preferred_buffer_scale
 };
 struct message_preferred_buffer_transform
 {
-    std::uint_least32_t transform;
+    PMeta::uint_t transform;
     struct Meta
     {
         using Type = message_preferred_buffer_transform;
@@ -1686,7 +1683,7 @@ struct wl_seat
 {
 struct message_get_pointer
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_get_pointer;
@@ -1703,7 +1700,7 @@ struct message_get_pointer
 };
 struct message_get_keyboard
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_get_keyboard;
@@ -1720,7 +1717,7 @@ struct message_get_keyboard
 };
 struct message_get_touch
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_get_touch;
@@ -1752,7 +1749,7 @@ struct message_release
 };
 struct message_capabilities
 {
-    std::uint_least32_t capabilities;
+    PMeta::uint_t capabilities;
     struct Meta
     {
         using Type = message_capabilities;
@@ -1769,7 +1766,7 @@ struct message_capabilities
 };
 struct message_name
 {
-    std::string_view name;
+    PMeta::string_t name;
     struct Meta
     {
         using Type = message_name;
@@ -1806,10 +1803,10 @@ struct wl_pointer
 {
 struct message_set_cursor
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t surface;
-    std::int_least32_t hotspot_x;
-    std::int_least32_t hotspot_y;
+    PMeta::uint_t serial;
+    PMeta::object_t surface;
+    PMeta::int_t hotspot_x;
+    PMeta::int_t hotspot_y;
     struct Meta
     {
         using Type = message_set_cursor;
@@ -1844,10 +1841,10 @@ struct message_release
 };
 struct message_enter
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t surface;
-    std::uint_least32_t surface_x;
-    std::uint_least32_t surface_y;
+    PMeta::uint_t serial;
+    PMeta::object_t surface;
+    PMeta::fixed_t surface_x;
+    PMeta::fixed_t surface_y;
     struct Meta
     {
         using Type = message_enter;
@@ -1867,8 +1864,8 @@ struct message_enter
 };
 struct message_leave
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t surface;
+    PMeta::uint_t serial;
+    PMeta::object_t surface;
     struct Meta
     {
         using Type = message_leave;
@@ -1886,9 +1883,9 @@ struct message_leave
 };
 struct message_motion
 {
-    std::uint_least32_t time;
-    std::uint_least32_t surface_x;
-    std::uint_least32_t surface_y;
+    PMeta::uint_t time;
+    PMeta::fixed_t surface_x;
+    PMeta::fixed_t surface_y;
     struct Meta
     {
         using Type = message_motion;
@@ -1907,10 +1904,10 @@ struct message_motion
 };
 struct message_button
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t time;
-    std::uint_least32_t button;
-    std::uint_least32_t state;
+    PMeta::uint_t serial;
+    PMeta::uint_t time;
+    PMeta::uint_t button;
+    PMeta::uint_t state;
     struct Meta
     {
         using Type = message_button;
@@ -1930,9 +1927,9 @@ struct message_button
 };
 struct message_axis
 {
-    std::uint_least32_t time;
-    std::uint_least32_t axis;
-    std::uint_least32_t value;
+    PMeta::uint_t time;
+    PMeta::uint_t axis;
+    PMeta::fixed_t value;
     struct Meta
     {
         using Type = message_axis;
@@ -1966,7 +1963,7 @@ struct message_frame
 };
 struct message_axis_source
 {
-    std::uint_least32_t axis_source;
+    PMeta::uint_t axis_source;
     struct Meta
     {
         using Type = message_axis_source;
@@ -1983,8 +1980,8 @@ struct message_axis_source
 };
 struct message_axis_stop
 {
-    std::uint_least32_t time;
-    std::uint_least32_t axis;
+    PMeta::uint_t time;
+    PMeta::uint_t axis;
     struct Meta
     {
         using Type = message_axis_stop;
@@ -2002,8 +1999,8 @@ struct message_axis_stop
 };
 struct message_axis_discrete
 {
-    std::uint_least32_t axis;
-    std::int_least32_t discrete;
+    PMeta::uint_t axis;
+    PMeta::int_t discrete;
     struct Meta
     {
         using Type = message_axis_discrete;
@@ -2021,8 +2018,8 @@ struct message_axis_discrete
 };
 struct message_axis_value120
 {
-    std::uint_least32_t axis;
-    std::int_least32_t value120;
+    PMeta::uint_t axis;
+    PMeta::int_t value120;
     struct Meta
     {
         using Type = message_axis_value120;
@@ -2040,8 +2037,8 @@ struct message_axis_value120
 };
 struct message_axis_relative_direction
 {
-    std::uint_least32_t axis;
-    std::uint_least32_t direction;
+    PMeta::uint_t axis;
+    PMeta::uint_t direction;
     struct Meta
     {
         using Type = message_axis_relative_direction;
@@ -2101,9 +2098,9 @@ struct message_release
 };
 struct message_keymap
 {
-    std::uint_least32_t format;
-    void * fd;
-    std::uint_least32_t size;
+    PMeta::uint_t format;
+    PMeta::fd_t fd;
+    PMeta::uint_t size;
     struct Meta
     {
         using Type = message_keymap;
@@ -2122,9 +2119,9 @@ struct message_keymap
 };
 struct message_enter
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t surface;
-    std::span<const std::byte> keys;
+    PMeta::uint_t serial;
+    PMeta::object_t surface;
+    PMeta::array_t keys;
     struct Meta
     {
         using Type = message_enter;
@@ -2143,8 +2140,8 @@ struct message_enter
 };
 struct message_leave
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t surface;
+    PMeta::uint_t serial;
+    PMeta::object_t surface;
     struct Meta
     {
         using Type = message_leave;
@@ -2162,10 +2159,10 @@ struct message_leave
 };
 struct message_key
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t time;
-    std::uint_least32_t key;
-    std::uint_least32_t state;
+    PMeta::uint_t serial;
+    PMeta::uint_t time;
+    PMeta::uint_t key;
+    PMeta::uint_t state;
     struct Meta
     {
         using Type = message_key;
@@ -2185,11 +2182,11 @@ struct message_key
 };
 struct message_modifiers
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t mods_depressed;
-    std::uint_least32_t mods_latched;
-    std::uint_least32_t mods_locked;
-    std::uint_least32_t group;
+    PMeta::uint_t serial;
+    PMeta::uint_t mods_depressed;
+    PMeta::uint_t mods_latched;
+    PMeta::uint_t mods_locked;
+    PMeta::uint_t group;
     struct Meta
     {
         using Type = message_modifiers;
@@ -2210,8 +2207,8 @@ struct message_modifiers
 };
 struct message_repeat_info
 {
-    std::int_least32_t rate;
-    std::int_least32_t delay;
+    PMeta::int_t rate;
+    PMeta::int_t delay;
     struct Meta
     {
         using Type = message_repeat_info;
@@ -2265,12 +2262,12 @@ struct message_release
 };
 struct message_down
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t time;
-    std::uint_least32_t surface;
-    std::int_least32_t id;
-    std::uint_least32_t x;
-    std::uint_least32_t y;
+    PMeta::uint_t serial;
+    PMeta::uint_t time;
+    PMeta::object_t surface;
+    PMeta::int_t id;
+    PMeta::fixed_t x;
+    PMeta::fixed_t y;
     struct Meta
     {
         using Type = message_down;
@@ -2292,9 +2289,9 @@ struct message_down
 };
 struct message_up
 {
-    std::uint_least32_t serial;
-    std::uint_least32_t time;
-    std::int_least32_t id;
+    PMeta::uint_t serial;
+    PMeta::uint_t time;
+    PMeta::int_t id;
     struct Meta
     {
         using Type = message_up;
@@ -2313,10 +2310,10 @@ struct message_up
 };
 struct message_motion
 {
-    std::uint_least32_t time;
-    std::int_least32_t id;
-    std::uint_least32_t x;
-    std::uint_least32_t y;
+    PMeta::uint_t time;
+    PMeta::int_t id;
+    PMeta::fixed_t x;
+    PMeta::fixed_t y;
     struct Meta
     {
         using Type = message_motion;
@@ -2366,9 +2363,9 @@ struct message_cancel
 };
 struct message_shape
 {
-    std::int_least32_t id;
-    std::uint_least32_t major;
-    std::uint_least32_t minor;
+    PMeta::int_t id;
+    PMeta::fixed_t major;
+    PMeta::fixed_t minor;
     struct Meta
     {
         using Type = message_shape;
@@ -2387,8 +2384,8 @@ struct message_shape
 };
 struct message_orientation
 {
-    std::int_least32_t id;
-    std::uint_least32_t orientation;
+    PMeta::int_t id;
+    PMeta::fixed_t orientation;
     struct Meta
     {
         using Type = message_orientation;
@@ -2443,14 +2440,14 @@ struct message_release
 };
 struct message_geometry
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::int_least32_t physical_width;
-    std::int_least32_t physical_height;
-    std::int_least32_t subpixel;
-    std::string_view make;
-    std::string_view model;
-    std::int_least32_t transform;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::int_t physical_width;
+    PMeta::int_t physical_height;
+    PMeta::int_t subpixel;
+    PMeta::string_t make;
+    PMeta::string_t model;
+    PMeta::int_t transform;
     struct Meta
     {
         using Type = message_geometry;
@@ -2474,10 +2471,10 @@ struct message_geometry
 };
 struct message_mode
 {
-    std::uint_least32_t flags;
-    std::int_least32_t width;
-    std::int_least32_t height;
-    std::int_least32_t refresh;
+    PMeta::uint_t flags;
+    PMeta::int_t width;
+    PMeta::int_t height;
+    PMeta::int_t refresh;
     struct Meta
     {
         using Type = message_mode;
@@ -2512,7 +2509,7 @@ struct message_done
 };
 struct message_scale
 {
-    std::int_least32_t factor;
+    PMeta::int_t factor;
     struct Meta
     {
         using Type = message_scale;
@@ -2529,7 +2526,7 @@ struct message_scale
 };
 struct message_name
 {
-    std::string_view name;
+    PMeta::string_t name;
     struct Meta
     {
         using Type = message_name;
@@ -2546,7 +2543,7 @@ struct message_name
 };
 struct message_description
 {
-    std::string_view description;
+    PMeta::string_t description;
     struct Meta
     {
         using Type = message_description;
@@ -2599,10 +2596,10 @@ struct message_destroy
 };
 struct message_add
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_add;
@@ -2622,10 +2619,10 @@ struct message_add
 };
 struct message_subtract
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_subtract;
@@ -2677,9 +2674,9 @@ struct message_destroy
 };
 struct message_get_subsurface
 {
-    std::uint_least32_t id;
-    std::uint_least32_t surface;
-    std::uint_least32_t parent;
+    PMeta::new_id_t id;
+    PMeta::object_t surface;
+    PMeta::object_t parent;
     struct Meta
     {
         using Type = message_get_subsurface;
@@ -2729,8 +2726,8 @@ struct message_destroy
 };
 struct message_set_position
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
+    PMeta::int_t x;
+    PMeta::int_t y;
     struct Meta
     {
         using Type = message_set_position;
@@ -2748,7 +2745,7 @@ struct message_set_position
 };
 struct message_place_above
 {
-    std::uint_least32_t sibling;
+    PMeta::object_t sibling;
     struct Meta
     {
         using Type = message_place_above;
@@ -2765,7 +2762,7 @@ struct message_place_above
 };
 struct message_place_below
 {
-    std::uint_least32_t sibling;
+    PMeta::object_t sibling;
     struct Meta
     {
         using Type = message_place_below;
@@ -2847,7 +2844,7 @@ struct message_destroy
 };
 struct message_destroy_registry
 {
-    std::uint_least32_t registry;
+    PMeta::object_t registry;
     struct Meta
     {
         using Type = message_destroy_registry;
@@ -2864,8 +2861,8 @@ struct message_destroy_registry
 };
 struct message_ack_global_remove
 {
-    std::uint_least32_t registry;
-    std::uint_least32_t name;
+    PMeta::object_t registry;
+    PMeta::uint_t name;
     struct Meta
     {
         using Type = message_ack_global_remove;
@@ -2917,8 +2914,8 @@ struct message_destroy
 };
 struct message_get_toplevel_decoration
 {
-    std::uint_least32_t id;
-    std::uint_least32_t toplevel;
+    PMeta::new_id_t id;
+    PMeta::object_t toplevel;
     struct Meta
     {
         using Type = message_get_toplevel_decoration;
@@ -2967,7 +2964,7 @@ struct message_destroy
 };
 struct message_set_mode
 {
-    std::uint_least32_t mode;
+    PMeta::uint_t mode;
     struct Meta
     {
         using Type = message_set_mode;
@@ -2999,7 +2996,7 @@ struct message_unset_mode
 };
 struct message_configure
 {
-    std::uint_least32_t mode;
+    PMeta::uint_t mode;
     struct Meta
     {
         using Type = message_configure;
@@ -3051,7 +3048,7 @@ struct message_destroy
 };
 struct message_create_positioner
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_create_positioner;
@@ -3068,8 +3065,8 @@ struct message_create_positioner
 };
 struct message_get_xdg_surface
 {
-    std::uint_least32_t id;
-    std::uint_least32_t surface;
+    PMeta::new_id_t id;
+    PMeta::object_t surface;
     struct Meta
     {
         using Type = message_get_xdg_surface;
@@ -3087,7 +3084,7 @@ struct message_get_xdg_surface
 };
 struct message_pong
 {
-    std::uint_least32_t serial;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_pong;
@@ -3104,7 +3101,7 @@ struct message_pong
 };
 struct message_ping
 {
-    std::uint_least32_t serial;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_ping;
@@ -3155,8 +3152,8 @@ struct message_destroy
 };
 struct message_set_size
 {
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_set_size;
@@ -3174,10 +3171,10 @@ struct message_set_size
 };
 struct message_set_anchor_rect
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_set_anchor_rect;
@@ -3197,7 +3194,7 @@ struct message_set_anchor_rect
 };
 struct message_set_anchor
 {
-    std::uint_least32_t anchor;
+    PMeta::uint_t anchor;
     struct Meta
     {
         using Type = message_set_anchor;
@@ -3214,7 +3211,7 @@ struct message_set_anchor
 };
 struct message_set_gravity
 {
-    std::uint_least32_t gravity;
+    PMeta::uint_t gravity;
     struct Meta
     {
         using Type = message_set_gravity;
@@ -3231,7 +3228,7 @@ struct message_set_gravity
 };
 struct message_set_constraint_adjustment
 {
-    std::uint_least32_t constraint_adjustment;
+    PMeta::uint_t constraint_adjustment;
     struct Meta
     {
         using Type = message_set_constraint_adjustment;
@@ -3248,8 +3245,8 @@ struct message_set_constraint_adjustment
 };
 struct message_set_offset
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
+    PMeta::int_t x;
+    PMeta::int_t y;
     struct Meta
     {
         using Type = message_set_offset;
@@ -3282,8 +3279,8 @@ struct message_set_reactive
 };
 struct message_set_parent_size
 {
-    std::int_least32_t parent_width;
-    std::int_least32_t parent_height;
+    PMeta::int_t parent_width;
+    PMeta::int_t parent_height;
     struct Meta
     {
         using Type = message_set_parent_size;
@@ -3301,7 +3298,7 @@ struct message_set_parent_size
 };
 struct message_set_parent_configure
 {
-    std::uint_least32_t serial;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_set_parent_configure;
@@ -3357,7 +3354,7 @@ struct message_destroy
 };
 struct message_get_toplevel
 {
-    std::uint_least32_t id;
+    PMeta::new_id_t id;
     struct Meta
     {
         using Type = message_get_toplevel;
@@ -3374,9 +3371,9 @@ struct message_get_toplevel
 };
 struct message_get_popup
 {
-    std::uint_least32_t id;
-    std::uint_least32_t parent;
-    std::uint_least32_t positioner;
+    PMeta::new_id_t id;
+    PMeta::object_t parent;
+    PMeta::object_t positioner;
     struct Meta
     {
         using Type = message_get_popup;
@@ -3395,10 +3392,10 @@ struct message_get_popup
 };
 struct message_set_window_geometry
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_set_window_geometry;
@@ -3418,7 +3415,7 @@ struct message_set_window_geometry
 };
 struct message_ack_configure
 {
-    std::uint_least32_t serial;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_ack_configure;
@@ -3435,7 +3432,7 @@ struct message_ack_configure
 };
 struct message_configure
 {
-    std::uint_least32_t serial;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_configure;
@@ -3487,7 +3484,7 @@ struct message_destroy
 };
 struct message_set_parent
 {
-    std::uint_least32_t parent;
+    PMeta::object_t parent;
     struct Meta
     {
         using Type = message_set_parent;
@@ -3504,7 +3501,7 @@ struct message_set_parent
 };
 struct message_set_title
 {
-    std::string_view title;
+    PMeta::string_t title;
     struct Meta
     {
         using Type = message_set_title;
@@ -3521,7 +3518,7 @@ struct message_set_title
 };
 struct message_set_app_id
 {
-    std::string_view app_id;
+    PMeta::string_t app_id;
     struct Meta
     {
         using Type = message_set_app_id;
@@ -3538,10 +3535,10 @@ struct message_set_app_id
 };
 struct message_show_window_menu
 {
-    std::uint_least32_t seat;
-    std::uint_least32_t serial;
-    std::int_least32_t x;
-    std::int_least32_t y;
+    PMeta::object_t seat;
+    PMeta::uint_t serial;
+    PMeta::int_t x;
+    PMeta::int_t y;
     struct Meta
     {
         using Type = message_show_window_menu;
@@ -3561,8 +3558,8 @@ struct message_show_window_menu
 };
 struct message_move
 {
-    std::uint_least32_t seat;
-    std::uint_least32_t serial;
+    PMeta::object_t seat;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_move;
@@ -3580,9 +3577,9 @@ struct message_move
 };
 struct message_resize
 {
-    std::uint_least32_t seat;
-    std::uint_least32_t serial;
-    std::uint_least32_t edges;
+    PMeta::object_t seat;
+    PMeta::uint_t serial;
+    PMeta::uint_t edges;
     struct Meta
     {
         using Type = message_resize;
@@ -3601,8 +3598,8 @@ struct message_resize
 };
 struct message_set_max_size
 {
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_set_max_size;
@@ -3620,8 +3617,8 @@ struct message_set_max_size
 };
 struct message_set_min_size
 {
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_set_min_size;
@@ -3669,7 +3666,7 @@ struct message_unset_maximized
 };
 struct message_set_fullscreen
 {
-    std::uint_least32_t output;
+    PMeta::object_t output;
     struct Meta
     {
         using Type = message_set_fullscreen;
@@ -3716,9 +3713,9 @@ struct message_set_minimized
 };
 struct message_configure
 {
-    std::int_least32_t width;
-    std::int_least32_t height;
-    std::span<const std::byte> states;
+    PMeta::int_t width;
+    PMeta::int_t height;
+    PMeta::array_t states;
     struct Meta
     {
         using Type = message_configure;
@@ -3752,8 +3749,8 @@ struct message_close
 };
 struct message_configure_bounds
 {
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_configure_bounds;
@@ -3771,7 +3768,7 @@ struct message_configure_bounds
 };
 struct message_wm_capabilities
 {
-    std::span<const std::byte> capabilities;
+    PMeta::array_t capabilities;
     struct Meta
     {
         using Type = message_wm_capabilities;
@@ -3835,8 +3832,8 @@ struct message_destroy
 };
 struct message_grab
 {
-    std::uint_least32_t seat;
-    std::uint_least32_t serial;
+    PMeta::object_t seat;
+    PMeta::uint_t serial;
     struct Meta
     {
         using Type = message_grab;
@@ -3854,8 +3851,8 @@ struct message_grab
 };
 struct message_reposition
 {
-    std::uint_least32_t positioner;
-    std::uint_least32_t token;
+    PMeta::object_t positioner;
+    PMeta::uint_t token;
     struct Meta
     {
         using Type = message_reposition;
@@ -3873,10 +3870,10 @@ struct message_reposition
 };
 struct message_configure
 {
-    std::int_least32_t x;
-    std::int_least32_t y;
-    std::int_least32_t width;
-    std::int_least32_t height;
+    PMeta::int_t x;
+    PMeta::int_t y;
+    PMeta::int_t width;
+    PMeta::int_t height;
     struct Meta
     {
         using Type = message_configure;
@@ -3911,7 +3908,7 @@ struct message_popup_done
 };
 struct message_repositioned
 {
-    std::uint_least32_t token;
+    PMeta::uint_t token;
     struct Meta
     {
         using Type = message_repositioned;

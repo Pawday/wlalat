@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Types.hh"
 #include "LineList.hh"
+#include "Types.hh"
 
 #include <array>
 #include <cstddef>
@@ -86,11 +86,8 @@ struct Generator
         O += "#pragma once";
         O += "";
         O += "#include <cstddef>";
-        O += "#include <cstdint>";
         O += "";
-        O += "#include <string_view>";
         O += "#include <tuple>";
-        O += "#include <span>";
         O += "";
 
         O += "template<typename PMeta>";
@@ -101,28 +98,6 @@ struct Generator
         }
         O += "}; // struct protocols";
         return O;
-    }
-
-    std::optional<std::string_view> to_cxx_type(std::string_view type)
-    {
-        using Pair = std::pair<std::string_view, std::string_view>;
-        Pair map[]{
-            {"int", "std::int_least32_t"},
-            {"uint", "std::uint_least32_t"},
-            {"new_id", "std::uint_least32_t"},
-            {"object", "std::uint_least32_t"},
-            {"string", "std::string_view"},
-            {"fixed", "std::uint_least32_t"},
-            {"array", "std::span<const std::byte>"},
-            {"fd", "void *"},
-        };
-
-        auto matched = [&](const auto &s) { return type == s.first; };
-        auto mapped = std::ranges::find_if(map, matched);
-        if (mapped == std::end(map)) {
-            return {};
-        }
-        return mapped->second;
     }
 
     LineList on_proto(const CodeGen::Protocol &proto_node)
@@ -352,13 +327,8 @@ struct Generator
     {
         LineList O;
         auto type = arg.type.value();
-        auto type_str = std::format("void * /* UNMAPPED {} */", type);
-        auto cxx_type_str_op = to_cxx_type(type);
-        if (cxx_type_str_op) {
-            type_str = std::format("{}", cxx_type_str_op.value());
-        }
-
-        O += std::format("{} {};", type_str, arg.name.value());
+        auto name = arg.name.value();
+        O += std::format("PMeta::{}_t {};", type, name);
         return O;
     }
 
