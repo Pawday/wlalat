@@ -100,22 +100,6 @@ struct Generator
             O += on_proto(proto);
         }
         O += "}; // struct protocols";
-
-        for (auto &line : O) {
-            auto white = [](auto c) {
-                switch (c) {
-                    case ' ':
-                    case '\n':
-                        return true;
-                }
-                return false;
-            };
-            auto non_space = std::ranges::find_if_not(line, white);
-            if (non_space == std::end(line)) {
-                line.clear();
-            }
-        }
-
         return O;
     }
 

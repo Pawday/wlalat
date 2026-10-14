@@ -41,6 +41,9 @@ struct LineList : std::vector<std::string>
     void indent()
     {
         for (std::string &s : *this) {
+            if (s.empty()) {
+                continue;
+            }
             s = std::format("    {}", s);
         }
     }
