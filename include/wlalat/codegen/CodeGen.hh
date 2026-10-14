@@ -204,7 +204,6 @@ struct Generator
         std::string_view msg_name,
         const std::vector<Argument> &args,
         size_t opcode,
-        bool is_event,
         std::string_view type_using,
         std::string_view interface_type_using)
     {
@@ -217,7 +216,6 @@ struct Generator
         B0 += std::format("using InterfaceTag = {};", interface_type_using);
         B0 += std::format("static constexpr char name[] = \"{}\";", msg_name);
         B0 += std::format("static constexpr const unsigned short opcode = {};", opcode);
-        B0 += std::format("static constexpr bool is_event = {};", is_event);
 
         LineList B1;
 
@@ -282,21 +280,20 @@ struct Generator
     LineList gen_request(
         std::string_view interface_name, const Request &req, size_t opcode)
     {
-        return gen_message(interface_name, req.name, req.args, opcode, false);
+        return gen_message(interface_name, req.name, req.args, opcode);
     }
 
     LineList gen_event(
         std::string_view interface_name, const Event &ev, size_t opcode)
     {
-        return gen_message(interface_name, ev.name, ev.args, opcode, true);
+        return gen_message(interface_name, ev.name, ev.args, opcode);
     }
 
     LineList gen_message(
         std::string_view interface_name,
         const MetadataEntry &name_op,
         const std::vector<Argument> &args,
-        size_t opcode,
-        bool is_event)
+        size_t opcode)
     {
         LineList O;
 
@@ -314,7 +311,7 @@ struct Generator
 
         auto type_using = std::format("message_{}", name);
         B = gen_args_meta(
-            name, args, opcode, is_event, type_using, interface_name);
+            name, args, opcode, type_using, interface_name);
         B.indent();
         O += std::move(B);
         O += "};";
