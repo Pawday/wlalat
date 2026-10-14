@@ -83,11 +83,6 @@ struct Generator
     {
         LineList O;
 
-        O += "#pragma once";
-        O += "";
-        O += "#include <tuple>";
-        O += "";
-
         O += "template<typename PMeta>";
         O += "struct protocols";
         O += "{";
@@ -171,29 +166,29 @@ struct Generator
 
         LineList B0;
         B0 += std::format("static constexpr char name[] = \"{}\";", iface_name);
-        B0 += std::format("using Events = std::tuple");
-        B0 += "<";
+        B0 += std::format("using Events = decltype(typename PMeta::TupleMaker{{}}");
+        B0 += "(";
         LineList B1;
         for (auto &ev : events) {
             auto &msg_type_name = ev.name.value();
-            B1 += std::format("message_{}", msg_type_name);
+            B1 += std::format("message_{}{{}}", msg_type_name);
         }
         B1.comma_sep();
         B1.indent();
         B0 += std::move(B1);
-        B0 += ">;";
+        B0 += "));";
 
-        B0 += std::format("using Requests = std::tuple");
-        B0 += "<";
+        B0 += std::format("using Requests = decltype(typename PMeta::TupleMaker{{}}");
+        B0 += "(";
         B1.clear();
         for (auto &req : requests) {
             auto &msg_type_name = req.name.value();
-            B1 += std::format("message_{}", msg_type_name);
+            B1 += std::format("message_{}{{}}", msg_type_name);
         }
         B1.comma_sep();
         B1.indent();
         B0 += std::move(B1);
-        B0 += ">;";
+        B0 += "));";
         B0.indent();
         O += std::move(B0);
         O += "};";
@@ -255,12 +250,12 @@ struct Generator
             }
         }
 
-        B0 += "static constexpr auto args = std::make_tuple";
+        B0 += "static constexpr auto args = typename PMeta::TupleMaker{}";
         B0 += "(";
         B1.clear();
         for (auto &meta_entry : meta_entries) {
             B1 += std::format(
-                "std::make_tuple({},{},{})",
+                "typename PMeta::TupleMaker{{}}({},{},{})",
                 meta_entry[0],
                 meta_entry[1],
                 meta_entry[2]);

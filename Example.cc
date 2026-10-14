@@ -69,6 +69,15 @@ std::string hexdump(std::span<const std::byte> data)
     return O;
 }
 
+struct ExampleTupleMaker
+{
+    template <typename... Args>
+    constexpr auto operator()(Args &&...args)
+    {
+        return std::make_tuple(std::forward<Args>(args)...);
+    }
+};
+
 struct PMeta
 {
     using int_t = std::int_least32_t;
@@ -89,6 +98,8 @@ struct PMeta
     using string_tag = Tags::wl_string;
     using array_tag = Tags::wl_array;
     using fd_tag = Tags::wl_fd;
+
+    using TupleMaker = ExampleTupleMaker;
 };
 
 using GroupT = protocols<PMeta>;
