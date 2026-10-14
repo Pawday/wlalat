@@ -234,7 +234,7 @@ struct Generator
                 auto name = std::get<0>(name_type_pair);
                 auto type = std::get<1>(name_type_pair);
                 std::array<std::string, 3> entry;
-                entry[0] = std::format("typename TypeTagsT::wl_{}{{}}", type);
+                entry[0] = std::format("typename PMeta::{}_tag{{}}", type);
                 entry[1] = std::format("&Type::{}", name);
                 entry[2] = std::format("\"{}\"", name);
                 meta_entries.push_back(std::move(entry));
@@ -255,7 +255,6 @@ struct Generator
             }
         }
 
-        B0 += "template<typename TypeTagsT>";
         B0 += "static constexpr auto args = std::make_tuple";
         B0 += "(";
         B1.clear();

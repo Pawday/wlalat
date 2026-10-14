@@ -18,10 +18,9 @@ struct message_sync
         using InterfaceTag = wl_display;
         static constexpr char name[] = "sync";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::callback,"callback")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::callback,"callback")
         );
     };
 };
@@ -34,10 +33,9 @@ struct message_get_registry
         using InterfaceTag = wl_display;
         static constexpr char name[] = "get_registry";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::registry,"registry")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::registry,"registry")
         );
     };
 };
@@ -52,12 +50,11 @@ struct message_error
         using InterfaceTag = wl_display;
         static constexpr char name[] = "error";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::object_id,"object_id"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::code     ,"code"     ),
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::message  ,"message"  )
+            std::make_tuple(typename PMeta::object_tag{},&Type::object_id,"object_id"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::code     ,"code"     ),
+            std::make_tuple(typename PMeta::string_tag{},&Type::message  ,"message"  )
         );
     };
 };
@@ -70,10 +67,9 @@ struct message_delete_id
         using InterfaceTag = wl_display;
         static constexpr char name[] = "delete_id";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::id,"id")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::id,"id")
         );
     };
 };
@@ -107,13 +103,12 @@ struct message_bind
         using InterfaceTag = wl_registry;
         static constexpr char name[] = "bind";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::name        ,"name"        ),
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::id_interface,"id_interface"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::id_version  ,"id_version"  ),
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id          ,"id"          )
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::name        ,"name"        ),
+            std::make_tuple(typename PMeta::string_tag{},&Type::id_interface,"id_interface"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::id_version  ,"id_version"  ),
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id          ,"id"          )
         );
     };
 };
@@ -128,12 +123,11 @@ struct message_global
         using InterfaceTag = wl_registry;
         static constexpr char name[] = "global";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::name     ,"name"     ),
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::interface,"interface"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::version  ,"version"  )
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::name     ,"name"     ),
+            std::make_tuple(typename PMeta::string_tag{},&Type::interface,"interface"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::version  ,"version"  )
         );
     };
 };
@@ -146,10 +140,9 @@ struct message_global_remove
         using InterfaceTag = wl_registry;
         static constexpr char name[] = "global_remove";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::name,"name")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::name,"name")
         );
     };
 };
@@ -179,10 +172,9 @@ struct message_done
         using InterfaceTag = wl_callback;
         static constexpr char name[] = "done";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::callback_data,"callback_data")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::callback_data,"callback_data")
         );
     };
 };
@@ -210,10 +202,9 @@ struct message_create_surface
         using InterfaceTag = wl_compositor;
         static constexpr char name[] = "create_surface";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -226,10 +217,9 @@ struct message_create_region
         using InterfaceTag = wl_compositor;
         static constexpr char name[] = "create_region";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -241,7 +231,6 @@ struct message_release
         using InterfaceTag = wl_compositor;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -278,15 +267,14 @@ struct message_create_buffer
         using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "create_buffer";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id    ,"id"    ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::offset,"offset"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::height,"height"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::stride,"stride"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::format,"format")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id    ,"id"    ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::offset,"offset"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::height,"height"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::stride,"stride"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::format,"format")
         );
     };
 };
@@ -298,7 +286,6 @@ struct message_destroy
         using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -313,10 +300,9 @@ struct message_resize
         using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "resize";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::size,"size")
+            std::make_tuple(typename PMeta::int_tag{},&Type::size,"size")
         );
     };
 };
@@ -348,12 +334,11 @@ struct message_create_pool
         using InterfaceTag = wl_shm;
         static constexpr char name[] = "create_pool";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id  ,"id"  ),
-            std::make_tuple(typename TypeTagsT::wl_fd{}    ,&Type::fd  ,"fd"  ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::size,"size")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id  ,"id"  ),
+            std::make_tuple(typename PMeta::fd_tag{}    ,&Type::fd  ,"fd"  ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::size,"size")
         );
     };
 };
@@ -365,7 +350,6 @@ struct message_release
         using InterfaceTag = wl_shm;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -380,10 +364,9 @@ struct message_format
         using InterfaceTag = wl_shm;
         static constexpr char name[] = "format";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::format,"format")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::format,"format")
         );
     };
 };
@@ -412,7 +395,6 @@ struct message_destroy
         using InterfaceTag = wl_buffer;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -426,7 +408,6 @@ struct message_release
         using InterfaceTag = wl_buffer;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -458,11 +439,10 @@ struct message_accept
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "accept";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial   ,"serial"   ),
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::mime_type,"mime_type")
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial   ,"serial"   ),
+            std::make_tuple(typename PMeta::string_tag{},&Type::mime_type,"mime_type")
         );
     };
 };
@@ -476,11 +456,10 @@ struct message_receive
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "receive";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::mime_type,"mime_type"),
-            std::make_tuple(typename TypeTagsT::wl_fd{}    ,&Type::fd       ,"fd"       )
+            std::make_tuple(typename PMeta::string_tag{},&Type::mime_type,"mime_type"),
+            std::make_tuple(typename PMeta::fd_tag{}    ,&Type::fd       ,"fd"       )
         );
     };
 };
@@ -492,7 +471,6 @@ struct message_destroy
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -506,7 +484,6 @@ struct message_finish
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "finish";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -522,11 +499,10 @@ struct message_set_actions
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "set_actions";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::dnd_actions     ,"dnd_actions"     ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::preferred_action,"preferred_action")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::dnd_actions     ,"dnd_actions"     ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::preferred_action,"preferred_action")
         );
     };
 };
@@ -539,10 +515,9 @@ struct message_offer
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "offer";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::mime_type,"mime_type")
+            std::make_tuple(typename PMeta::string_tag{},&Type::mime_type,"mime_type")
         );
     };
 };
@@ -555,10 +530,9 @@ struct message_source_actions
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "source_actions";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::source_actions,"source_actions")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::source_actions,"source_actions")
         );
     };
 };
@@ -571,10 +545,9 @@ struct message_action
         using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "action";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::dnd_action,"dnd_action")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::dnd_action,"dnd_action")
         );
     };
 };
@@ -609,10 +582,9 @@ struct message_offer
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "offer";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::mime_type,"mime_type")
+            std::make_tuple(typename PMeta::string_tag{},&Type::mime_type,"mime_type")
         );
     };
 };
@@ -624,7 +596,6 @@ struct message_destroy
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -639,10 +610,9 @@ struct message_set_actions
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "set_actions";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::dnd_actions,"dnd_actions")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::dnd_actions,"dnd_actions")
         );
     };
 };
@@ -655,10 +625,9 @@ struct message_target
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "target";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::mime_type,"mime_type")
+            std::make_tuple(typename PMeta::string_tag{},&Type::mime_type,"mime_type")
         );
     };
 };
@@ -672,11 +641,10 @@ struct message_send
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "send";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::mime_type,"mime_type"),
-            std::make_tuple(typename TypeTagsT::wl_fd{}    ,&Type::fd       ,"fd"       )
+            std::make_tuple(typename PMeta::string_tag{},&Type::mime_type,"mime_type"),
+            std::make_tuple(typename PMeta::fd_tag{}    ,&Type::fd       ,"fd"       )
         );
     };
 };
@@ -688,7 +656,6 @@ struct message_cancelled
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "cancelled";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -702,7 +669,6 @@ struct message_dnd_drop_performed
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "dnd_drop_performed";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -716,7 +682,6 @@ struct message_dnd_finished
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "dnd_finished";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -731,10 +696,9 @@ struct message_action
         using InterfaceTag = wl_data_source;
         static constexpr char name[] = "action";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::dnd_action,"dnd_action")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::dnd_action,"dnd_action")
         );
     };
 };
@@ -773,13 +737,12 @@ struct message_start_drag
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "start_drag";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::source,"source"),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::origin,"origin"),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::icon  ,"icon"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial")
+            std::make_tuple(typename PMeta::object_tag{},&Type::source,"source"),
+            std::make_tuple(typename PMeta::object_tag{},&Type::origin,"origin"),
+            std::make_tuple(typename PMeta::object_tag{},&Type::icon  ,"icon"  ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial")
         );
     };
 };
@@ -793,11 +756,10 @@ struct message_set_selection
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "set_selection";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::source,"source"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial")
+            std::make_tuple(typename PMeta::object_tag{},&Type::source,"source"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial")
         );
     };
 };
@@ -809,7 +771,6 @@ struct message_release
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -824,10 +785,9 @@ struct message_data_offer
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "data_offer";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -844,14 +804,13 @@ struct message_enter
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "enter";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial ,"serial" ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface,"surface"),
-            std::make_tuple(typename TypeTagsT::wl_fixed{} ,&Type::x      ,"x"      ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{} ,&Type::y      ,"y"      ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::id     ,"id"     )
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial ,"serial" ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface,"surface"),
+            std::make_tuple(typename PMeta::fixed_tag{} ,&Type::x      ,"x"      ),
+            std::make_tuple(typename PMeta::fixed_tag{} ,&Type::y      ,"y"      ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::id     ,"id"     )
         );
     };
 };
@@ -863,7 +822,6 @@ struct message_leave
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "leave";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -880,12 +838,11 @@ struct message_motion
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "motion";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{} ,&Type::time,"time"),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::x   ,"x"   ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::y   ,"y"   )
+            std::make_tuple(typename PMeta::uint_tag{} ,&Type::time,"time"),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::x   ,"x"   ),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::y   ,"y"   )
         );
     };
 };
@@ -897,7 +854,6 @@ struct message_drop
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "drop";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -912,10 +868,9 @@ struct message_selection
         using InterfaceTag = wl_data_device;
         static constexpr char name[] = "selection";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::id,"id")
+            std::make_tuple(typename PMeta::object_tag{},&Type::id,"id")
         );
     };
 };
@@ -951,10 +906,9 @@ struct message_create_data_source
         using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "create_data_source";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -968,11 +922,10 @@ struct message_get_data_device
         using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "get_data_device";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id  ,"id"  ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::seat,"seat")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id  ,"id"  ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::seat,"seat")
         );
     };
 };
@@ -984,7 +937,6 @@ struct message_release
         using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -1017,11 +969,10 @@ struct message_get_shell_surface
         using InterfaceTag = wl_shell;
         static constexpr char name[] = "get_shell_surface";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id     ,"id"     ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface,"surface")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id     ,"id"     ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface,"surface")
         );
     };
 };
@@ -1049,10 +1000,9 @@ struct message_pong
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "pong";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial")
         );
     };
 };
@@ -1066,11 +1016,10 @@ struct message_move
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "move";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::seat  ,"seat"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial")
+            std::make_tuple(typename PMeta::object_tag{},&Type::seat  ,"seat"  ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial")
         );
     };
 };
@@ -1085,12 +1034,11 @@ struct message_resize
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "resize";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::seat  ,"seat"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::edges ,"edges" )
+            std::make_tuple(typename PMeta::object_tag{},&Type::seat  ,"seat"  ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::edges ,"edges" )
         );
     };
 };
@@ -1102,7 +1050,6 @@ struct message_set_toplevel
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_toplevel";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -1120,13 +1067,12 @@ struct message_set_transient
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_transient";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::parent,"parent"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::flags ,"flags" )
+            std::make_tuple(typename PMeta::object_tag{},&Type::parent,"parent"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::flags ,"flags" )
         );
     };
 };
@@ -1141,12 +1087,11 @@ struct message_set_fullscreen
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_fullscreen";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::method   ,"method"   ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::framerate,"framerate"),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::output   ,"output"   )
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::method   ,"method"   ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::framerate,"framerate"),
+            std::make_tuple(typename PMeta::object_tag{},&Type::output   ,"output"   )
         );
     };
 };
@@ -1164,15 +1109,14 @@ struct message_set_popup
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_popup";
         static constexpr const unsigned short opcode = 6;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::seat  ,"seat"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial"),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::parent,"parent"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::flags ,"flags" )
+            std::make_tuple(typename PMeta::object_tag{},&Type::seat  ,"seat"  ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial"),
+            std::make_tuple(typename PMeta::object_tag{},&Type::parent,"parent"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::flags ,"flags" )
         );
     };
 };
@@ -1185,10 +1129,9 @@ struct message_set_maximized
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_maximized";
         static constexpr const unsigned short opcode = 7;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::output,"output")
+            std::make_tuple(typename PMeta::object_tag{},&Type::output,"output")
         );
     };
 };
@@ -1201,10 +1144,9 @@ struct message_set_title
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_title";
         static constexpr const unsigned short opcode = 8;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::title,"title")
+            std::make_tuple(typename PMeta::string_tag{},&Type::title,"title")
         );
     };
 };
@@ -1217,10 +1159,9 @@ struct message_set_class
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_class";
         static constexpr const unsigned short opcode = 9;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::class_,"class_")
+            std::make_tuple(typename PMeta::string_tag{},&Type::class_,"class_")
         );
     };
 };
@@ -1233,10 +1174,9 @@ struct message_ping
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "ping";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial")
         );
     };
 };
@@ -1251,12 +1191,11 @@ struct message_configure
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::edges ,"edges" ),
-            std::make_tuple(typename TypeTagsT::wl_int{} ,&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{} ,&Type::height,"height")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::edges ,"edges" ),
+            std::make_tuple(typename PMeta::int_tag{} ,&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{} ,&Type::height,"height")
         );
     };
 };
@@ -1268,7 +1207,6 @@ struct message_popup_done
         using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "popup_done";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -1309,7 +1247,6 @@ struct message_destroy
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -1326,12 +1263,11 @@ struct message_attach
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "attach";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::buffer,"buffer"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::y     ,"y"     )
+            std::make_tuple(typename PMeta::object_tag{},&Type::buffer,"buffer"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::y     ,"y"     )
         );
     };
 };
@@ -1347,13 +1283,12 @@ struct message_damage
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "damage";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -1366,10 +1301,9 @@ struct message_frame
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "frame";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::callback,"callback")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::callback,"callback")
         );
     };
 };
@@ -1382,10 +1316,9 @@ struct message_set_opaque_region
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_opaque_region";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::region,"region")
+            std::make_tuple(typename PMeta::object_tag{},&Type::region,"region")
         );
     };
 };
@@ -1398,10 +1331,9 @@ struct message_set_input_region
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_input_region";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::region,"region")
+            std::make_tuple(typename PMeta::object_tag{},&Type::region,"region")
         );
     };
 };
@@ -1413,7 +1345,6 @@ struct message_commit
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "commit";
         static constexpr const unsigned short opcode = 6;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -1428,10 +1359,9 @@ struct message_set_buffer_transform
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_buffer_transform";
         static constexpr const unsigned short opcode = 7;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::transform,"transform")
+            std::make_tuple(typename PMeta::int_tag{},&Type::transform,"transform")
         );
     };
 };
@@ -1444,10 +1374,9 @@ struct message_set_buffer_scale
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_buffer_scale";
         static constexpr const unsigned short opcode = 8;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::scale,"scale")
+            std::make_tuple(typename PMeta::int_tag{},&Type::scale,"scale")
         );
     };
 };
@@ -1463,13 +1392,12 @@ struct message_damage_buffer
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "damage_buffer";
         static constexpr const unsigned short opcode = 9;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -1483,11 +1411,10 @@ struct message_offset
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "offset";
         static constexpr const unsigned short opcode = 10;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x,"x"),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y,"y")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x,"x"),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y,"y")
         );
     };
 };
@@ -1500,10 +1427,9 @@ struct message_get_release
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "get_release";
         static constexpr const unsigned short opcode = 11;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::callback,"callback")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::callback,"callback")
         );
     };
 };
@@ -1516,10 +1442,9 @@ struct message_enter
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "enter";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::output,"output")
+            std::make_tuple(typename PMeta::object_tag{},&Type::output,"output")
         );
     };
 };
@@ -1532,10 +1457,9 @@ struct message_leave
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "leave";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::output,"output")
+            std::make_tuple(typename PMeta::object_tag{},&Type::output,"output")
         );
     };
 };
@@ -1548,10 +1472,9 @@ struct message_preferred_buffer_scale
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "preferred_buffer_scale";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::factor,"factor")
+            std::make_tuple(typename PMeta::int_tag{},&Type::factor,"factor")
         );
     };
 };
@@ -1564,10 +1487,9 @@ struct message_preferred_buffer_transform
         using InterfaceTag = wl_surface;
         static constexpr char name[] = "preferred_buffer_transform";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::transform,"transform")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::transform,"transform")
         );
     };
 };
@@ -1610,10 +1532,9 @@ struct message_get_pointer
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_pointer";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -1626,10 +1547,9 @@ struct message_get_keyboard
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_keyboard";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -1642,10 +1562,9 @@ struct message_get_touch
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_touch";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -1657,7 +1576,6 @@ struct message_release
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -1672,10 +1590,9 @@ struct message_capabilities
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "capabilities";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::capabilities,"capabilities")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::capabilities,"capabilities")
         );
     };
 };
@@ -1688,10 +1605,9 @@ struct message_name
         using InterfaceTag = wl_seat;
         static constexpr char name[] = "name";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::name,"name")
+            std::make_tuple(typename PMeta::string_tag{},&Type::name,"name")
         );
     };
 };
@@ -1727,13 +1643,12 @@ struct message_set_cursor
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "set_cursor";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial   ,"serial"   ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface  ,"surface"  ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::hotspot_x,"hotspot_x"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::hotspot_y,"hotspot_y")
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial   ,"serial"   ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface  ,"surface"  ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::hotspot_x,"hotspot_x"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::hotspot_y,"hotspot_y")
         );
     };
 };
@@ -1745,7 +1660,6 @@ struct message_release
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -1763,13 +1677,12 @@ struct message_enter
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "enter";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial   ,"serial"   ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface  ,"surface"  ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{} ,&Type::surface_x,"surface_x"),
-            std::make_tuple(typename TypeTagsT::wl_fixed{} ,&Type::surface_y,"surface_y")
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial   ,"serial"   ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface  ,"surface"  ),
+            std::make_tuple(typename PMeta::fixed_tag{} ,&Type::surface_x,"surface_x"),
+            std::make_tuple(typename PMeta::fixed_tag{} ,&Type::surface_y,"surface_y")
         );
     };
 };
@@ -1783,11 +1696,10 @@ struct message_leave
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "leave";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial ,"serial" ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface,"surface")
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial ,"serial" ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface,"surface")
         );
     };
 };
@@ -1802,12 +1714,11 @@ struct message_motion
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "motion";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{} ,&Type::time     ,"time"     ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::surface_x,"surface_x"),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::surface_y,"surface_y")
+            std::make_tuple(typename PMeta::uint_tag{} ,&Type::time     ,"time"     ),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::surface_x,"surface_x"),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::surface_y,"surface_y")
         );
     };
 };
@@ -1823,13 +1734,12 @@ struct message_button
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "button";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial"),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::time  ,"time"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::button,"button"),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::state ,"state" )
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial"),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::time  ,"time"  ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::button,"button"),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::state ,"state" )
         );
     };
 };
@@ -1844,12 +1754,11 @@ struct message_axis
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{} ,&Type::time ,"time" ),
-            std::make_tuple(typename TypeTagsT::wl_uint{} ,&Type::axis ,"axis" ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::value,"value")
+            std::make_tuple(typename PMeta::uint_tag{} ,&Type::time ,"time" ),
+            std::make_tuple(typename PMeta::uint_tag{} ,&Type::axis ,"axis" ),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::value,"value")
         );
     };
 };
@@ -1861,7 +1770,6 @@ struct message_frame
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "frame";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -1876,10 +1784,9 @@ struct message_axis_source
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_source";
         static constexpr const unsigned short opcode = 6;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::axis_source,"axis_source")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::axis_source,"axis_source")
         );
     };
 };
@@ -1893,11 +1800,10 @@ struct message_axis_stop
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_stop";
         static constexpr const unsigned short opcode = 7;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::time,"time"),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::axis,"axis")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::time,"time"),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::axis,"axis")
         );
     };
 };
@@ -1911,11 +1817,10 @@ struct message_axis_discrete
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_discrete";
         static constexpr const unsigned short opcode = 8;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::axis    ,"axis"    ),
-            std::make_tuple(typename TypeTagsT::wl_int{} ,&Type::discrete,"discrete")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::axis    ,"axis"    ),
+            std::make_tuple(typename PMeta::int_tag{} ,&Type::discrete,"discrete")
         );
     };
 };
@@ -1929,11 +1834,10 @@ struct message_axis_value120
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_value120";
         static constexpr const unsigned short opcode = 9;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::axis    ,"axis"    ),
-            std::make_tuple(typename TypeTagsT::wl_int{} ,&Type::value120,"value120")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::axis    ,"axis"    ),
+            std::make_tuple(typename PMeta::int_tag{} ,&Type::value120,"value120")
         );
     };
 };
@@ -1947,11 +1851,10 @@ struct message_axis_relative_direction
         using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_relative_direction";
         static constexpr const unsigned short opcode = 10;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::axis     ,"axis"     ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::direction,"direction")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::axis     ,"axis"     ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::direction,"direction")
         );
     };
 };
@@ -1990,7 +1893,6 @@ struct message_release
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2007,12 +1909,11 @@ struct message_keymap
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "keymap";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::format,"format"),
-            std::make_tuple(typename TypeTagsT::wl_fd{}  ,&Type::fd    ,"fd"    ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::size  ,"size"  )
+            std::make_tuple(typename PMeta::uint_tag{},&Type::format,"format"),
+            std::make_tuple(typename PMeta::fd_tag{}  ,&Type::fd    ,"fd"    ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::size  ,"size"  )
         );
     };
 };
@@ -2027,12 +1928,11 @@ struct message_enter
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "enter";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial ,"serial" ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface,"surface"),
-            std::make_tuple(typename TypeTagsT::wl_array{} ,&Type::keys   ,"keys"   )
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial ,"serial" ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface,"surface"),
+            std::make_tuple(typename PMeta::array_tag{} ,&Type::keys   ,"keys"   )
         );
     };
 };
@@ -2046,11 +1946,10 @@ struct message_leave
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "leave";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial ,"serial" ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface,"surface")
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial ,"serial" ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface,"surface")
         );
     };
 };
@@ -2066,13 +1965,12 @@ struct message_key
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "key";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial"),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::time  ,"time"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::key   ,"key"   ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::state ,"state" )
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial"),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::time  ,"time"  ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::key   ,"key"   ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::state ,"state" )
         );
     };
 };
@@ -2089,14 +1987,13 @@ struct message_modifiers
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "modifiers";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial        ,"serial"        ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::mods_depressed,"mods_depressed"),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::mods_latched  ,"mods_latched"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::mods_locked   ,"mods_locked"   ),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::group         ,"group"         )
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial        ,"serial"        ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::mods_depressed,"mods_depressed"),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::mods_latched  ,"mods_latched"  ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::mods_locked   ,"mods_locked"   ),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::group         ,"group"         )
         );
     };
 };
@@ -2110,11 +2007,10 @@ struct message_repeat_info
         using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "repeat_info";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::rate ,"rate" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::delay,"delay")
+            std::make_tuple(typename PMeta::int_tag{},&Type::rate ,"rate" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::delay,"delay")
         );
     };
 };
@@ -2147,7 +2043,6 @@ struct message_release
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2167,15 +2062,14 @@ struct message_down
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "down";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial ,"serial" ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::time   ,"time"   ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface,"surface"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::id     ,"id"     ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{} ,&Type::x      ,"x"      ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{} ,&Type::y      ,"y"      )
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial ,"serial" ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::time   ,"time"   ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface,"surface"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::id     ,"id"     ),
+            std::make_tuple(typename PMeta::fixed_tag{} ,&Type::x      ,"x"      ),
+            std::make_tuple(typename PMeta::fixed_tag{} ,&Type::y      ,"y"      )
         );
     };
 };
@@ -2190,12 +2084,11 @@ struct message_up
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "up";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial"),
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::time  ,"time"  ),
-            std::make_tuple(typename TypeTagsT::wl_int{} ,&Type::id    ,"id"    )
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial"),
+            std::make_tuple(typename PMeta::uint_tag{},&Type::time  ,"time"  ),
+            std::make_tuple(typename PMeta::int_tag{} ,&Type::id    ,"id"    )
         );
     };
 };
@@ -2211,13 +2104,12 @@ struct message_motion
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "motion";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{} ,&Type::time,"time"),
-            std::make_tuple(typename TypeTagsT::wl_int{}  ,&Type::id  ,"id"  ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::x   ,"x"   ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::y   ,"y"   )
+            std::make_tuple(typename PMeta::uint_tag{} ,&Type::time,"time"),
+            std::make_tuple(typename PMeta::int_tag{}  ,&Type::id  ,"id"  ),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::x   ,"x"   ),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::y   ,"y"   )
         );
     };
 };
@@ -2229,7 +2121,6 @@ struct message_frame
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "frame";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2243,7 +2134,6 @@ struct message_cancel
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "cancel";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2260,12 +2150,11 @@ struct message_shape
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "shape";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{}  ,&Type::id   ,"id"   ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::major,"major"),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::minor,"minor")
+            std::make_tuple(typename PMeta::int_tag{}  ,&Type::id   ,"id"   ),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::major,"major"),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::minor,"minor")
         );
     };
 };
@@ -2279,11 +2168,10 @@ struct message_orientation
         using InterfaceTag = wl_touch;
         static constexpr char name[] = "orientation";
         static constexpr const unsigned short opcode = 6;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{}  ,&Type::id         ,"id"         ),
-            std::make_tuple(typename TypeTagsT::wl_fixed{},&Type::orientation,"orientation")
+            std::make_tuple(typename PMeta::int_tag{}  ,&Type::id         ,"id"         ),
+            std::make_tuple(typename PMeta::fixed_tag{},&Type::orientation,"orientation")
         );
     };
 };
@@ -2317,7 +2205,6 @@ struct message_release
         using InterfaceTag = wl_output;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2339,17 +2226,16 @@ struct message_geometry
         using InterfaceTag = wl_output;
         static constexpr char name[] = "geometry";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::x              ,"x"              ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::y              ,"y"              ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::physical_width ,"physical_width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::physical_height,"physical_height"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::subpixel       ,"subpixel"       ),
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::make           ,"make"           ),
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::model          ,"model"          ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::transform      ,"transform"      )
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::x              ,"x"              ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::y              ,"y"              ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::physical_width ,"physical_width" ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::physical_height,"physical_height"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::subpixel       ,"subpixel"       ),
+            std::make_tuple(typename PMeta::string_tag{},&Type::make           ,"make"           ),
+            std::make_tuple(typename PMeta::string_tag{},&Type::model          ,"model"          ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::transform      ,"transform"      )
         );
     };
 };
@@ -2365,13 +2251,12 @@ struct message_mode
         using InterfaceTag = wl_output;
         static constexpr char name[] = "mode";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::flags  ,"flags"  ),
-            std::make_tuple(typename TypeTagsT::wl_int{} ,&Type::width  ,"width"  ),
-            std::make_tuple(typename TypeTagsT::wl_int{} ,&Type::height ,"height" ),
-            std::make_tuple(typename TypeTagsT::wl_int{} ,&Type::refresh,"refresh")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::flags  ,"flags"  ),
+            std::make_tuple(typename PMeta::int_tag{} ,&Type::width  ,"width"  ),
+            std::make_tuple(typename PMeta::int_tag{} ,&Type::height ,"height" ),
+            std::make_tuple(typename PMeta::int_tag{} ,&Type::refresh,"refresh")
         );
     };
 };
@@ -2383,7 +2268,6 @@ struct message_done
         using InterfaceTag = wl_output;
         static constexpr char name[] = "done";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2398,10 +2282,9 @@ struct message_scale
         using InterfaceTag = wl_output;
         static constexpr char name[] = "scale";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::factor,"factor")
+            std::make_tuple(typename PMeta::int_tag{},&Type::factor,"factor")
         );
     };
 };
@@ -2414,10 +2297,9 @@ struct message_name
         using InterfaceTag = wl_output;
         static constexpr char name[] = "name";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::name,"name")
+            std::make_tuple(typename PMeta::string_tag{},&Type::name,"name")
         );
     };
 };
@@ -2430,10 +2312,9 @@ struct message_description
         using InterfaceTag = wl_output;
         static constexpr char name[] = "description";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::description,"description")
+            std::make_tuple(typename PMeta::string_tag{},&Type::description,"description")
         );
     };
 };
@@ -2466,7 +2347,6 @@ struct message_destroy
         using InterfaceTag = wl_region;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2484,13 +2364,12 @@ struct message_add
         using InterfaceTag = wl_region;
         static constexpr char name[] = "add";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -2506,13 +2385,12 @@ struct message_subtract
         using InterfaceTag = wl_region;
         static constexpr char name[] = "subtract";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -2541,7 +2419,6 @@ struct message_destroy
         using InterfaceTag = wl_subcompositor;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2558,12 +2435,11 @@ struct message_get_subsurface
         using InterfaceTag = wl_subcompositor;
         static constexpr char name[] = "get_subsurface";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id     ,"id"     ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface,"surface"),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::parent ,"parent" )
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id     ,"id"     ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface,"surface"),
+            std::make_tuple(typename PMeta::object_tag{},&Type::parent ,"parent" )
         );
     };
 };
@@ -2591,7 +2467,6 @@ struct message_destroy
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2607,11 +2482,10 @@ struct message_set_position
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_position";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x,"x"),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y,"y")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x,"x"),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y,"y")
         );
     };
 };
@@ -2624,10 +2498,9 @@ struct message_place_above
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "place_above";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::sibling,"sibling")
+            std::make_tuple(typename PMeta::object_tag{},&Type::sibling,"sibling")
         );
     };
 };
@@ -2640,10 +2513,9 @@ struct message_place_below
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "place_below";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::sibling,"sibling")
+            std::make_tuple(typename PMeta::object_tag{},&Type::sibling,"sibling")
         );
     };
 };
@@ -2655,7 +2527,6 @@ struct message_set_sync
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_sync";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2669,7 +2540,6 @@ struct message_set_desync
         using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_desync";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2703,7 +2573,6 @@ struct message_destroy
         using InterfaceTag = wl_fixes;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2718,10 +2587,9 @@ struct message_destroy_registry
         using InterfaceTag = wl_fixes;
         static constexpr char name[] = "destroy_registry";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::registry,"registry")
+            std::make_tuple(typename PMeta::object_tag{},&Type::registry,"registry")
         );
     };
 };
@@ -2735,11 +2603,10 @@ struct message_ack_global_remove
         using InterfaceTag = wl_fixes;
         static constexpr char name[] = "ack_global_remove";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::registry,"registry"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::name    ,"name"    )
+            std::make_tuple(typename PMeta::object_tag{},&Type::registry,"registry"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::name    ,"name"    )
         );
     };
 };
@@ -2770,7 +2637,6 @@ struct message_destroy
         using InterfaceTag = zxdg_decoration_manager_v1;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2786,11 +2652,10 @@ struct message_get_toplevel_decoration
         using InterfaceTag = zxdg_decoration_manager_v1;
         static constexpr char name[] = "get_toplevel_decoration";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id      ,"id"      ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::toplevel,"toplevel")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id      ,"id"      ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::toplevel,"toplevel")
         );
     };
 };
@@ -2818,7 +2683,6 @@ struct message_destroy
         using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2833,10 +2697,9 @@ struct message_set_mode
         using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "set_mode";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::mode,"mode")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::mode,"mode")
         );
     };
 };
@@ -2848,7 +2711,6 @@ struct message_unset_mode
         using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "unset_mode";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2863,10 +2725,9 @@ struct message_configure
         using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::mode,"mode")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::mode,"mode")
         );
     };
 };
@@ -2898,7 +2759,6 @@ struct message_destroy
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -2913,10 +2773,9 @@ struct message_create_positioner
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "create_positioner";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -2930,11 +2789,10 @@ struct message_get_xdg_surface
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "get_xdg_surface";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id     ,"id"     ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::surface,"surface")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id     ,"id"     ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::surface,"surface")
         );
     };
 };
@@ -2947,10 +2805,9 @@ struct message_pong
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "pong";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial")
         );
     };
 };
@@ -2963,10 +2820,9 @@ struct message_ping
         using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "ping";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial")
         );
     };
 };
@@ -2997,7 +2853,6 @@ struct message_destroy
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3013,11 +2868,10 @@ struct message_set_size
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_size";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -3033,13 +2887,12 @@ struct message_set_anchor_rect
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_anchor_rect";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -3052,10 +2905,9 @@ struct message_set_anchor
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_anchor";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::anchor,"anchor")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::anchor,"anchor")
         );
     };
 };
@@ -3068,10 +2920,9 @@ struct message_set_gravity
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_gravity";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::gravity,"gravity")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::gravity,"gravity")
         );
     };
 };
@@ -3084,10 +2935,9 @@ struct message_set_constraint_adjustment
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_constraint_adjustment";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::constraint_adjustment,"constraint_adjustment")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::constraint_adjustment,"constraint_adjustment")
         );
     };
 };
@@ -3101,11 +2951,10 @@ struct message_set_offset
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_offset";
         static constexpr const unsigned short opcode = 6;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x,"x"),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y,"y")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x,"x"),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y,"y")
         );
     };
 };
@@ -3117,7 +2966,6 @@ struct message_set_reactive
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_reactive";
         static constexpr const unsigned short opcode = 7;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3133,11 +2981,10 @@ struct message_set_parent_size
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_parent_size";
         static constexpr const unsigned short opcode = 8;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::parent_width ,"parent_width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::parent_height,"parent_height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::parent_width ,"parent_width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::parent_height,"parent_height")
         );
     };
 };
@@ -3150,10 +2997,9 @@ struct message_set_parent_configure
         using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_parent_configure";
         static constexpr const unsigned short opcode = 9;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial")
         );
     };
 };
@@ -3189,7 +3035,6 @@ struct message_destroy
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3204,10 +3049,9 @@ struct message_get_toplevel
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "get_toplevel";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id,"id")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id,"id")
         );
     };
 };
@@ -3222,12 +3066,11 @@ struct message_get_popup
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "get_popup";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_new_id{},&Type::id        ,"id"        ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::parent    ,"parent"    ),
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::positioner,"positioner")
+            std::make_tuple(typename PMeta::new_id_tag{},&Type::id        ,"id"        ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::parent    ,"parent"    ),
+            std::make_tuple(typename PMeta::object_tag{},&Type::positioner,"positioner")
         );
     };
 };
@@ -3243,13 +3086,12 @@ struct message_set_window_geometry
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "set_window_geometry";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -3262,10 +3104,9 @@ struct message_ack_configure
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "ack_configure";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial")
         );
     };
 };
@@ -3278,10 +3119,9 @@ struct message_configure
         using InterfaceTag = xdg_surface;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::serial,"serial")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::serial,"serial")
         );
     };
 };
@@ -3313,7 +3153,6 @@ struct message_destroy
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3328,10 +3167,9 @@ struct message_set_parent
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_parent";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::parent,"parent")
+            std::make_tuple(typename PMeta::object_tag{},&Type::parent,"parent")
         );
     };
 };
@@ -3344,10 +3182,9 @@ struct message_set_title
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_title";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::title,"title")
+            std::make_tuple(typename PMeta::string_tag{},&Type::title,"title")
         );
     };
 };
@@ -3360,10 +3197,9 @@ struct message_set_app_id
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_app_id";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_string{},&Type::app_id,"app_id")
+            std::make_tuple(typename PMeta::string_tag{},&Type::app_id,"app_id")
         );
     };
 };
@@ -3379,13 +3215,12 @@ struct message_show_window_menu
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "show_window_menu";
         static constexpr const unsigned short opcode = 4;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::seat  ,"seat"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial"),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{}   ,&Type::y     ,"y"     )
+            std::make_tuple(typename PMeta::object_tag{},&Type::seat  ,"seat"  ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial"),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{}   ,&Type::y     ,"y"     )
         );
     };
 };
@@ -3399,11 +3234,10 @@ struct message_move
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "move";
         static constexpr const unsigned short opcode = 5;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::seat  ,"seat"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial")
+            std::make_tuple(typename PMeta::object_tag{},&Type::seat  ,"seat"  ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial")
         );
     };
 };
@@ -3418,12 +3252,11 @@ struct message_resize
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "resize";
         static constexpr const unsigned short opcode = 6;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::seat  ,"seat"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::edges ,"edges" )
+            std::make_tuple(typename PMeta::object_tag{},&Type::seat  ,"seat"  ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::edges ,"edges" )
         );
     };
 };
@@ -3437,11 +3270,10 @@ struct message_set_max_size
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_max_size";
         static constexpr const unsigned short opcode = 7;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -3455,11 +3287,10 @@ struct message_set_min_size
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_min_size";
         static constexpr const unsigned short opcode = 8;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -3471,7 +3302,6 @@ struct message_set_maximized
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_maximized";
         static constexpr const unsigned short opcode = 9;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3485,7 +3315,6 @@ struct message_unset_maximized
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "unset_maximized";
         static constexpr const unsigned short opcode = 10;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3500,10 +3329,9 @@ struct message_set_fullscreen
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_fullscreen";
         static constexpr const unsigned short opcode = 11;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::output,"output")
+            std::make_tuple(typename PMeta::object_tag{},&Type::output,"output")
         );
     };
 };
@@ -3515,7 +3343,6 @@ struct message_unset_fullscreen
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "unset_fullscreen";
         static constexpr const unsigned short opcode = 12;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3529,7 +3356,6 @@ struct message_set_minimized
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_minimized";
         static constexpr const unsigned short opcode = 13;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3546,12 +3372,11 @@ struct message_configure
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{}  ,&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{}  ,&Type::height,"height"),
-            std::make_tuple(typename TypeTagsT::wl_array{},&Type::states,"states")
+            std::make_tuple(typename PMeta::int_tag{}  ,&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{}  ,&Type::height,"height"),
+            std::make_tuple(typename PMeta::array_tag{},&Type::states,"states")
         );
     };
 };
@@ -3563,7 +3388,6 @@ struct message_close
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "close";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3579,11 +3403,10 @@ struct message_configure_bounds
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "configure_bounds";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -3596,10 +3419,9 @@ struct message_wm_capabilities
         using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "wm_capabilities";
         static constexpr const unsigned short opcode = 3;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_array{},&Type::capabilities,"capabilities")
+            std::make_tuple(typename PMeta::array_tag{},&Type::capabilities,"capabilities")
         );
     };
 };
@@ -3643,7 +3465,6 @@ struct message_destroy
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3659,11 +3480,10 @@ struct message_grab
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "grab";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::seat  ,"seat"  ),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::serial,"serial")
+            std::make_tuple(typename PMeta::object_tag{},&Type::seat  ,"seat"  ),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::serial,"serial")
         );
     };
 };
@@ -3677,11 +3497,10 @@ struct message_reposition
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "reposition";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_object{},&Type::positioner,"positioner"),
-            std::make_tuple(typename TypeTagsT::wl_uint{}  ,&Type::token     ,"token"     )
+            std::make_tuple(typename PMeta::object_tag{},&Type::positioner,"positioner"),
+            std::make_tuple(typename PMeta::uint_tag{}  ,&Type::token     ,"token"     )
         );
     };
 };
@@ -3697,13 +3516,12 @@ struct message_configure
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 0;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::x     ,"x"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::y     ,"y"     ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::width ,"width" ),
-            std::make_tuple(typename TypeTagsT::wl_int{},&Type::height,"height")
+            std::make_tuple(typename PMeta::int_tag{},&Type::x     ,"x"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::y     ,"y"     ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::width ,"width" ),
+            std::make_tuple(typename PMeta::int_tag{},&Type::height,"height")
         );
     };
 };
@@ -3715,7 +3533,6 @@ struct message_popup_done
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "popup_done";
         static constexpr const unsigned short opcode = 1;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
         );
@@ -3730,10 +3547,9 @@ struct message_repositioned
         using InterfaceTag = xdg_popup;
         static constexpr char name[] = "repositioned";
         static constexpr const unsigned short opcode = 2;
-        template<typename TypeTagsT>
         static constexpr auto args = std::make_tuple
         (
-            std::make_tuple(typename TypeTagsT::wl_uint{},&Type::token,"token")
+            std::make_tuple(typename PMeta::uint_tag{},&Type::token,"token")
         );
     };
 };

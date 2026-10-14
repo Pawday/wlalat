@@ -147,7 +147,7 @@ struct MessageSerializer
     template <typename MessageT, typename UpstreamWriterT>
     static void write_args(const MessageT &M, UpstreamWriterT &W)
     {
-        auto &metas = MessageT::Meta::template args<Unix::WlTags>;
+        auto &metas = MessageT::Meta::args;
         auto F = [&](auto... meta) {
             (..., (W(M.*(std::get<1>(meta)), std::get<0>(meta))));
         };

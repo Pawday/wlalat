@@ -79,6 +79,16 @@ struct PMeta
     using fixed_t = std::uint_least32_t;
     using array_t = std::span<const std::byte>;
     using fd_t = void *;
+
+    using Tags = wlalat::Unix::WlTags;
+
+    using int_tag = Tags::wl_int;
+    using uint_tag = Tags::wl_uint;
+    using new_id_tag = Tags::wl_new_id;
+    using object_tag = Tags::wl_object;
+    using string_tag = Tags::wl_string;
+    using array_tag = Tags::wl_array;
+    using fd_tag = Tags::wl_fd;
 };
 
 using GroupT = protocols<PMeta>;
@@ -113,7 +123,7 @@ struct TypeFormatVis
     std::string format()
     {
         _output.clear();
-        MyFormatDispatcher{*this, MsgT::Meta::template args<wlalat::Unix::WlTags>}.format();
+        MyFormatDispatcher{*this, MsgT::Meta::args}.format();
         return _output;
     }
 
