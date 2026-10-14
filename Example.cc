@@ -69,6 +69,15 @@ std::string hexdump(std::span<const std::byte> data)
     return O;
 }
 
+struct PMeta
+{
+};
+
+using GroupT = protocols<PMeta>;
+using wayland = GroupT::wayland;
+using xdg_shell = GroupT::xdg_shell;
+using xdg_decoration_unstable_v1 = GroupT::xdg_decoration_unstable_v1;
+
 template <typename TupleT>
 struct Tuple2Variant;
 template <typename... Alternatives>

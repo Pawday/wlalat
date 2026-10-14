@@ -93,10 +93,13 @@ struct Generator
         O += "#include <span>";
         O += "";
 
-        bool f = true;
+        O += "template<typename PMeta>";
+        O += "struct protocols";
+        O += "{";
         for (auto &proto : _protocols) {
             O += on_proto(proto);
         }
+        O += "}; // struct protocols";
 
         for (auto &line : O) {
             auto white = [](auto c) {
@@ -320,17 +323,13 @@ struct Generator
     }
 
     LineList gen_request(
-        std::string_view interface_name,
-        const Request &req,
-        size_t opcode)
+        std::string_view interface_name, const Request &req, size_t opcode)
     {
         return gen_message(interface_name, req.name, req.args, opcode, false);
     }
 
     LineList gen_event(
-        std::string_view interface_name,
-        const Event &ev,
-        size_t opcode)
+        std::string_view interface_name, const Event &ev, size_t opcode)
     {
         return gen_message(interface_name, ev.name, ev.args, opcode, true);
     }

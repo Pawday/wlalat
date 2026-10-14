@@ -7,6 +7,9 @@
 #include <tuple>
 #include <span>
 
+template<typename PMeta>
+struct protocols
+{
 struct wayland
 {
 struct wl_display
@@ -3941,3 +3944,4 @@ struct Meta
 };
 }; // struct xdg_popup
 }; // struct xdg_shell
+}; // struct protocols
