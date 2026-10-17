@@ -163,29 +163,32 @@ struct Generator
 
         LineList B0;
         B0 += std::format("static constexpr char name[] = \"{}\";", iface_name);
-        B0 += std::format("using Events = decltype(typename PMeta::TupleMaker{{}}");
-        B0 += "(";
+
+        B0 += "template <template <typename... T> class TupleLike>";
+        B0 += "struct Events : TupleLike";
+        B0 += "<";
         LineList B1;
         for (auto &ev : events) {
             auto &msg_type_name = ev.name.value();
-            B1 += std::format("message_{}{{}}", msg_type_name);
+            B1 += std::format("message_{}", msg_type_name);
         }
         B1.comma_sep();
         B1.indent();
         B0 += std::move(B1);
-        B0 += "));";
+        B0 += ">{};";
 
-        B0 += std::format("using Requests = decltype(typename PMeta::TupleMaker{{}}");
-        B0 += "(";
+        B0 += "template <template <typename... T> class TupleLike>";
+        B0 += "struct Requests : TupleLike";
+        B0 += "<";
         B1.clear();
         for (auto &req : requests) {
             auto &msg_type_name = req.name.value();
-            B1 += std::format("message_{}{{}}", msg_type_name);
+            B1 += std::format("message_{}", msg_type_name);
         }
         B1.comma_sep();
         B1.indent();
         B0 += std::move(B1);
-        B0 += "));";
+        B0 += ">{};";
         B0.indent();
         O += std::move(B0);
         O += "};";

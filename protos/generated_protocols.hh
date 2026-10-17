@@ -176,16 +176,18 @@ struct message_delete_id
 struct Meta
 {
     static constexpr char name[] = "wl_display";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_error{},
-        message_delete_id{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_sync{},
-        message_get_registry{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_error,
+        message_delete_id
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_sync,
+        message_get_registry
+    >{};
 };
 }; // struct wl_display
 
@@ -334,15 +336,17 @@ struct message_global_remove
 struct Meta
 {
     static constexpr char name[] = "wl_registry";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_global{},
-        message_global_remove{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_bind{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_global,
+        message_global_remove
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_bind
+    >{};
 };
 }; // struct wl_registry
 
@@ -391,13 +395,15 @@ struct message_done
 struct Meta
 {
     static constexpr char name[] = "wl_callback";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_done{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_done
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+    >{};
 };
 }; // struct wl_callback
 
@@ -522,15 +528,17 @@ struct message_release
 struct Meta
 {
     static constexpr char name[] = "wl_compositor";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_create_surface{},
-        message_create_region{},
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_create_surface,
+        message_create_region,
+        message_release
+    >{};
 };
 }; // struct wl_compositor
 
@@ -675,15 +683,17 @@ struct message_resize
 struct Meta
 {
     static constexpr char name[] = "wl_shm_pool";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_create_buffer{},
-        message_destroy{},
-        message_resize{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_create_buffer,
+        message_destroy,
+        message_resize
+    >{};
 };
 }; // struct wl_shm_pool
 
@@ -816,15 +826,17 @@ struct message_format
 struct Meta
 {
     static constexpr char name[] = "wl_shm";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_format{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_create_pool{},
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_format
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_create_pool,
+        message_release
+    >{};
 };
 }; // struct wl_shm
 
@@ -905,14 +917,16 @@ struct message_release
 struct Meta
 {
     static constexpr char name[] = "wl_buffer";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_release{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_release
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy
+    >{};
 };
 }; // struct wl_buffer
 
@@ -1245,20 +1259,22 @@ struct message_action
 struct Meta
 {
     static constexpr char name[] = "wl_data_offer";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_offer{},
-        message_source_actions{},
-        message_action{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_accept{},
-        message_receive{},
-        message_destroy{},
-        message_finish{},
-        message_set_actions{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_offer,
+        message_source_actions,
+        message_action
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_accept,
+        message_receive,
+        message_destroy,
+        message_finish,
+        message_set_actions
+    >{};
 };
 }; // struct wl_data_offer
 
@@ -1615,21 +1631,23 @@ struct message_action
 struct Meta
 {
     static constexpr char name[] = "wl_data_source";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_target{},
-        message_send{},
-        message_cancelled{},
-        message_dnd_drop_performed{},
-        message_dnd_finished{},
-        message_action{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_offer{},
-        message_destroy{},
-        message_set_actions{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_target,
+        message_send,
+        message_cancelled,
+        message_dnd_drop_performed,
+        message_dnd_finished,
+        message_action
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_offer,
+        message_destroy,
+        message_set_actions
+    >{};
 };
 }; // struct wl_data_source
 
@@ -2026,21 +2044,23 @@ struct message_selection
 struct Meta
 {
     static constexpr char name[] = "wl_data_device";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_data_offer{},
-        message_enter{},
-        message_leave{},
-        message_motion{},
-        message_drop{},
-        message_selection{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_start_drag{},
-        message_set_selection{},
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_data_offer,
+        message_enter,
+        message_leave,
+        message_motion,
+        message_drop,
+        message_selection
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_start_drag,
+        message_set_selection,
+        message_release
+    >{};
 };
 }; // struct wl_data_device
 
@@ -2169,15 +2189,17 @@ struct message_release
 struct Meta
 {
     static constexpr char name[] = "wl_data_device_manager";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_create_data_source{},
-        message_get_data_device{},
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_create_data_source,
+        message_get_data_device,
+        message_release
+    >{};
 };
 }; // struct wl_data_device_manager
 
@@ -2230,13 +2252,15 @@ struct message_get_shell_surface
 struct Meta
 {
     static constexpr char name[] = "wl_shell";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_get_shell_surface{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_get_shell_surface
+    >{};
 };
 }; // struct wl_shell
 
@@ -2817,25 +2841,27 @@ struct message_popup_done
 struct Meta
 {
     static constexpr char name[] = "wl_shell_surface";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_ping{},
-        message_configure{},
-        message_popup_done{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_pong{},
-        message_move{},
-        message_resize{},
-        message_set_toplevel{},
-        message_set_transient{},
-        message_set_fullscreen{},
-        message_set_popup{},
-        message_set_maximized{},
-        message_set_title{},
-        message_set_class{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_ping,
+        message_configure,
+        message_popup_done
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_pong,
+        message_move,
+        message_resize,
+        message_set_toplevel,
+        message_set_transient,
+        message_set_fullscreen,
+        message_set_popup,
+        message_set_maximized,
+        message_set_title,
+        message_set_class
+    >{};
 };
 }; // struct wl_shell_surface
 
@@ -3512,28 +3538,30 @@ struct message_preferred_buffer_transform
 struct Meta
 {
     static constexpr char name[] = "wl_surface";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_enter{},
-        message_leave{},
-        message_preferred_buffer_scale{},
-        message_preferred_buffer_transform{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_attach{},
-        message_damage{},
-        message_frame{},
-        message_set_opaque_region{},
-        message_set_input_region{},
-        message_commit{},
-        message_set_buffer_transform{},
-        message_set_buffer_scale{},
-        message_damage_buffer{},
-        message_offset{},
-        message_get_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_enter,
+        message_leave,
+        message_preferred_buffer_scale,
+        message_preferred_buffer_transform
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_attach,
+        message_damage,
+        message_frame,
+        message_set_opaque_region,
+        message_set_input_region,
+        message_commit,
+        message_set_buffer_transform,
+        message_set_buffer_scale,
+        message_damage_buffer,
+        message_offset,
+        message_get_release
+    >{};
 };
 }; // struct wl_surface
 
@@ -3778,18 +3806,20 @@ struct message_name
 struct Meta
 {
     static constexpr char name[] = "wl_seat";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_capabilities{},
-        message_name{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_get_pointer{},
-        message_get_keyboard{},
-        message_get_touch{},
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_capabilities,
+        message_name
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_get_pointer,
+        message_get_keyboard,
+        message_get_touch,
+        message_release
+    >{};
 };
 }; // struct wl_seat
 
@@ -4382,25 +4412,27 @@ struct message_axis_relative_direction
 struct Meta
 {
     static constexpr char name[] = "wl_pointer";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_enter{},
-        message_leave{},
-        message_motion{},
-        message_button{},
-        message_axis{},
-        message_frame{},
-        message_axis_source{},
-        message_axis_stop{},
-        message_axis_discrete{},
-        message_axis_value120{},
-        message_axis_relative_direction{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_set_cursor{},
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_enter,
+        message_leave,
+        message_motion,
+        message_button,
+        message_axis,
+        message_frame,
+        message_axis_source,
+        message_axis_stop,
+        message_axis_discrete,
+        message_axis_value120,
+        message_axis_relative_direction
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_set_cursor,
+        message_release
+    >{};
 };
 }; // struct wl_pointer
 
@@ -4737,19 +4769,21 @@ struct message_repeat_info
 struct Meta
 {
     static constexpr char name[] = "wl_keyboard";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_keymap{},
-        message_enter{},
-        message_leave{},
-        message_key{},
-        message_modifiers{},
-        message_repeat_info{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_keymap,
+        message_enter,
+        message_leave,
+        message_key,
+        message_modifiers,
+        message_repeat_info
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_release
+    >{};
 };
 }; // struct wl_keyboard
 
@@ -5118,20 +5152,22 @@ struct message_orientation
 struct Meta
 {
     static constexpr char name[] = "wl_touch";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_down{},
-        message_up{},
-        message_motion{},
-        message_frame{},
-        message_cancel{},
-        message_shape{},
-        message_orientation{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_down,
+        message_up,
+        message_motion,
+        message_frame,
+        message_cancel,
+        message_shape,
+        message_orientation
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_release
+    >{};
 };
 }; // struct wl_touch
 
@@ -5452,19 +5488,21 @@ struct message_description
 struct Meta
 {
     static constexpr char name[] = "wl_output";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_geometry{},
-        message_mode{},
-        message_done{},
-        message_scale{},
-        message_name{},
-        message_description{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_release{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_geometry,
+        message_mode,
+        message_done,
+        message_scale,
+        message_name,
+        message_description
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_release
+    >{};
 };
 }; // struct wl_output
 
@@ -5613,15 +5651,17 @@ struct message_subtract
 struct Meta
 {
     static constexpr char name[] = "wl_region";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_add{},
-        message_subtract{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_add,
+        message_subtract
+    >{};
 };
 }; // struct wl_region
 
@@ -5714,14 +5754,16 @@ struct message_get_subsurface
 struct Meta
 {
     static constexpr char name[] = "wl_subcompositor";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_get_subsurface{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_get_subsurface
+    >{};
 };
 }; // struct wl_subcompositor
 
@@ -5962,18 +6004,20 @@ struct message_set_desync
 struct Meta
 {
     static constexpr char name[] = "wl_subsurface";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_set_position{},
-        message_place_above{},
-        message_place_below{},
-        message_set_sync{},
-        message_set_desync{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_set_position,
+        message_place_above,
+        message_place_below,
+        message_set_sync,
+        message_set_desync
+    >{};
 };
 }; // struct wl_subsurface
 
@@ -6102,15 +6146,17 @@ struct message_ack_global_remove
 struct Meta
 {
     static constexpr char name[] = "wl_fixes";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_destroy_registry{},
-        message_ack_global_remove{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_destroy_registry,
+        message_ack_global_remove
+    >{};
 };
 }; // struct wl_fixes
 }; // struct wayland
@@ -6201,14 +6247,16 @@ struct message_get_toplevel_decoration
 struct Meta
 {
     static constexpr char name[] = "zxdg_decoration_manager_v1";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_get_toplevel_decoration{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_get_toplevel_decoration
+    >{};
 };
 }; // struct zxdg_decoration_manager_v1
 
@@ -6369,16 +6417,18 @@ struct message_configure
 struct Meta
 {
     static constexpr char name[] = "zxdg_toplevel_decoration_v1";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_configure{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_set_mode{},
-        message_unset_mode{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_configure
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_set_mode,
+        message_unset_mode
+    >{};
 };
 }; // struct zxdg_toplevel_decoration_v1
 }; // struct xdg_decoration_unstable_v1
@@ -6589,17 +6639,19 @@ struct message_ping
 struct Meta
 {
     static constexpr char name[] = "xdg_wm_base";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_ping{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_create_positioner{},
-        message_get_xdg_surface{},
-        message_pong{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_ping
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_create_positioner,
+        message_get_xdg_surface,
+        message_pong
+    >{};
 };
 }; // struct xdg_wm_base
 
@@ -7024,22 +7076,24 @@ struct message_set_parent_configure
 struct Meta
 {
     static constexpr char name[] = "xdg_positioner";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_set_size{},
-        message_set_anchor_rect{},
-        message_set_anchor{},
-        message_set_gravity{},
-        message_set_constraint_adjustment{},
-        message_set_offset{},
-        message_set_reactive{},
-        message_set_parent_size{},
-        message_set_parent_configure{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_set_size,
+        message_set_anchor_rect,
+        message_set_anchor,
+        message_set_gravity,
+        message_set_constraint_adjustment,
+        message_set_offset,
+        message_set_reactive,
+        message_set_parent_size,
+        message_set_parent_configure
+    >{};
 };
 }; // struct xdg_positioner
 
@@ -7304,18 +7358,20 @@ struct message_configure
 struct Meta
 {
     static constexpr char name[] = "xdg_surface";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_configure{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_get_toplevel{},
-        message_get_popup{},
-        message_set_window_geometry{},
-        message_ack_configure{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_configure
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_get_toplevel,
+        message_get_popup,
+        message_set_window_geometry,
+        message_ack_configure
+    >{};
 };
 }; // struct xdg_surface
 
@@ -8064,30 +8120,32 @@ struct message_wm_capabilities
 struct Meta
 {
     static constexpr char name[] = "xdg_toplevel";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_configure{},
-        message_close{},
-        message_configure_bounds{},
-        message_wm_capabilities{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_set_parent{},
-        message_set_title{},
-        message_set_app_id{},
-        message_show_window_menu{},
-        message_move{},
-        message_resize{},
-        message_set_max_size{},
-        message_set_min_size{},
-        message_set_maximized{},
-        message_unset_maximized{},
-        message_set_fullscreen{},
-        message_unset_fullscreen{},
-        message_set_minimized{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_configure,
+        message_close,
+        message_configure_bounds,
+        message_wm_capabilities
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_set_parent,
+        message_set_title,
+        message_set_app_id,
+        message_show_window_menu,
+        message_move,
+        message_resize,
+        message_set_max_size,
+        message_set_min_size,
+        message_set_maximized,
+        message_unset_maximized,
+        message_set_fullscreen,
+        message_unset_fullscreen,
+        message_set_minimized
+    >{};
 };
 }; // struct xdg_toplevel
 
@@ -8348,18 +8406,20 @@ struct message_repositioned
 struct Meta
 {
     static constexpr char name[] = "xdg_popup";
-    using Events = decltype(typename PMeta::TupleMaker{}
-    (
-        message_configure{},
-        message_popup_done{},
-        message_repositioned{}
-    ));
-    using Requests = decltype(typename PMeta::TupleMaker{}
-    (
-        message_destroy{},
-        message_grab{},
-        message_reposition{}
-    ));
+    template <template <typename... T> class TupleLike>
+    struct Events : TupleLike
+    <
+        message_configure,
+        message_popup_done,
+        message_repositioned
+    >{};
+    template <template <typename... T> class TupleLike>
+    struct Requests : TupleLike
+    <
+        message_destroy,
+        message_grab,
+        message_reposition
+    >{};
 };
 }; // struct xdg_popup
 }; // struct xdg_shell

@@ -285,8 +285,7 @@ struct TypeFormatVis
 
     void my_format(WlTags::wl_array, const std::span<const std::byte> &v)
     {
-        std::format_to(O, "(array)");
-        // std::format_to(O, "(array){}", hexdump(v));
+        std::format_to(O, "(array){}", hexdump(v));
     }
 
     void my_format(WlTags::wl_uint, const uint_least32_t &v)
@@ -392,7 +391,12 @@ struct SocketEventDispatcher
     void set_listener(
         uint_least32_t object_id, LType &L, std::type_identity<InterfaceT>)
     {
-        using VariantT = Tuple2VariantT<typename InterfaceT::Meta::Events>;
+        using Events = typename InterfaceT::Meta::template Events<std::tuple>;
+        auto deduce_tuple = []<typename... Args>(const std::tuple<Args...> &t) {
+            return t;
+        };
+        using VariantT = Tuple2VariantT<decltype(deduce_tuple(Events{}))>;
+
         std::type_identity<VariantT> event_id{};
         _listeners.emplace(
             std::piecewise_construct,
