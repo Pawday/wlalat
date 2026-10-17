@@ -124,6 +124,105 @@ struct Tuple2Variant<std::tuple<>>
 template <typename TupleT>
 using Tuple2VariantT = typename Tuple2Variant<TupleT>::type;
 
+template <typename HandlerT, typename MsgT>
+struct PointerTagNameIterator
+{
+    HandlerT &H;
+
+    void operator()()
+    {
+        PointersVisitor V{*this};
+        typename MsgT::template VisitPointers<decltype(V)>{V}();
+    }
+
+    template <
+        size_t End,
+        typename PointerTupleT,
+        typename TagsTupleT,
+        typename NamesTupleT>
+    void iterate(
+        std::integral_constant<size_t, End>,
+        std::integral_constant<size_t, End>,
+        const PointerTupleT &,
+        const TagsTupleT &,
+        const NamesTupleT &)
+    {
+    }
+
+    template <
+        size_t I,
+        size_t End,
+        typename PointerTupleT,
+        typename TagsTupleT,
+        typename NamesTupleT>
+    void iterate(
+        std::integral_constant<size_t, I>,
+        std::integral_constant<size_t, End> end,
+        const PointerTupleT &p,
+        const TagsTupleT &t,
+        const NamesTupleT &n)
+    {
+        using Next = std::integral_constant<size_t, I + 1>;
+        H(std::get<I>(p), std::get<I>(t), std::get<I>(n));
+        iterate(Next{}, end, p, t, n);
+    }
+
+    template <typename... PointerTs, typename... TagTs, typename... NameTs>
+    void call_handler(
+        const std::tuple<PointerTs...> &p,
+        const std::tuple<TagTs...> &t,
+        const std::tuple<NameTs...> &n)
+    {
+        using Begin = std::integral_constant<size_t, 0>;
+        using End = std::tuple_size<std::tuple<PointerTs...>>;
+        iterate(Begin{}, End{}, p, t, n);
+    }
+
+  private:
+    template <typename PointersTupleT>
+    struct NamesVisitor
+    {
+        NamesVisitor(
+            const PointersTupleT &pointers,
+            PointerTagNameIterator<HandlerT, MsgT> &iter)
+            : _pointers{pointers}, _iter{iter}
+        {
+        }
+
+        template <typename... NameTs>
+        void operator()(NameTs... names)
+        {
+            using TagsTupleT = typename MsgT::template Tags<std::tuple>;
+            TagsTupleT tags{};
+            auto tuple = std::make_tuple(names...);
+            _iter.call_handler(_pointers, tags, tuple);
+        }
+
+      private:
+        const PointersTupleT &_pointers;
+        PointerTagNameIterator &_iter;
+    };
+
+    struct PointersVisitor
+    {
+        explicit PointersVisitor(PointerTagNameIterator<HandlerT, MsgT> &iter)
+            : _iter{iter}
+        {
+        }
+
+        template <typename... PointerTs>
+        void operator()(PointerTs... pointers)
+        {
+            auto tuple = std::make_tuple(pointers...);
+            NamesVisitor V{tuple, _iter};
+            typename MsgT::template VisitNames<decltype(V)>{V}();
+        }
+
+      private:
+        PointerTagNameIterator &_iter;
+    };
+};
+
 template <typename MsgT>
 struct TypeFormatVis
 {
@@ -134,54 +233,27 @@ struct TypeFormatVis
     std::string format()
     {
         _output.clear();
-        MyFormatDispatcher{*this, MsgT::Meta::args}.format();
+        MyFormatDispatcher D{*this};
+        PointerTagNameIterator<MyFormatDispatcher, MsgT>{D}();
         return _output;
     }
 
   private:
     using WlTags = wlalat::Unix::WlTags;
 
-    template <typename... Args>
     struct MyFormatDispatcher
     {
-        using TupleType = std::tuple<Args...>;
-        using IndexesT =
-            decltype(std::make_index_sequence<std::tuple_size_v<TupleType>>());
-
-        MyFormatDispatcher(TypeFormatVis<MsgT> &V, const std::tuple<Args...> &args) : _v{V}, _args{args}
+        MyFormatDispatcher(TypeFormatVis<MsgT> &V) : _v{V}
         {
         }
 
         TypeFormatVis &_v;
-        const TupleType &_args;
 
-        void format()
+        size_t rt_idx = 0;
+        template <typename PointerT, typename TagT, typename NameT>
+        void operator()(PointerT ptr, TagT tag, NameT name)
         {
-            return format(std::make_index_sequence<std::tuple_size_v<TupleType>>());
-        }
-
-        template <size_t... FIDXS>
-        void format(std::index_sequence<FIDXS...>)
-        {
-            for (size_t idx = 0; idx != sizeof...(FIDXS); ++idx) {
-                (rt(std::integral_constant<size_t, FIDXS>{}, idx), ...);
-            }
-        }
-
-      private:
-        template <size_t IDX>
-        void rt(std::integral_constant<size_t, IDX>, size_t rt_idx)
-        {
-            if (IDX != rt_idx) {
-                return;
-            }
-
-            auto &arg_meta = std::get<IDX>(_args);
-
-            auto &tag = std::get<0>(arg_meta);
-            auto &ptr = std::get<1>(arg_meta);
-            auto &name = std::get<2>(arg_meta);
-            _v.my_format_taged(rt_idx, tag, _v.M.*ptr, name);
+            _v.my_format_taged(rt_idx++, tag, _v.M.*ptr, name);
         }
     };
 
@@ -213,7 +285,8 @@ struct TypeFormatVis
 
     void my_format(WlTags::wl_array, const std::span<const std::byte> &v)
     {
-        std::format_to(O, "(array){}", hexdump(v));
+        std::format_to(O, "(array)");
+        // std::format_to(O, "(array){}", hexdump(v));
     }
 
     void my_format(WlTags::wl_uint, const uint_least32_t &v)
