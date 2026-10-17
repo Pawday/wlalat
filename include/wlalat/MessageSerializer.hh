@@ -6,6 +6,7 @@
 #include "Writer.hh"
 
 #include "Unix/TypeTags.hh"
+#include "wlalat/PointerTagIterator.hh"
 
 #include <cstddef>
 #include <cstdint>
@@ -145,13 +146,24 @@ struct MessageSerializer
     };
 
     template <typename MessageT, typename UpstreamWriterT>
+    struct WriteArgsHandler
+    {
+        const MessageT &M;
+        UpstreamWriterT &W;
+
+        template <typename PointerT, typename TagT>
+        void operator()(PointerT ptr, TagT tag)
+        {
+            W(M.*ptr, tag);
+        }
+    };
+
+    template <typename MessageT, typename UpstreamWriterT>
     static void write_args(const MessageT &M, UpstreamWriterT &W)
     {
-        auto &metas = MessageT::Meta::args;
-        auto F = [&](auto... meta) {
-            (..., (W(M.*(std::get<1>(meta)), std::get<0>(meta))));
-        };
-        std::apply(F, metas);
+        using RawMessageT = std::remove_cvref_t<MessageT>;
+        WriteArgsHandler handler{M, W};
+        PointerTagIterator<RawMessageT, decltype(handler)>{handler}();
     }
 
     std::pmr::vector<std::byte> data;

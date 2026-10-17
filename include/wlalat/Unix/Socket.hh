@@ -7,6 +7,7 @@
 #include <wlalat/MessageHeader.hh>
 #include <wlalat/MessageSerializer.hh>
 #include <wlalat/Parser.hh>
+#include <wlalat/PointerTagIterator.hh>
 #include <wlalat/Types.hh>
 #include <wlalat/Unix/TypeTags.hh>
 
@@ -28,10 +29,8 @@
 #include <optional>
 #include <span>
 #include <string>
-#include <tuple>
 #include <type_traits>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace wlalat
@@ -232,13 +231,9 @@ struct Socket
         EventMessageT M{};
         bool good = true;
 
-        auto &metas = EventMessageT::Meta::args;
-        auto F = [&](auto... meta) {
-            ((good = good && P(M.*(std::get<1>(meta)), std::get<0>(meta))),
-             ...);
-        };
-        std::apply(F, metas);
-        if (!good) {
+        ParserCallHandler p{M, P};
+        PointerTagIterator<decltype(M), decltype(p)>{p}();
+        if (!p.good) {
             return std::unexpected{"Parse failure"};
         }
 
@@ -246,6 +241,23 @@ struct Socket
     }
 
   private:
+    template <typename EventMessageT>
+    struct ParserCallHandler
+    {
+        EventMessageT &M;
+        wlalat::Parser &P;
+        bool good = true;
+
+        template <typename PointerT, typename TagT>
+        void operator()(PointerT &pointer, TagT tag)
+        {
+            if (!good) {
+                return;
+            }
+            good = good && P(M.*pointer, tag);
+        }
+    };
+
     ClosableFD _fd;
     MessageSerializer _send_serializer;
     std::pmr::vector<std::byte> _recv_buffer;
