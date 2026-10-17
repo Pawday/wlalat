@@ -8,9 +8,8 @@
 
 #include <algorithm>
 #include <format>
-#include <optional>
 #include <ranges>
-#include <set>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -250,7 +249,7 @@ struct Generator
             }
         }
 
-        B0 += "static constexpr auto args = typename PMeta::TupleMaker{}";
+        B0 += "[[deprecated]] static constexpr auto args = typename PMeta::TupleMaker{}";
         B0 += "(";
         B1.clear();
         for (auto &meta_entry : meta_entries) {
@@ -268,6 +267,74 @@ struct Generator
         B0.indent();
         O += std::move(B0);
         O += "};";
+        return O;
+    }
+
+    LineList gen_VisitPointers(std::span<std::string_view> names)
+    {
+        LineList pointers;
+        for (std::string_view name : names) {
+            pointers += std::format("&Type::{}", name);
+        }
+        return gen_VisitStruct("VisitPointers", std::move(pointers));
+    }
+
+    LineList gen_VisitNames(std::span<std::string_view> names)
+    {
+        LineList pointers;
+        for (std::string_view name : names) {
+            pointers += std::format("\"{}\"", name);
+        }
+        return gen_VisitStruct("VisitNames", std::move(pointers));
+    }
+
+    LineList gen_VisitStruct(std::string_view struct_name, LineList &&args)
+    {
+        LineList O;
+        O += "template <typename Visitor>";
+        O += std::format("struct {}", struct_name);
+        O += "{";
+        auto B0 = gen_VisitStructBody(std::move(args));
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
+    }
+
+    LineList gen_VisitStructBody(LineList &&args)
+    {
+        LineList O;
+        O += "Visitor &V;";
+        O += "void operator()()";
+        O += "{";
+        LineList B0;
+        B0 += "V";
+        B0 += "(";
+        LineList B1 = std::move(args);
+        B1.comma_sep();
+        B1.indent();
+        B0 += std::move(B1);
+        B0 += ");";
+        B0.indent();
+        O += std::move(B0);
+        O += "}";
+        return O;
+    }
+
+    LineList gen_Tags(std::span<std::string_view> types)
+    {
+        LineList O;
+        O += "template <template <typename... T> class TupleLike>";
+        O += "struct Tags : TupleLike";
+        O += "<";
+        LineList tag_strings;
+        for (auto type : types) {
+            tag_strings += std::format("typename PMeta::{}_tag", type);
+        }
+        tag_strings.comma_sep();
+        tag_strings.indent();
+        O += std::move(tag_strings);
+        O += ">{};";
         return O;
     }
 
@@ -300,12 +367,23 @@ struct Generator
             B += define_arg(arg);
         }
 
-        B.indent();
-        O += std::move(B);
-
         auto type_using = std::format("message_{}", name);
-        B = gen_args_meta(
-            name, args, opcode, type_using, interface_name);
+        B += gen_args_meta(name, args, opcode, type_using, interface_name);
+
+        std::vector<std::string_view> arg_names;
+        std::vector<std::string_view> arg_types;
+        for (auto &arg : args) {
+            std::string_view arg_name{arg.name.value()};
+            arg_names.push_back(arg_name);
+            auto &arg_type = arg.type.value();
+            arg_types.push_back(arg_type);
+        }
+
+        B += std::format("using Type = {};", type_using);
+        B += gen_VisitPointers(arg_names);
+        B += gen_VisitNames(arg_names);
+        B += gen_Tags(arg_types);
+
         B.indent();
         O += std::move(B);
         O += "};";
