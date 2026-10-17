@@ -3,12 +3,10 @@
 #include "LineList.hh"
 #include "Types.hh"
 
-#include <array>
 #include <cstddef>
 
 #include <algorithm>
 #include <format>
-#include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
@@ -196,9 +194,7 @@ struct Generator
 
     LineList gen_args_meta(
         std::string_view msg_name,
-        const std::vector<Argument> &args,
         size_t opcode,
-        std::string_view type_using,
         std::string_view interface_type_using)
     {
         LineList O;
@@ -206,63 +202,9 @@ struct Generator
         O += "{";
         LineList B0;
 
-        B0 += std::format("using Type = {};", type_using);
         B0 += std::format("using InterfaceTag = {};", interface_type_using);
         B0 += std::format("static constexpr char name[] = \"{}\";", msg_name);
         B0 += std::format("static constexpr const unsigned short opcode = {};", opcode);
-
-        LineList B1;
-
-        std::vector<std::string_view> arg_names;
-        std::vector<std::string_view> arg_types;
-        for (auto &arg : args) {
-            std::string_view arg_name{arg.name.value()};
-            arg_names.push_back(arg_name);
-            auto &arg_type = arg.type.value();
-            arg_types.push_back(arg_type);
-        }
-
-        std::vector<std::array<std::string, 3>> meta_entries;
-        {
-            for (auto name_type_pair : std::views::zip(arg_names, arg_types)) {
-                auto name = std::get<0>(name_type_pair);
-                auto type = std::get<1>(name_type_pair);
-                std::array<std::string, 3> entry;
-                entry[0] = std::format("typename PMeta::{}_tag{{}}", type);
-                entry[1] = std::format("&Type::{}", name);
-                entry[2] = std::format("\"{}\"", name);
-                meta_entries.push_back(std::move(entry));
-            }
-
-            std::array<size_t, 3> meta_entry_max_lens{};
-            for (auto &meta_entry : meta_entries) {
-                auto &max = meta_entry_max_lens;
-                max[0] = std::max(max[0], meta_entry[0].size());
-                max[1] = std::max(max[1], meta_entry[1].size());
-                max[2] = std::max(max[2], meta_entry[2].size());
-            }
-
-            for (auto &meta_entry : meta_entries) {
-                meta_entry[0].resize(meta_entry_max_lens[0], ' ');
-                meta_entry[1].resize(meta_entry_max_lens[1], ' ');
-                meta_entry[2].resize(meta_entry_max_lens[2], ' ');
-            }
-        }
-
-        B0 += "[[deprecated]] static constexpr auto args = typename PMeta::TupleMaker{}";
-        B0 += "(";
-        B1.clear();
-        for (auto &meta_entry : meta_entries) {
-            B1 += std::format(
-                "typename PMeta::TupleMaker{{}}({},{},{})",
-                meta_entry[0],
-                meta_entry[1],
-                meta_entry[2]);
-        }
-        B1.comma_sep();
-        B1.indent();
-        B0 += std::move(B1);
-        B0 += ");";
 
         B0.indent();
         O += std::move(B0);
@@ -368,7 +310,7 @@ struct Generator
         }
 
         auto type_using = std::format("message_{}", name);
-        B += gen_args_meta(name, args, opcode, type_using, interface_name);
+        B += gen_args_meta(name, opcode, interface_name);
 
         std::vector<std::string_view> arg_names;
         std::vector<std::string_view> arg_types;
