@@ -158,12 +158,20 @@ struct Generator
         LineList O;
         O += "struct Meta";
         O += "{";
-        auto requests = iface_node.requests;
-        auto events = iface_node.events;
-
         LineList B0;
         B0 += std::format("static constexpr char name[] = \"{}\";", iface_name);
+        B0 += gen_iface_tuples(iface_node);
+        B0.indent();
+        O += std::move(B0);
+        O += "};";
+        return O;
+    }
 
+    LineList gen_iface_tuples(const Interface &iface)
+    {
+        auto &requests = iface.requests;
+        auto &events = iface.events;
+        LineList B0;
         B0 += "template <template <typename... T> class TupleLike>";
         B0 += "struct Events : TupleLike";
         B0 += "<";
@@ -189,10 +197,7 @@ struct Generator
         B1.indent();
         B0 += std::move(B1);
         B0 += ">{};";
-        B0.indent();
-        O += std::move(B0);
-        O += "};";
-        return O;
+        return B0;
     }
 
     LineList gen_args_meta(
