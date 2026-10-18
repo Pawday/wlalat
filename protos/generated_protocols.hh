@@ -7,7 +7,7 @@ struct wl_display
 {
 struct message_sync
 {
-    PMeta::new_id_t callback;
+    typename PMeta::new_id_t callback;
     struct Meta
     {
         using InterfaceTag = wl_display;
@@ -47,7 +47,7 @@ struct message_sync
 };
 struct message_get_registry
 {
-    PMeta::new_id_t registry;
+    typename PMeta::new_id_t registry;
     struct Meta
     {
         using InterfaceTag = wl_display;
@@ -87,9 +87,9 @@ struct message_get_registry
 };
 struct message_error
 {
-    PMeta::object_t object_id;
-    PMeta::uint_t code;
-    PMeta::string_t message;
+    typename PMeta::object_t object_id;
+    typename PMeta::uint_t code;
+    typename PMeta::string_t message;
     struct Meta
     {
         using InterfaceTag = wl_display;
@@ -135,7 +135,7 @@ struct message_error
 };
 struct message_delete_id
 {
-    PMeta::uint_t id;
+    typename PMeta::uint_t id;
     struct Meta
     {
         using InterfaceTag = wl_display;
@@ -195,10 +195,10 @@ struct wl_registry
 {
 struct message_bind
 {
-    PMeta::uint_t name;
-    PMeta::string_t id_interface;
-    PMeta::uint_t id_version;
-    PMeta::new_id_t id;
+    typename PMeta::uint_t name;
+    typename PMeta::string_t id_interface;
+    typename PMeta::uint_t id_version;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = wl_registry;
@@ -247,9 +247,9 @@ struct message_bind
 };
 struct message_global
 {
-    PMeta::uint_t name;
-    PMeta::string_t interface;
-    PMeta::uint_t version;
+    typename PMeta::uint_t name;
+    typename PMeta::string_t interface;
+    typename PMeta::uint_t version;
     struct Meta
     {
         using InterfaceTag = wl_registry;
@@ -295,7 +295,7 @@ struct message_global
 };
 struct message_global_remove
 {
-    PMeta::uint_t name;
+    typename PMeta::uint_t name;
     struct Meta
     {
         using InterfaceTag = wl_registry;
@@ -354,7 +354,7 @@ struct wl_callback
 {
 struct message_done
 {
-    PMeta::uint_t callback_data;
+    typename PMeta::uint_t callback_data;
     struct Meta
     {
         using InterfaceTag = wl_callback;
@@ -411,7 +411,7 @@ struct wl_compositor
 {
 struct message_create_surface
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = wl_compositor;
@@ -451,7 +451,7 @@ struct message_create_surface
 };
 struct message_create_region
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = wl_compositor;
@@ -546,12 +546,12 @@ struct wl_shm_pool
 {
 struct message_create_buffer
 {
-    PMeta::new_id_t id;
-    PMeta::int_t offset;
-    PMeta::int_t width;
-    PMeta::int_t height;
-    PMeta::int_t stride;
-    PMeta::uint_t format;
+    typename PMeta::new_id_t id;
+    typename PMeta::int_t offset;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
+    typename PMeta::int_t stride;
+    typename PMeta::uint_t format;
     struct Meta
     {
         using InterfaceTag = wl_shm_pool;
@@ -642,7 +642,7 @@ struct message_destroy
 };
 struct message_resize
 {
-    PMeta::int_t size;
+    typename PMeta::int_t size;
     struct Meta
     {
         using InterfaceTag = wl_shm_pool;
@@ -701,9 +701,9 @@ struct wl_shm
 {
 struct message_create_pool
 {
-    PMeta::new_id_t id;
-    PMeta::fd_t fd;
-    PMeta::int_t size;
+    typename PMeta::new_id_t id;
+    typename PMeta::fd_t fd;
+    typename PMeta::int_t size;
     struct Meta
     {
         using InterfaceTag = wl_shm;
@@ -785,7 +785,7 @@ struct message_release
 };
 struct message_format
 {
-    PMeta::uint_t format;
+    typename PMeta::uint_t format;
     struct Meta
     {
         using InterfaceTag = wl_shm;
@@ -934,8 +934,8 @@ struct wl_data_offer
 {
 struct message_accept
 {
-    PMeta::uint_t serial;
-    PMeta::string_t mime_type;
+    typename PMeta::uint_t serial;
+    typename PMeta::string_t mime_type;
     struct Meta
     {
         using InterfaceTag = wl_data_offer;
@@ -978,8 +978,8 @@ struct message_accept
 };
 struct message_receive
 {
-    PMeta::string_t mime_type;
-    PMeta::fd_t fd;
+    typename PMeta::string_t mime_type;
+    typename PMeta::fd_t fd;
     struct Meta
     {
         using InterfaceTag = wl_data_offer;
@@ -1094,8 +1094,8 @@ struct message_finish
 };
 struct message_set_actions
 {
-    PMeta::uint_t dnd_actions;
-    PMeta::uint_t preferred_action;
+    typename PMeta::uint_t dnd_actions;
+    typename PMeta::uint_t preferred_action;
     struct Meta
     {
         using InterfaceTag = wl_data_offer;
@@ -1138,7 +1138,7 @@ struct message_set_actions
 };
 struct message_offer
 {
-    PMeta::string_t mime_type;
+    typename PMeta::string_t mime_type;
     struct Meta
     {
         using InterfaceTag = wl_data_offer;
@@ -1178,7 +1178,7 @@ struct message_offer
 };
 struct message_source_actions
 {
-    PMeta::uint_t source_actions;
+    typename PMeta::uint_t source_actions;
     struct Meta
     {
         using InterfaceTag = wl_data_offer;
@@ -1218,7 +1218,7 @@ struct message_source_actions
 };
 struct message_action
 {
-    PMeta::uint_t dnd_action;
+    typename PMeta::uint_t dnd_action;
     struct Meta
     {
         using InterfaceTag = wl_data_offer;
@@ -1282,7 +1282,7 @@ struct wl_data_source
 {
 struct message_offer
 {
-    PMeta::string_t mime_type;
+    typename PMeta::string_t mime_type;
     struct Meta
     {
         using InterfaceTag = wl_data_source;
@@ -1358,7 +1358,7 @@ struct message_destroy
 };
 struct message_set_actions
 {
-    PMeta::uint_t dnd_actions;
+    typename PMeta::uint_t dnd_actions;
     struct Meta
     {
         using InterfaceTag = wl_data_source;
@@ -1398,7 +1398,7 @@ struct message_set_actions
 };
 struct message_target
 {
-    PMeta::string_t mime_type;
+    typename PMeta::string_t mime_type;
     struct Meta
     {
         using InterfaceTag = wl_data_source;
@@ -1438,8 +1438,8 @@ struct message_target
 };
 struct message_send
 {
-    PMeta::string_t mime_type;
-    PMeta::fd_t fd;
+    typename PMeta::string_t mime_type;
+    typename PMeta::fd_t fd;
     struct Meta
     {
         using InterfaceTag = wl_data_source;
@@ -1590,7 +1590,7 @@ struct message_dnd_finished
 };
 struct message_action
 {
-    PMeta::uint_t dnd_action;
+    typename PMeta::uint_t dnd_action;
     struct Meta
     {
         using InterfaceTag = wl_data_source;
@@ -1655,10 +1655,10 @@ struct wl_data_device
 {
 struct message_start_drag
 {
-    PMeta::object_t source;
-    PMeta::object_t origin;
-    PMeta::object_t icon;
-    PMeta::uint_t serial;
+    typename PMeta::object_t source;
+    typename PMeta::object_t origin;
+    typename PMeta::object_t icon;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = wl_data_device;
@@ -1707,8 +1707,8 @@ struct message_start_drag
 };
 struct message_set_selection
 {
-    PMeta::object_t source;
-    PMeta::uint_t serial;
+    typename PMeta::object_t source;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = wl_data_device;
@@ -1787,7 +1787,7 @@ struct message_release
 };
 struct message_data_offer
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = wl_data_device;
@@ -1827,11 +1827,11 @@ struct message_data_offer
 };
 struct message_enter
 {
-    PMeta::uint_t serial;
-    PMeta::object_t surface;
-    PMeta::fixed_t x;
-    PMeta::fixed_t y;
-    PMeta::object_t id;
+    typename PMeta::uint_t serial;
+    typename PMeta::object_t surface;
+    typename PMeta::fixed_t x;
+    typename PMeta::fixed_t y;
+    typename PMeta::object_t id;
     struct Meta
     {
         using InterfaceTag = wl_data_device;
@@ -1919,9 +1919,9 @@ struct message_leave
 };
 struct message_motion
 {
-    PMeta::uint_t time;
-    PMeta::fixed_t x;
-    PMeta::fixed_t y;
+    typename PMeta::uint_t time;
+    typename PMeta::fixed_t x;
+    typename PMeta::fixed_t y;
     struct Meta
     {
         using InterfaceTag = wl_data_device;
@@ -2003,7 +2003,7 @@ struct message_drop
 };
 struct message_selection
 {
-    PMeta::object_t id;
+    typename PMeta::object_t id;
     struct Meta
     {
         using InterfaceTag = wl_data_device;
@@ -2068,7 +2068,7 @@ struct wl_data_device_manager
 {
 struct message_create_data_source
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = wl_data_device_manager;
@@ -2108,8 +2108,8 @@ struct message_create_data_source
 };
 struct message_get_data_device
 {
-    PMeta::new_id_t id;
-    PMeta::object_t seat;
+    typename PMeta::new_id_t id;
+    typename PMeta::object_t seat;
     struct Meta
     {
         using InterfaceTag = wl_data_device_manager;
@@ -2207,8 +2207,8 @@ struct wl_shell
 {
 struct message_get_shell_surface
 {
-    PMeta::new_id_t id;
-    PMeta::object_t surface;
+    typename PMeta::new_id_t id;
+    typename PMeta::object_t surface;
     struct Meta
     {
         using InterfaceTag = wl_shell;
@@ -2268,7 +2268,7 @@ struct wl_shell_surface
 {
 struct message_pong
 {
-    PMeta::uint_t serial;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2308,8 +2308,8 @@ struct message_pong
 };
 struct message_move
 {
-    PMeta::object_t seat;
-    PMeta::uint_t serial;
+    typename PMeta::object_t seat;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2352,9 +2352,9 @@ struct message_move
 };
 struct message_resize
 {
-    PMeta::object_t seat;
-    PMeta::uint_t serial;
-    PMeta::uint_t edges;
+    typename PMeta::object_t seat;
+    typename PMeta::uint_t serial;
+    typename PMeta::uint_t edges;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2436,10 +2436,10 @@ struct message_set_toplevel
 };
 struct message_set_transient
 {
-    PMeta::object_t parent;
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::uint_t flags;
+    typename PMeta::object_t parent;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::uint_t flags;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2488,9 +2488,9 @@ struct message_set_transient
 };
 struct message_set_fullscreen
 {
-    PMeta::uint_t method;
-    PMeta::uint_t framerate;
-    PMeta::object_t output;
+    typename PMeta::uint_t method;
+    typename PMeta::uint_t framerate;
+    typename PMeta::object_t output;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2536,12 +2536,12 @@ struct message_set_fullscreen
 };
 struct message_set_popup
 {
-    PMeta::object_t seat;
-    PMeta::uint_t serial;
-    PMeta::object_t parent;
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::uint_t flags;
+    typename PMeta::object_t seat;
+    typename PMeta::uint_t serial;
+    typename PMeta::object_t parent;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::uint_t flags;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2596,7 +2596,7 @@ struct message_set_popup
 };
 struct message_set_maximized
 {
-    PMeta::object_t output;
+    typename PMeta::object_t output;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2636,7 +2636,7 @@ struct message_set_maximized
 };
 struct message_set_title
 {
-    PMeta::string_t title;
+    typename PMeta::string_t title;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2676,7 +2676,7 @@ struct message_set_title
 };
 struct message_set_class
 {
-    PMeta::string_t class_;
+    typename PMeta::string_t class_;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2716,7 +2716,7 @@ struct message_set_class
 };
 struct message_ping
 {
-    PMeta::uint_t serial;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2756,9 +2756,9 @@ struct message_ping
 };
 struct message_configure
 {
-    PMeta::uint_t edges;
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::uint_t edges;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = wl_shell_surface;
@@ -2905,9 +2905,9 @@ struct message_destroy
 };
 struct message_attach
 {
-    PMeta::object_t buffer;
-    PMeta::int_t x;
-    PMeta::int_t y;
+    typename PMeta::object_t buffer;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -2953,10 +2953,10 @@ struct message_attach
 };
 struct message_damage
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3005,7 +3005,7 @@ struct message_damage
 };
 struct message_frame
 {
-    PMeta::new_id_t callback;
+    typename PMeta::new_id_t callback;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3045,7 +3045,7 @@ struct message_frame
 };
 struct message_set_opaque_region
 {
-    PMeta::object_t region;
+    typename PMeta::object_t region;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3085,7 +3085,7 @@ struct message_set_opaque_region
 };
 struct message_set_input_region
 {
-    PMeta::object_t region;
+    typename PMeta::object_t region;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3161,7 +3161,7 @@ struct message_commit
 };
 struct message_set_buffer_transform
 {
-    PMeta::int_t transform;
+    typename PMeta::int_t transform;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3201,7 +3201,7 @@ struct message_set_buffer_transform
 };
 struct message_set_buffer_scale
 {
-    PMeta::int_t scale;
+    typename PMeta::int_t scale;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3241,10 +3241,10 @@ struct message_set_buffer_scale
 };
 struct message_damage_buffer
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3293,8 +3293,8 @@ struct message_damage_buffer
 };
 struct message_offset
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3337,7 +3337,7 @@ struct message_offset
 };
 struct message_get_release
 {
-    PMeta::new_id_t callback;
+    typename PMeta::new_id_t callback;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3377,7 +3377,7 @@ struct message_get_release
 };
 struct message_enter
 {
-    PMeta::object_t output;
+    typename PMeta::object_t output;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3417,7 +3417,7 @@ struct message_enter
 };
 struct message_leave
 {
-    PMeta::object_t output;
+    typename PMeta::object_t output;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3457,7 +3457,7 @@ struct message_leave
 };
 struct message_preferred_buffer_scale
 {
-    PMeta::int_t factor;
+    typename PMeta::int_t factor;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3497,7 +3497,7 @@ struct message_preferred_buffer_scale
 };
 struct message_preferred_buffer_transform
 {
-    PMeta::uint_t transform;
+    typename PMeta::uint_t transform;
     struct Meta
     {
         using InterfaceTag = wl_surface;
@@ -3569,7 +3569,7 @@ struct wl_seat
 {
 struct message_get_pointer
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = wl_seat;
@@ -3609,7 +3609,7 @@ struct message_get_pointer
 };
 struct message_get_keyboard
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = wl_seat;
@@ -3649,7 +3649,7 @@ struct message_get_keyboard
 };
 struct message_get_touch
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = wl_seat;
@@ -3725,7 +3725,7 @@ struct message_release
 };
 struct message_capabilities
 {
-    PMeta::uint_t capabilities;
+    typename PMeta::uint_t capabilities;
     struct Meta
     {
         using InterfaceTag = wl_seat;
@@ -3765,7 +3765,7 @@ struct message_capabilities
 };
 struct message_name
 {
-    PMeta::string_t name;
+    typename PMeta::string_t name;
     struct Meta
     {
         using InterfaceTag = wl_seat;
@@ -3827,10 +3827,10 @@ struct wl_pointer
 {
 struct message_set_cursor
 {
-    PMeta::uint_t serial;
-    PMeta::object_t surface;
-    PMeta::int_t hotspot_x;
-    PMeta::int_t hotspot_y;
+    typename PMeta::uint_t serial;
+    typename PMeta::object_t surface;
+    typename PMeta::int_t hotspot_x;
+    typename PMeta::int_t hotspot_y;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -3915,10 +3915,10 @@ struct message_release
 };
 struct message_enter
 {
-    PMeta::uint_t serial;
-    PMeta::object_t surface;
-    PMeta::fixed_t surface_x;
-    PMeta::fixed_t surface_y;
+    typename PMeta::uint_t serial;
+    typename PMeta::object_t surface;
+    typename PMeta::fixed_t surface_x;
+    typename PMeta::fixed_t surface_y;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -3967,8 +3967,8 @@ struct message_enter
 };
 struct message_leave
 {
-    PMeta::uint_t serial;
-    PMeta::object_t surface;
+    typename PMeta::uint_t serial;
+    typename PMeta::object_t surface;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4011,9 +4011,9 @@ struct message_leave
 };
 struct message_motion
 {
-    PMeta::uint_t time;
-    PMeta::fixed_t surface_x;
-    PMeta::fixed_t surface_y;
+    typename PMeta::uint_t time;
+    typename PMeta::fixed_t surface_x;
+    typename PMeta::fixed_t surface_y;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4059,10 +4059,10 @@ struct message_motion
 };
 struct message_button
 {
-    PMeta::uint_t serial;
-    PMeta::uint_t time;
-    PMeta::uint_t button;
-    PMeta::uint_t state;
+    typename PMeta::uint_t serial;
+    typename PMeta::uint_t time;
+    typename PMeta::uint_t button;
+    typename PMeta::uint_t state;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4111,9 +4111,9 @@ struct message_button
 };
 struct message_axis
 {
-    PMeta::uint_t time;
-    PMeta::uint_t axis;
-    PMeta::fixed_t value;
+    typename PMeta::uint_t time;
+    typename PMeta::uint_t axis;
+    typename PMeta::fixed_t value;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4195,7 +4195,7 @@ struct message_frame
 };
 struct message_axis_source
 {
-    PMeta::uint_t axis_source;
+    typename PMeta::uint_t axis_source;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4235,8 +4235,8 @@ struct message_axis_source
 };
 struct message_axis_stop
 {
-    PMeta::uint_t time;
-    PMeta::uint_t axis;
+    typename PMeta::uint_t time;
+    typename PMeta::uint_t axis;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4279,8 +4279,8 @@ struct message_axis_stop
 };
 struct message_axis_discrete
 {
-    PMeta::uint_t axis;
-    PMeta::int_t discrete;
+    typename PMeta::uint_t axis;
+    typename PMeta::int_t discrete;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4323,8 +4323,8 @@ struct message_axis_discrete
 };
 struct message_axis_value120
 {
-    PMeta::uint_t axis;
-    PMeta::int_t value120;
+    typename PMeta::uint_t axis;
+    typename PMeta::int_t value120;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4367,8 +4367,8 @@ struct message_axis_value120
 };
 struct message_axis_relative_direction
 {
-    PMeta::uint_t axis;
-    PMeta::uint_t direction;
+    typename PMeta::uint_t axis;
+    typename PMeta::uint_t direction;
     struct Meta
     {
         using InterfaceTag = wl_pointer;
@@ -4476,9 +4476,9 @@ struct message_release
 };
 struct message_keymap
 {
-    PMeta::uint_t format;
-    PMeta::fd_t fd;
-    PMeta::uint_t size;
+    typename PMeta::uint_t format;
+    typename PMeta::fd_t fd;
+    typename PMeta::uint_t size;
     struct Meta
     {
         using InterfaceTag = wl_keyboard;
@@ -4524,9 +4524,9 @@ struct message_keymap
 };
 struct message_enter
 {
-    PMeta::uint_t serial;
-    PMeta::object_t surface;
-    PMeta::array_t keys;
+    typename PMeta::uint_t serial;
+    typename PMeta::object_t surface;
+    typename PMeta::array_t keys;
     struct Meta
     {
         using InterfaceTag = wl_keyboard;
@@ -4572,8 +4572,8 @@ struct message_enter
 };
 struct message_leave
 {
-    PMeta::uint_t serial;
-    PMeta::object_t surface;
+    typename PMeta::uint_t serial;
+    typename PMeta::object_t surface;
     struct Meta
     {
         using InterfaceTag = wl_keyboard;
@@ -4616,10 +4616,10 @@ struct message_leave
 };
 struct message_key
 {
-    PMeta::uint_t serial;
-    PMeta::uint_t time;
-    PMeta::uint_t key;
-    PMeta::uint_t state;
+    typename PMeta::uint_t serial;
+    typename PMeta::uint_t time;
+    typename PMeta::uint_t key;
+    typename PMeta::uint_t state;
     struct Meta
     {
         using InterfaceTag = wl_keyboard;
@@ -4668,11 +4668,11 @@ struct message_key
 };
 struct message_modifiers
 {
-    PMeta::uint_t serial;
-    PMeta::uint_t mods_depressed;
-    PMeta::uint_t mods_latched;
-    PMeta::uint_t mods_locked;
-    PMeta::uint_t group;
+    typename PMeta::uint_t serial;
+    typename PMeta::uint_t mods_depressed;
+    typename PMeta::uint_t mods_latched;
+    typename PMeta::uint_t mods_locked;
+    typename PMeta::uint_t group;
     struct Meta
     {
         using InterfaceTag = wl_keyboard;
@@ -4724,8 +4724,8 @@ struct message_modifiers
 };
 struct message_repeat_info
 {
-    PMeta::int_t rate;
-    PMeta::int_t delay;
+    typename PMeta::int_t rate;
+    typename PMeta::int_t delay;
     struct Meta
     {
         using InterfaceTag = wl_keyboard;
@@ -4827,12 +4827,12 @@ struct message_release
 };
 struct message_down
 {
-    PMeta::uint_t serial;
-    PMeta::uint_t time;
-    PMeta::object_t surface;
-    PMeta::int_t id;
-    PMeta::fixed_t x;
-    PMeta::fixed_t y;
+    typename PMeta::uint_t serial;
+    typename PMeta::uint_t time;
+    typename PMeta::object_t surface;
+    typename PMeta::int_t id;
+    typename PMeta::fixed_t x;
+    typename PMeta::fixed_t y;
     struct Meta
     {
         using InterfaceTag = wl_touch;
@@ -4887,9 +4887,9 @@ struct message_down
 };
 struct message_up
 {
-    PMeta::uint_t serial;
-    PMeta::uint_t time;
-    PMeta::int_t id;
+    typename PMeta::uint_t serial;
+    typename PMeta::uint_t time;
+    typename PMeta::int_t id;
     struct Meta
     {
         using InterfaceTag = wl_touch;
@@ -4935,10 +4935,10 @@ struct message_up
 };
 struct message_motion
 {
-    PMeta::uint_t time;
-    PMeta::int_t id;
-    PMeta::fixed_t x;
-    PMeta::fixed_t y;
+    typename PMeta::uint_t time;
+    typename PMeta::int_t id;
+    typename PMeta::fixed_t x;
+    typename PMeta::fixed_t y;
     struct Meta
     {
         using InterfaceTag = wl_touch;
@@ -5059,9 +5059,9 @@ struct message_cancel
 };
 struct message_shape
 {
-    PMeta::int_t id;
-    PMeta::fixed_t major;
-    PMeta::fixed_t minor;
+    typename PMeta::int_t id;
+    typename PMeta::fixed_t major;
+    typename PMeta::fixed_t minor;
     struct Meta
     {
         using InterfaceTag = wl_touch;
@@ -5107,8 +5107,8 @@ struct message_shape
 };
 struct message_orientation
 {
-    PMeta::int_t id;
-    PMeta::fixed_t orientation;
+    typename PMeta::int_t id;
+    typename PMeta::fixed_t orientation;
     struct Meta
     {
         using InterfaceTag = wl_touch;
@@ -5211,14 +5211,14 @@ struct message_release
 };
 struct message_geometry
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::int_t physical_width;
-    PMeta::int_t physical_height;
-    PMeta::int_t subpixel;
-    PMeta::string_t make;
-    PMeta::string_t model;
-    PMeta::int_t transform;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::int_t physical_width;
+    typename PMeta::int_t physical_height;
+    typename PMeta::int_t subpixel;
+    typename PMeta::string_t make;
+    typename PMeta::string_t model;
+    typename PMeta::int_t transform;
     struct Meta
     {
         using InterfaceTag = wl_output;
@@ -5279,10 +5279,10 @@ struct message_geometry
 };
 struct message_mode
 {
-    PMeta::uint_t flags;
-    PMeta::int_t width;
-    PMeta::int_t height;
-    PMeta::int_t refresh;
+    typename PMeta::uint_t flags;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
+    typename PMeta::int_t refresh;
     struct Meta
     {
         using InterfaceTag = wl_output;
@@ -5367,7 +5367,7 @@ struct message_done
 };
 struct message_scale
 {
-    PMeta::int_t factor;
+    typename PMeta::int_t factor;
     struct Meta
     {
         using InterfaceTag = wl_output;
@@ -5407,7 +5407,7 @@ struct message_scale
 };
 struct message_name
 {
-    PMeta::string_t name;
+    typename PMeta::string_t name;
     struct Meta
     {
         using InterfaceTag = wl_output;
@@ -5447,7 +5447,7 @@ struct message_name
 };
 struct message_description
 {
-    PMeta::string_t description;
+    typename PMeta::string_t description;
     struct Meta
     {
         using InterfaceTag = wl_output;
@@ -5546,10 +5546,10 @@ struct message_destroy
 };
 struct message_add
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = wl_region;
@@ -5598,10 +5598,10 @@ struct message_add
 };
 struct message_subtract
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = wl_region;
@@ -5705,9 +5705,9 @@ struct message_destroy
 };
 struct message_get_subsurface
 {
-    PMeta::new_id_t id;
-    PMeta::object_t surface;
-    PMeta::object_t parent;
+    typename PMeta::new_id_t id;
+    typename PMeta::object_t surface;
+    typename PMeta::object_t parent;
     struct Meta
     {
         using InterfaceTag = wl_subcompositor;
@@ -5807,8 +5807,8 @@ struct message_destroy
 };
 struct message_set_position
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
     struct Meta
     {
         using InterfaceTag = wl_subsurface;
@@ -5851,7 +5851,7 @@ struct message_set_position
 };
 struct message_place_above
 {
-    PMeta::object_t sibling;
+    typename PMeta::object_t sibling;
     struct Meta
     {
         using InterfaceTag = wl_subsurface;
@@ -5891,7 +5891,7 @@ struct message_place_above
 };
 struct message_place_below
 {
-    PMeta::object_t sibling;
+    typename PMeta::object_t sibling;
     struct Meta
     {
         using InterfaceTag = wl_subsurface;
@@ -6061,7 +6061,7 @@ struct message_destroy
 };
 struct message_destroy_registry
 {
-    PMeta::object_t registry;
+    typename PMeta::object_t registry;
     struct Meta
     {
         using InterfaceTag = wl_fixes;
@@ -6101,8 +6101,8 @@ struct message_destroy_registry
 };
 struct message_ack_global_remove
 {
-    PMeta::object_t registry;
-    PMeta::uint_t name;
+    typename PMeta::object_t registry;
+    typename PMeta::uint_t name;
     struct Meta
     {
         using InterfaceTag = wl_fixes;
@@ -6202,8 +6202,8 @@ struct message_destroy
 };
 struct message_get_toplevel_decoration
 {
-    PMeta::new_id_t id;
-    PMeta::object_t toplevel;
+    typename PMeta::new_id_t id;
+    typename PMeta::object_t toplevel;
     struct Meta
     {
         using InterfaceTag = zxdg_decoration_manager_v1;
@@ -6300,7 +6300,7 @@ struct message_destroy
 };
 struct message_set_mode
 {
-    PMeta::uint_t mode;
+    typename PMeta::uint_t mode;
     struct Meta
     {
         using InterfaceTag = zxdg_toplevel_decoration_v1;
@@ -6376,7 +6376,7 @@ struct message_unset_mode
 };
 struct message_configure
 {
-    PMeta::uint_t mode;
+    typename PMeta::uint_t mode;
     struct Meta
     {
         using InterfaceTag = zxdg_toplevel_decoration_v1;
@@ -6474,7 +6474,7 @@ struct message_destroy
 };
 struct message_create_positioner
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = xdg_wm_base;
@@ -6514,8 +6514,8 @@ struct message_create_positioner
 };
 struct message_get_xdg_surface
 {
-    PMeta::new_id_t id;
-    PMeta::object_t surface;
+    typename PMeta::new_id_t id;
+    typename PMeta::object_t surface;
     struct Meta
     {
         using InterfaceTag = xdg_wm_base;
@@ -6558,7 +6558,7 @@ struct message_get_xdg_surface
 };
 struct message_pong
 {
-    PMeta::uint_t serial;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = xdg_wm_base;
@@ -6598,7 +6598,7 @@ struct message_pong
 };
 struct message_ping
 {
-    PMeta::uint_t serial;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = xdg_wm_base;
@@ -6695,8 +6695,8 @@ struct message_destroy
 };
 struct message_set_size
 {
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = xdg_positioner;
@@ -6739,10 +6739,10 @@ struct message_set_size
 };
 struct message_set_anchor_rect
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = xdg_positioner;
@@ -6791,7 +6791,7 @@ struct message_set_anchor_rect
 };
 struct message_set_anchor
 {
-    PMeta::uint_t anchor;
+    typename PMeta::uint_t anchor;
     struct Meta
     {
         using InterfaceTag = xdg_positioner;
@@ -6831,7 +6831,7 @@ struct message_set_anchor
 };
 struct message_set_gravity
 {
-    PMeta::uint_t gravity;
+    typename PMeta::uint_t gravity;
     struct Meta
     {
         using InterfaceTag = xdg_positioner;
@@ -6871,7 +6871,7 @@ struct message_set_gravity
 };
 struct message_set_constraint_adjustment
 {
-    PMeta::uint_t constraint_adjustment;
+    typename PMeta::uint_t constraint_adjustment;
     struct Meta
     {
         using InterfaceTag = xdg_positioner;
@@ -6911,8 +6911,8 @@ struct message_set_constraint_adjustment
 };
 struct message_set_offset
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
     struct Meta
     {
         using InterfaceTag = xdg_positioner;
@@ -6991,8 +6991,8 @@ struct message_set_reactive
 };
 struct message_set_parent_size
 {
-    PMeta::int_t parent_width;
-    PMeta::int_t parent_height;
+    typename PMeta::int_t parent_width;
+    typename PMeta::int_t parent_height;
     struct Meta
     {
         using InterfaceTag = xdg_positioner;
@@ -7035,7 +7035,7 @@ struct message_set_parent_size
 };
 struct message_set_parent_configure
 {
-    PMeta::uint_t serial;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = xdg_positioner;
@@ -7137,7 +7137,7 @@ struct message_destroy
 };
 struct message_get_toplevel
 {
-    PMeta::new_id_t id;
+    typename PMeta::new_id_t id;
     struct Meta
     {
         using InterfaceTag = xdg_surface;
@@ -7177,9 +7177,9 @@ struct message_get_toplevel
 };
 struct message_get_popup
 {
-    PMeta::new_id_t id;
-    PMeta::object_t parent;
-    PMeta::object_t positioner;
+    typename PMeta::new_id_t id;
+    typename PMeta::object_t parent;
+    typename PMeta::object_t positioner;
     struct Meta
     {
         using InterfaceTag = xdg_surface;
@@ -7225,10 +7225,10 @@ struct message_get_popup
 };
 struct message_set_window_geometry
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = xdg_surface;
@@ -7277,7 +7277,7 @@ struct message_set_window_geometry
 };
 struct message_ack_configure
 {
-    PMeta::uint_t serial;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = xdg_surface;
@@ -7317,7 +7317,7 @@ struct message_ack_configure
 };
 struct message_configure
 {
-    PMeta::uint_t serial;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = xdg_surface;
@@ -7415,7 +7415,7 @@ struct message_destroy
 };
 struct message_set_parent
 {
-    PMeta::object_t parent;
+    typename PMeta::object_t parent;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7455,7 +7455,7 @@ struct message_set_parent
 };
 struct message_set_title
 {
-    PMeta::string_t title;
+    typename PMeta::string_t title;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7495,7 +7495,7 @@ struct message_set_title
 };
 struct message_set_app_id
 {
-    PMeta::string_t app_id;
+    typename PMeta::string_t app_id;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7535,10 +7535,10 @@ struct message_set_app_id
 };
 struct message_show_window_menu
 {
-    PMeta::object_t seat;
-    PMeta::uint_t serial;
-    PMeta::int_t x;
-    PMeta::int_t y;
+    typename PMeta::object_t seat;
+    typename PMeta::uint_t serial;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7587,8 +7587,8 @@ struct message_show_window_menu
 };
 struct message_move
 {
-    PMeta::object_t seat;
-    PMeta::uint_t serial;
+    typename PMeta::object_t seat;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7631,9 +7631,9 @@ struct message_move
 };
 struct message_resize
 {
-    PMeta::object_t seat;
-    PMeta::uint_t serial;
-    PMeta::uint_t edges;
+    typename PMeta::object_t seat;
+    typename PMeta::uint_t serial;
+    typename PMeta::uint_t edges;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7679,8 +7679,8 @@ struct message_resize
 };
 struct message_set_max_size
 {
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7723,8 +7723,8 @@ struct message_set_max_size
 };
 struct message_set_min_size
 {
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7839,7 +7839,7 @@ struct message_unset_maximized
 };
 struct message_set_fullscreen
 {
-    PMeta::object_t output;
+    typename PMeta::object_t output;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -7951,9 +7951,9 @@ struct message_set_minimized
 };
 struct message_configure
 {
-    PMeta::int_t width;
-    PMeta::int_t height;
-    PMeta::array_t states;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
+    typename PMeta::array_t states;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -8035,8 +8035,8 @@ struct message_close
 };
 struct message_configure_bounds
 {
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -8079,7 +8079,7 @@ struct message_configure_bounds
 };
 struct message_wm_capabilities
 {
-    PMeta::array_t capabilities;
+    typename PMeta::array_t capabilities;
     struct Meta
     {
         using InterfaceTag = xdg_toplevel;
@@ -8189,8 +8189,8 @@ struct message_destroy
 };
 struct message_grab
 {
-    PMeta::object_t seat;
-    PMeta::uint_t serial;
+    typename PMeta::object_t seat;
+    typename PMeta::uint_t serial;
     struct Meta
     {
         using InterfaceTag = xdg_popup;
@@ -8233,8 +8233,8 @@ struct message_grab
 };
 struct message_reposition
 {
-    PMeta::object_t positioner;
-    PMeta::uint_t token;
+    typename PMeta::object_t positioner;
+    typename PMeta::uint_t token;
     struct Meta
     {
         using InterfaceTag = xdg_popup;
@@ -8277,10 +8277,10 @@ struct message_reposition
 };
 struct message_configure
 {
-    PMeta::int_t x;
-    PMeta::int_t y;
-    PMeta::int_t width;
-    PMeta::int_t height;
+    typename PMeta::int_t x;
+    typename PMeta::int_t y;
+    typename PMeta::int_t width;
+    typename PMeta::int_t height;
     struct Meta
     {
         using InterfaceTag = xdg_popup;
@@ -8365,7 +8365,7 @@ struct message_popup_done
 };
 struct message_repositioned
 {
-    PMeta::uint_t token;
+    typename PMeta::uint_t token;
     struct Meta
     {
         using InterfaceTag = xdg_popup;

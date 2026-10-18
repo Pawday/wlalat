@@ -344,7 +344,7 @@ struct Generator
         LineList O;
         auto type = arg.type.value();
         auto name = arg.name.value();
-        O += std::format("PMeta::{}_t {};", type, name);
+        O += std::format("typename PMeta::{}_t {};", type, name);
         return O;
     }
 
