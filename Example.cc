@@ -391,7 +391,7 @@ struct SocketEventDispatcher
     void set_listener(
         uint_least32_t object_id, LType &L, std::type_identity<InterfaceT>)
     {
-        using Events = typename InterfaceT::Meta::template Events<std::tuple>;
+        using Events = InterfaceT::template Events<std::tuple>;
         auto deduce_tuple = []<typename... Args>(const std::tuple<Args...> &t) {
             return t;
         };

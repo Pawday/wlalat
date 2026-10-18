@@ -144,23 +144,22 @@ struct Generator
             O += gen_event(interface_name, ev, opcode);
         }
 
-        auto meta = gen_iface_meta(iface_node, name);
+        auto meta = gen_iface_meta(name);
         O += std::move(meta);
+        O += gen_iface_tuples(iface_node);
 
         O += std::format("}}; // struct {}", name);
 
         return O;
     }
 
-    LineList
-        gen_iface_meta(const Interface &iface_node, std::string_view iface_name)
+    LineList gen_iface_meta(std::string_view iface_name)
     {
         LineList O;
         O += "struct Meta";
         O += "{";
         LineList B0;
         B0 += std::format("static constexpr char name[] = \"{}\";", iface_name);
-        B0 += gen_iface_tuples(iface_node);
         B0.indent();
         O += std::move(B0);
         O += "};";

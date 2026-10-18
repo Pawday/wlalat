@@ -176,19 +176,19 @@ struct message_delete_id
 struct Meta
 {
     static constexpr char name[] = "wl_display";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_error,
-        message_delete_id
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_sync,
-        message_get_registry
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_error,
+    message_delete_id
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_sync,
+    message_get_registry
+>{};
 }; // struct wl_display
 
 struct wl_registry
@@ -336,18 +336,18 @@ struct message_global_remove
 struct Meta
 {
     static constexpr char name[] = "wl_registry";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_global,
-        message_global_remove
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_bind
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_global,
+    message_global_remove
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_bind
+>{};
 }; // struct wl_registry
 
 struct wl_callback
@@ -395,16 +395,16 @@ struct message_done
 struct Meta
 {
     static constexpr char name[] = "wl_callback";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_done
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_done
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+>{};
 }; // struct wl_callback
 
 struct wl_compositor
@@ -528,18 +528,18 @@ struct message_release
 struct Meta
 {
     static constexpr char name[] = "wl_compositor";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_create_surface,
-        message_create_region,
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_create_surface,
+    message_create_region,
+    message_release
+>{};
 }; // struct wl_compositor
 
 struct wl_shm_pool
@@ -683,18 +683,18 @@ struct message_resize
 struct Meta
 {
     static constexpr char name[] = "wl_shm_pool";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_create_buffer,
-        message_destroy,
-        message_resize
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_create_buffer,
+    message_destroy,
+    message_resize
+>{};
 }; // struct wl_shm_pool
 
 struct wl_shm
@@ -826,18 +826,18 @@ struct message_format
 struct Meta
 {
     static constexpr char name[] = "wl_shm";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_format
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_create_pool,
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_format
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_create_pool,
+    message_release
+>{};
 }; // struct wl_shm
 
 struct wl_buffer
@@ -917,17 +917,17 @@ struct message_release
 struct Meta
 {
     static constexpr char name[] = "wl_buffer";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_release
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_release
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy
+>{};
 }; // struct wl_buffer
 
 struct wl_data_offer
@@ -1259,23 +1259,23 @@ struct message_action
 struct Meta
 {
     static constexpr char name[] = "wl_data_offer";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_offer,
-        message_source_actions,
-        message_action
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_accept,
-        message_receive,
-        message_destroy,
-        message_finish,
-        message_set_actions
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_offer,
+    message_source_actions,
+    message_action
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_accept,
+    message_receive,
+    message_destroy,
+    message_finish,
+    message_set_actions
+>{};
 }; // struct wl_data_offer
 
 struct wl_data_source
@@ -1631,24 +1631,24 @@ struct message_action
 struct Meta
 {
     static constexpr char name[] = "wl_data_source";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_target,
-        message_send,
-        message_cancelled,
-        message_dnd_drop_performed,
-        message_dnd_finished,
-        message_action
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_offer,
-        message_destroy,
-        message_set_actions
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_target,
+    message_send,
+    message_cancelled,
+    message_dnd_drop_performed,
+    message_dnd_finished,
+    message_action
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_offer,
+    message_destroy,
+    message_set_actions
+>{};
 }; // struct wl_data_source
 
 struct wl_data_device
@@ -2044,24 +2044,24 @@ struct message_selection
 struct Meta
 {
     static constexpr char name[] = "wl_data_device";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_data_offer,
-        message_enter,
-        message_leave,
-        message_motion,
-        message_drop,
-        message_selection
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_start_drag,
-        message_set_selection,
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_data_offer,
+    message_enter,
+    message_leave,
+    message_motion,
+    message_drop,
+    message_selection
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_start_drag,
+    message_set_selection,
+    message_release
+>{};
 }; // struct wl_data_device
 
 struct wl_data_device_manager
@@ -2189,18 +2189,18 @@ struct message_release
 struct Meta
 {
     static constexpr char name[] = "wl_data_device_manager";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_create_data_source,
-        message_get_data_device,
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_create_data_source,
+    message_get_data_device,
+    message_release
+>{};
 }; // struct wl_data_device_manager
 
 struct wl_shell
@@ -2252,16 +2252,16 @@ struct message_get_shell_surface
 struct Meta
 {
     static constexpr char name[] = "wl_shell";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_get_shell_surface
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_get_shell_surface
+>{};
 }; // struct wl_shell
 
 struct wl_shell_surface
@@ -2841,28 +2841,28 @@ struct message_popup_done
 struct Meta
 {
     static constexpr char name[] = "wl_shell_surface";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_ping,
-        message_configure,
-        message_popup_done
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_pong,
-        message_move,
-        message_resize,
-        message_set_toplevel,
-        message_set_transient,
-        message_set_fullscreen,
-        message_set_popup,
-        message_set_maximized,
-        message_set_title,
-        message_set_class
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_ping,
+    message_configure,
+    message_popup_done
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_pong,
+    message_move,
+    message_resize,
+    message_set_toplevel,
+    message_set_transient,
+    message_set_fullscreen,
+    message_set_popup,
+    message_set_maximized,
+    message_set_title,
+    message_set_class
+>{};
 }; // struct wl_shell_surface
 
 struct wl_surface
@@ -3538,31 +3538,31 @@ struct message_preferred_buffer_transform
 struct Meta
 {
     static constexpr char name[] = "wl_surface";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_enter,
-        message_leave,
-        message_preferred_buffer_scale,
-        message_preferred_buffer_transform
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_attach,
-        message_damage,
-        message_frame,
-        message_set_opaque_region,
-        message_set_input_region,
-        message_commit,
-        message_set_buffer_transform,
-        message_set_buffer_scale,
-        message_damage_buffer,
-        message_offset,
-        message_get_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_enter,
+    message_leave,
+    message_preferred_buffer_scale,
+    message_preferred_buffer_transform
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_attach,
+    message_damage,
+    message_frame,
+    message_set_opaque_region,
+    message_set_input_region,
+    message_commit,
+    message_set_buffer_transform,
+    message_set_buffer_scale,
+    message_damage_buffer,
+    message_offset,
+    message_get_release
+>{};
 }; // struct wl_surface
 
 struct wl_seat
@@ -3806,21 +3806,21 @@ struct message_name
 struct Meta
 {
     static constexpr char name[] = "wl_seat";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_capabilities,
-        message_name
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_get_pointer,
-        message_get_keyboard,
-        message_get_touch,
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_capabilities,
+    message_name
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_get_pointer,
+    message_get_keyboard,
+    message_get_touch,
+    message_release
+>{};
 }; // struct wl_seat
 
 struct wl_pointer
@@ -4412,28 +4412,28 @@ struct message_axis_relative_direction
 struct Meta
 {
     static constexpr char name[] = "wl_pointer";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_enter,
-        message_leave,
-        message_motion,
-        message_button,
-        message_axis,
-        message_frame,
-        message_axis_source,
-        message_axis_stop,
-        message_axis_discrete,
-        message_axis_value120,
-        message_axis_relative_direction
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_set_cursor,
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_enter,
+    message_leave,
+    message_motion,
+    message_button,
+    message_axis,
+    message_frame,
+    message_axis_source,
+    message_axis_stop,
+    message_axis_discrete,
+    message_axis_value120,
+    message_axis_relative_direction
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_set_cursor,
+    message_release
+>{};
 }; // struct wl_pointer
 
 struct wl_keyboard
@@ -4769,22 +4769,22 @@ struct message_repeat_info
 struct Meta
 {
     static constexpr char name[] = "wl_keyboard";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_keymap,
-        message_enter,
-        message_leave,
-        message_key,
-        message_modifiers,
-        message_repeat_info
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_keymap,
+    message_enter,
+    message_leave,
+    message_key,
+    message_modifiers,
+    message_repeat_info
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_release
+>{};
 }; // struct wl_keyboard
 
 struct wl_touch
@@ -5152,23 +5152,23 @@ struct message_orientation
 struct Meta
 {
     static constexpr char name[] = "wl_touch";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_down,
-        message_up,
-        message_motion,
-        message_frame,
-        message_cancel,
-        message_shape,
-        message_orientation
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_down,
+    message_up,
+    message_motion,
+    message_frame,
+    message_cancel,
+    message_shape,
+    message_orientation
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_release
+>{};
 }; // struct wl_touch
 
 struct wl_output
@@ -5488,22 +5488,22 @@ struct message_description
 struct Meta
 {
     static constexpr char name[] = "wl_output";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_geometry,
-        message_mode,
-        message_done,
-        message_scale,
-        message_name,
-        message_description
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_release
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_geometry,
+    message_mode,
+    message_done,
+    message_scale,
+    message_name,
+    message_description
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_release
+>{};
 }; // struct wl_output
 
 struct wl_region
@@ -5651,18 +5651,18 @@ struct message_subtract
 struct Meta
 {
     static constexpr char name[] = "wl_region";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_add,
-        message_subtract
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_add,
+    message_subtract
+>{};
 }; // struct wl_region
 
 struct wl_subcompositor
@@ -5754,17 +5754,17 @@ struct message_get_subsurface
 struct Meta
 {
     static constexpr char name[] = "wl_subcompositor";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_get_subsurface
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_get_subsurface
+>{};
 }; // struct wl_subcompositor
 
 struct wl_subsurface
@@ -6004,21 +6004,21 @@ struct message_set_desync
 struct Meta
 {
     static constexpr char name[] = "wl_subsurface";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_set_position,
-        message_place_above,
-        message_place_below,
-        message_set_sync,
-        message_set_desync
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_set_position,
+    message_place_above,
+    message_place_below,
+    message_set_sync,
+    message_set_desync
+>{};
 }; // struct wl_subsurface
 
 struct wl_fixes
@@ -6146,18 +6146,18 @@ struct message_ack_global_remove
 struct Meta
 {
     static constexpr char name[] = "wl_fixes";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_destroy_registry,
-        message_ack_global_remove
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_destroy_registry,
+    message_ack_global_remove
+>{};
 }; // struct wl_fixes
 }; // struct wayland
 struct xdg_decoration_unstable_v1
@@ -6247,17 +6247,17 @@ struct message_get_toplevel_decoration
 struct Meta
 {
     static constexpr char name[] = "zxdg_decoration_manager_v1";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_get_toplevel_decoration
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_get_toplevel_decoration
+>{};
 }; // struct zxdg_decoration_manager_v1
 
 struct zxdg_toplevel_decoration_v1
@@ -6417,19 +6417,19 @@ struct message_configure
 struct Meta
 {
     static constexpr char name[] = "zxdg_toplevel_decoration_v1";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_configure
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_set_mode,
-        message_unset_mode
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_configure
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_set_mode,
+    message_unset_mode
+>{};
 }; // struct zxdg_toplevel_decoration_v1
 }; // struct xdg_decoration_unstable_v1
 struct xdg_shell
@@ -6639,20 +6639,20 @@ struct message_ping
 struct Meta
 {
     static constexpr char name[] = "xdg_wm_base";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_ping
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_create_positioner,
-        message_get_xdg_surface,
-        message_pong
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_ping
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_create_positioner,
+    message_get_xdg_surface,
+    message_pong
+>{};
 }; // struct xdg_wm_base
 
 struct xdg_positioner
@@ -7076,25 +7076,25 @@ struct message_set_parent_configure
 struct Meta
 {
     static constexpr char name[] = "xdg_positioner";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_set_size,
-        message_set_anchor_rect,
-        message_set_anchor,
-        message_set_gravity,
-        message_set_constraint_adjustment,
-        message_set_offset,
-        message_set_reactive,
-        message_set_parent_size,
-        message_set_parent_configure
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_set_size,
+    message_set_anchor_rect,
+    message_set_anchor,
+    message_set_gravity,
+    message_set_constraint_adjustment,
+    message_set_offset,
+    message_set_reactive,
+    message_set_parent_size,
+    message_set_parent_configure
+>{};
 }; // struct xdg_positioner
 
 struct xdg_surface
@@ -7358,21 +7358,21 @@ struct message_configure
 struct Meta
 {
     static constexpr char name[] = "xdg_surface";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_configure
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_get_toplevel,
-        message_get_popup,
-        message_set_window_geometry,
-        message_ack_configure
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_configure
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_get_toplevel,
+    message_get_popup,
+    message_set_window_geometry,
+    message_ack_configure
+>{};
 }; // struct xdg_surface
 
 struct xdg_toplevel
@@ -8120,33 +8120,33 @@ struct message_wm_capabilities
 struct Meta
 {
     static constexpr char name[] = "xdg_toplevel";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_configure,
-        message_close,
-        message_configure_bounds,
-        message_wm_capabilities
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_set_parent,
-        message_set_title,
-        message_set_app_id,
-        message_show_window_menu,
-        message_move,
-        message_resize,
-        message_set_max_size,
-        message_set_min_size,
-        message_set_maximized,
-        message_unset_maximized,
-        message_set_fullscreen,
-        message_unset_fullscreen,
-        message_set_minimized
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_configure,
+    message_close,
+    message_configure_bounds,
+    message_wm_capabilities
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_set_parent,
+    message_set_title,
+    message_set_app_id,
+    message_show_window_menu,
+    message_move,
+    message_resize,
+    message_set_max_size,
+    message_set_min_size,
+    message_set_maximized,
+    message_unset_maximized,
+    message_set_fullscreen,
+    message_unset_fullscreen,
+    message_set_minimized
+>{};
 }; // struct xdg_toplevel
 
 struct xdg_popup
@@ -8406,21 +8406,21 @@ struct message_repositioned
 struct Meta
 {
     static constexpr char name[] = "xdg_popup";
-    template <template <typename... T> class TupleLike>
-    struct Events : TupleLike
-    <
-        message_configure,
-        message_popup_done,
-        message_repositioned
-    >{};
-    template <template <typename... T> class TupleLike>
-    struct Requests : TupleLike
-    <
-        message_destroy,
-        message_grab,
-        message_reposition
-    >{};
 };
+template <template <typename... T> class TupleLike>
+struct Events : TupleLike
+<
+    message_configure,
+    message_popup_done,
+    message_repositioned
+>{};
+template <template <typename... T> class TupleLike>
+struct Requests : TupleLike
+<
+    message_destroy,
+    message_grab,
+    message_reposition
+>{};
 }; // struct xdg_popup
 }; // struct xdg_shell
 }; // struct protocols
