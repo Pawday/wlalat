@@ -96,23 +96,6 @@ using wayland = GroupT::wayland;
 using xdg_shell = GroupT::xdg_shell;
 using xdg_decoration_unstable_v1 = GroupT::xdg_decoration_unstable_v1;
 
-template <typename TupleT>
-struct Tuple2Variant;
-template <typename... Alternatives>
-struct Tuple2Variant<std::tuple<Alternatives...>>
-    : std::type_identity<std::variant<Alternatives...>>
-{
-};
-
-template <>
-struct Tuple2Variant<std::tuple<>>
-    : std::type_identity<std::variant<std::monostate>>
-{
-};
-
-template <typename TupleT>
-using Tuple2VariantT = typename Tuple2Variant<TupleT>::type;
-
 template <typename HandlerT, typename MsgT>
 struct PointerTagNameIterator
 {
@@ -372,6 +355,11 @@ static bool operator==(const ObjectIDManager::ID &l, const wlalat::Object &o)
 
 struct SocketEventDispatcher
 {
+    template <typename... Alts>
+    struct MessageVariantId : std::type_identity<std::variant<Alts...>>
+    {
+    };
+
     SocketEventDispatcher(wlalat::Unix::Socket &s) : _s{s}
     {
     }
@@ -380,13 +368,8 @@ struct SocketEventDispatcher
     void set_listener(
         uint_least32_t object_id, LType &L, std::type_identity<InterfaceT>)
     {
-        using Events = InterfaceT::template Events<std::tuple>;
-        auto deduce_tuple = []<typename... Args>(const std::tuple<Args...> &t) {
-            return t;
-        };
-        using VariantT = Tuple2VariantT<decltype(deduce_tuple(Events{}))>;
-
-        std::type_identity<VariantT> event_id{};
+        using EventsVariantId = InterfaceT::template Events<MessageVariantId>;
+        EventsVariantId event_id{};
         _listeners.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(object_id),
@@ -491,6 +474,13 @@ struct SocketEventDispatcher
 
     wlalat::Unix::Socket &_s;
     std::unordered_map<uint_least32_t, Listener> _listeners;
+};
+
+// GCC compat https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85282
+template <>
+struct SocketEventDispatcher::MessageVariantId<>
+    : std::type_identity<std::variant<std::monostate>>
+{
 };
 
 struct Callback
