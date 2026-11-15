@@ -84,7 +84,7 @@ struct Parser
         if (!has(tid)) {
             return false;
         }
-        o = next(tid);
+        o = T{next(tid)};
         return true;
     }
 

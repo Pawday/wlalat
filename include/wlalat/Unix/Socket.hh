@@ -9,7 +9,6 @@
 #include <wlalat/Parser.hh>
 #include <wlalat/PointerTagIterator.hh>
 #include <wlalat/Types.hh>
-#include <wlalat/Unix/TypeTags.hh>
 
 #include <sys/socket.h>
 #include <sys/uio.h>

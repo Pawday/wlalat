@@ -5,7 +5,6 @@
 #include "Types.hh"
 #include "Writer.hh"
 
-#include "Unix/TypeTags.hh"
 #include "wlalat/PointerTagIterator.hh"
 
 #include <cstddef>
@@ -128,12 +127,12 @@ struct MessageSerializer
             fds->push_back(fd);
         }
 
-        void operator()(const void *fd, Unix::WlTags::wl_fd)
+        void operator()(const void *fd, std::type_identity<void *>)
         {
             write_fd(fd);
         };
 
-        void operator()(void *fd, Unix::WlTags::wl_fd)
+        void operator()(void *fd, std::type_identity<void *>)
         {
             write_fd(fd);
         };
