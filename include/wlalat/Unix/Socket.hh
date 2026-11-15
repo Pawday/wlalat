@@ -138,7 +138,7 @@ struct Socket
             cmsg = cmsghdr{};
             cmsg.cmsg_level = SOL_SOCKET;
             cmsg.cmsg_type = SCM_RIGHTS;
-            cmsg.cmsg_len = CMSG_LEN(sizeof(fd));
+            cmsg.cmsg_len = CMSG_LEN(sizeof(int));
             void *cmsg_payload = CMSG_DATA(cmsg_p);
             std::memcpy(cmsg_payload, fd, sizeof(int));
             cmsg_p = CMSG_NXTHDR(&sendmsg_arg, cmsg_p);
