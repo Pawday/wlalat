@@ -78,9 +78,10 @@ struct Parser
         return Array{P.parse().value()};
     }
 
-    template <typename T, typename TagT>
-    bool operator()(T &o, std::type_identity<TagT> tid)
+    template <typename T>
+    bool operator()(T &o)
     {
+        std::type_identity<T> tid;
         if (!has(tid)) {
             return false;
         }

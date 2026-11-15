@@ -7,7 +7,7 @@
 #include <wlalat/MessageHeader.hh>
 #include <wlalat/MessageSerializer.hh>
 #include <wlalat/Parser.hh>
-#include <wlalat/PointerTagIterator.hh>
+#include <wlalat/PointerIterator.hh>
 #include <wlalat/Types.hh>
 
 #include <sys/socket.h>
@@ -231,7 +231,7 @@ struct Socket
         bool good = true;
 
         ParserCallHandler p{M, P};
-        PointerTagIterator<decltype(M), decltype(p)>{p}();
+        PointerIterator<decltype(M), decltype(p)>{p}();
         if (!p.good) {
             return std::unexpected{"Parse failure"};
         }
@@ -247,13 +247,13 @@ struct Socket
         wlalat::Parser &P;
         bool good = true;
 
-        template <typename PointerT, typename TagT>
-        void operator()(PointerT &pointer, TagT tag)
+        template <typename PointerT>
+        void operator()(PointerT &pointer)
         {
             if (!good) {
                 return;
             }
-            good = good && P(M.*pointer, tag);
+            good = good && P(M.*pointer);
         }
     };
 

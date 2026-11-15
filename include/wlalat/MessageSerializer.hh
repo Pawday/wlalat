@@ -5,7 +5,7 @@
 #include "Types.hh"
 #include "Writer.hh"
 
-#include "wlalat/PointerTagIterator.hh"
+#include "wlalat/PointerIterator.hh"
 
 #include <cstddef>
 #include <cstdint>
@@ -15,9 +15,7 @@
 #include <memory>
 #include <memory_resource>
 #include <span>
-#include <tuple>
 #include <type_traits>
-#include <variant>
 #include <vector>
 
 namespace wlalat
@@ -127,20 +125,15 @@ struct MessageSerializer
             fds->push_back(fd);
         }
 
-        void operator()(const void *fd, std::type_identity<void *>)
+        void operator()(void *const fd)
         {
             write_fd(fd);
         };
 
-        void operator()(void *fd, std::type_identity<void *>)
+        template <typename T>
+        void operator()(const T &v)
         {
-            write_fd(fd);
-        };
-
-        template <typename T, typename TagT>
-        void operator()(const T &v, TagT id)
-        {
-            W(v, id);
+            W(v);
         }
     };
 
@@ -150,10 +143,10 @@ struct MessageSerializer
         const MessageT &M;
         UpstreamWriterT &W;
 
-        template <typename PointerT, typename TagT>
-        void operator()(PointerT ptr, TagT tag)
+        template <typename PointerT>
+        void operator()(PointerT ptr)
         {
-            W(M.*ptr, tag);
+            W(M.*ptr);
         }
     };
 
@@ -162,7 +155,7 @@ struct MessageSerializer
     {
         using RawMessageT = std::remove_cvref_t<MessageT>;
         WriteArgsHandler handler{M, W};
-        PointerTagIterator<RawMessageT, decltype(handler)>{handler}();
+        PointerIterator<RawMessageT, decltype(handler)>{handler}();
     }
 
     std::pmr::vector<std::byte> data;
