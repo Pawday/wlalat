@@ -94,7 +94,7 @@ using xdg_shell = GroupT::xdg_shell;
 using xdg_decoration_unstable_v1 = GroupT::xdg_decoration_unstable_v1;
 
 template <typename HandlerT, typename MsgT>
-struct PointerTagNameIterator
+struct PointerNameIterator
 {
     HandlerT &H;
 
@@ -104,16 +104,11 @@ struct PointerTagNameIterator
         typename MsgT::template VisitPointers<decltype(V)>{V}();
     }
 
-    template <
-        size_t End,
-        typename PointerTupleT,
-        typename TagsTupleT,
-        typename NamesTupleT>
+    template <size_t End, typename PointerTupleT, typename NamesTupleT>
     void iterate(
         std::integral_constant<size_t, End>,
         std::integral_constant<size_t, End>,
         const PointerTupleT &,
-        const TagsTupleT &,
         const NamesTupleT &)
     {
     }
@@ -122,29 +117,25 @@ struct PointerTagNameIterator
         size_t I,
         size_t End,
         typename PointerTupleT,
-        typename TagsTupleT,
         typename NamesTupleT>
     void iterate(
         std::integral_constant<size_t, I>,
         std::integral_constant<size_t, End> end,
         const PointerTupleT &p,
-        const TagsTupleT &t,
         const NamesTupleT &n)
     {
         using Next = std::integral_constant<size_t, I + 1>;
-        H(std::get<I>(p), std::get<I>(t), std::get<I>(n));
-        iterate(Next{}, end, p, t, n);
+        H(std::get<I>(p), std::get<I>(n));
+        iterate(Next{}, end, p, n);
     }
 
     template <typename... PointerTs, typename... TagTs, typename... NameTs>
     void call_handler(
-        const std::tuple<PointerTs...> &p,
-        const std::tuple<TagTs...> &t,
-        const std::tuple<NameTs...> &n)
+        const std::tuple<PointerTs...> &p, const std::tuple<NameTs...> &n)
     {
         using Begin = std::integral_constant<size_t, 0>;
         using End = std::tuple_size<std::tuple<PointerTs...>>;
-        iterate(Begin{}, End{}, p, t, n);
+        iterate(Begin{}, End{}, p, n);
     }
 
   private:
@@ -153,7 +144,7 @@ struct PointerTagNameIterator
     {
         NamesVisitor(
             const PointersTupleT &pointers,
-            PointerTagNameIterator<HandlerT, MsgT> &iter)
+            PointerNameIterator<HandlerT, MsgT> &iter)
             : _pointers{pointers}, _iter{iter}
         {
         }
@@ -161,20 +152,18 @@ struct PointerTagNameIterator
         template <typename... NameTs>
         void operator()(NameTs... names)
         {
-            using TagsTupleT = typename MsgT::template Tags<std::tuple>;
-            TagsTupleT tags{};
             auto tuple = std::make_tuple(names...);
-            _iter.call_handler(_pointers, tags, tuple);
+            _iter.call_handler(_pointers, tuple);
         }
 
       private:
         const PointersTupleT &_pointers;
-        PointerTagNameIterator &_iter;
+        PointerNameIterator &_iter;
     };
 
     struct PointersVisitor
     {
-        explicit PointersVisitor(PointerTagNameIterator<HandlerT, MsgT> &iter)
+        explicit PointersVisitor(PointerNameIterator<HandlerT, MsgT> &iter)
             : _iter{iter}
         {
         }
@@ -188,7 +177,7 @@ struct PointerTagNameIterator
         }
 
       private:
-        PointerTagNameIterator &_iter;
+        PointerNameIterator &_iter;
     };
 };
 
@@ -203,7 +192,7 @@ struct TypeFormatVis
     {
         _output.clear();
         MyFormatDispatcher D{*this};
-        PointerTagNameIterator<MyFormatDispatcher, MsgT>{D}();
+        PointerNameIterator<MyFormatDispatcher, MsgT>{D}();
         return _output;
     }
 
@@ -217,56 +206,55 @@ struct TypeFormatVis
         TypeFormatVis &_v;
 
         size_t rt_idx = 0;
-        template <typename PointerT, typename TagT, typename NameT>
-        void operator()(PointerT ptr, TagT tag, NameT name)
+        template <typename PointerT, typename NameT>
+        void operator()(PointerT ptr, NameT name)
         {
-            _v.my_format_taged(rt_idx++, tag, _v.M.*ptr, name);
+            _v.my_format_indexed(rt_idx++, _v.M.*ptr, name);
         }
     };
 
-    template <typename TagT, typename ValueT>
-    void my_format_taged(
-        size_t idx, TagT tag, const ValueT &v, std::string_view name)
+    template <typename ValueT>
+    void my_format_indexed(size_t idx, const ValueT &v, std::string_view name)
     {
         if (idx != 0) {
             std::format_to(O, ", ");
         }
         std::format_to(O, "{}=", name);
-        my_format(tag, v);
+        my_format(v);
     }
 
-    void my_format(PMeta::new_id_tag, const wlalat::NewID &v)
+    void my_format(const wlalat::NewID &v)
     {
         std::format_to(O, "(new_id)@{}", v.raw());
     }
 
-    void my_format(PMeta::object_tag, const wlalat::Object &v)
+    void my_format(const wlalat::Object &v)
     {
         std::format_to(O, "(object)@{}", v.raw());
     }
 
-    void my_format(PMeta::int_tag, const wlalat::Int &v)
+    void my_format(const wlalat::Int &v)
     {
         std::format_to(O, "(int){}", v.raw());
     }
 
-    void my_format(PMeta::array_tag, const wlalat::Array &v)
+    void my_format(const wlalat::Array &v)
     {
         std::format_to(O, "(array){}", hexdump(v));
     }
 
-    void my_format(PMeta::uint_tag, const wlalat::UInt &v)
+    void my_format(const wlalat::UInt &v)
     {
         std::format_to(O, "(uint){}", v.raw());
     }
 
-    void my_format(PMeta::fd_tag, const void *vp)
+    void my_format(const void *vp)
     {
         const int *vip = static_cast<const int *>(vp);
         std::format_to(O, "(fd){}", *vip);
     }
 
-    void my_format(PMeta::string_tag, const wlalat::String &v)
+    void my_format(const wlalat::String &v)
     {
         std::format_to(O, "\"{}\"", std::string_view{v});
     }
