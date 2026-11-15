@@ -78,14 +78,6 @@ struct PMeta
     using fixed_t = wlalat::Fixed;
     using array_t = wlalat::Array;
     using fd_t = void *;
-
-    using int_tag = std::type_identity<int_t>;
-    using uint_tag = std::type_identity<uint_t>;
-    using new_id_tag = std::type_identity<new_id_t>;
-    using object_tag = std::type_identity<object_t>;
-    using string_tag = std::type_identity<string_t>;
-    using array_tag = std::type_identity<array_t>;
-    using fd_tag = std::type_identity<fd_t>;
 };
 
 using GroupT = protocols<PMeta>;
