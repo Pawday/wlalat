@@ -121,7 +121,7 @@ struct PointerNameIterator
         iterate(Next{}, end, p, n);
     }
 
-    template <typename... PointerTs, typename... TagTs, typename... NameTs>
+    template <typename... PointerTs, typename... NameTs>
     void call_handler(
         const std::tuple<PointerTs...> &p, const std::tuple<NameTs...> &n)
     {
@@ -339,10 +339,10 @@ struct SocketEventDispatcher
     {
     }
 
-    template <typename LType, typename InterfaceT>
-    void set_listener(
-        wlalat::Object object_id, LType &L, std::type_identity<InterfaceT>)
+    template <typename LType>
+    void set_listener(wlalat::Object object_id, LType &L)
     {
+        using InterfaceT = typename LType::InterfaceType;
         using EventsVariantId = InterfaceT::template Events<MessageVariantId>;
         EventsVariantId event_id{};
         _listeners.emplace(
@@ -460,14 +460,16 @@ struct SocketEventDispatcher::MessageVariantId<>
 
 struct Callback
 {
-    using Tag = wayland::wl_callback;
+    using InterfaceType = wayland::wl_callback;
 
-    Callback(ObjectIDManager::ID id, std::optional<Tag::message_done> &done_msg)
+    Callback(
+        ObjectIDManager::ID id,
+        std::optional<InterfaceType::message_done> &done_msg)
         : _id{id}, _done_msg{done_msg}
     {
     }
 
-    void on(const Tag::message_done &M)
+    void on(const InterfaceType::message_done &M)
     {
         std::println("<- wl_callback@{}.{}", _id.raw(), dump_message(M));
         _done_msg = M;
@@ -475,12 +477,12 @@ struct Callback
 
   private:
     ObjectIDManager::ID _id;
-    std::optional<Tag::message_done> &_done_msg;
+    std::optional<InterfaceType::message_done> &_done_msg;
 };
 
 struct Display
 {
-    using Tag = wayland::wl_display;
+    using InterfaceType = wayland::wl_display;
 
     Display(
         wlalat::Unix::Socket &s,
@@ -499,8 +501,7 @@ struct Display
 
         auto obj = std::make_shared<Callback>(
             ObjectIDManager::ID{msg.callback}, done_msg);
-        _disp.set_listener(
-            callback_object_id, *obj, std::type_identity<Callback::Tag>{});
+        _disp.set_listener(callback_object_id, *obj);
         _sync_callbacks[callback_object_id.raw()] = obj;
 
         std::println("-> wl_display@1.{}", dump_message(msg));
@@ -537,7 +538,7 @@ struct Display
 
 struct Surface
 {
-    using Tag = wayland::wl_surface;
+    using InterfaceType = wayland::wl_surface;
 
     Surface(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s} {};
@@ -586,7 +587,7 @@ struct Surface
 
 struct Compositor
 {
-    using Tag = wayland::wl_compositor;
+    using InterfaceType = wayland::wl_compositor;
 
     Compositor(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s} {};
@@ -610,7 +611,7 @@ struct Compositor
 
 struct Buffer
 {
-    using Tag = wayland::wl_buffer;
+    using InterfaceType = wayland::wl_buffer;
 
     Buffer(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s} {};
 
@@ -634,7 +635,7 @@ struct Buffer
 
 struct ShmPool
 {
-    using Tag = wayland::wl_shm_pool;
+    using InterfaceType = wayland::wl_shm_pool;
 
     ShmPool(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
@@ -668,7 +669,7 @@ struct ShmPool
 
 struct Shm
 {
-    using Tag = wayland::wl_shm;
+    using InterfaceType = wayland::wl_shm;
 
     Shm(wlalat::Unix::Socket &s, ObjectIDManager::ID id) : _id{id}, _s{s}
     {
@@ -749,7 +750,7 @@ struct Shm
 
 struct XDGTopLevel
 {
-    using Tag = xdg_shell::xdg_toplevel;
+    using InterfaceType = xdg_shell::xdg_toplevel;
     XDGTopLevel(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s}
     {
@@ -785,7 +786,7 @@ struct XDGTopLevel
 
 struct XDGSurface
 {
-    using Tag = xdg_shell::xdg_surface;
+    using InterfaceType = xdg_shell::xdg_surface;
     XDGSurface(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
     }
@@ -826,7 +827,7 @@ struct XDGSurface
 
 struct XDGBase
 {
-    using Tag = xdg_shell::xdg_wm_base;
+    using InterfaceType = xdg_shell::xdg_wm_base;
 
     XDGBase(ObjectIDManager::ID id, wlalat::Unix::Socket &s) : _id{id}, _s{s}
     {
@@ -865,14 +866,15 @@ struct XDGBase
 
 struct XDGDecorTopLevel
 {
-    using Tag = xdg_decoration_unstable_v1::zxdg_toplevel_decoration_v1;
+    using InterfaceType =
+        xdg_decoration_unstable_v1::zxdg_toplevel_decoration_v1;
 
     XDGDecorTopLevel(ObjectIDManager::ID id, wlalat::Unix::Socket &s)
         : _id{id}, _s{s}
     {
     }
 
-    void on(const Tag::message_configure &M)
+    void on(const InterfaceType::message_configure &M)
     {
         std::println(
             "<- zxdg_toplevel_decoration_v1@{}.{}", _id.raw(), dump_message(M));
@@ -880,7 +882,7 @@ struct XDGDecorTopLevel
 
     void set_server_side()
     {
-        Tag::message_set_mode M{};
+        InterfaceType::message_set_mode M{};
         M.mode = wlalat::UInt{2}; // server side mode
         std::println(
             "-> zxdg_toplevel_decoration_v1@{}.{}", _id.raw(), dump_message(M));
@@ -894,7 +896,8 @@ struct XDGDecorTopLevel
 
 struct XDGDecorManager
 {
-    using Tag = xdg_decoration_unstable_v1::zxdg_decoration_manager_v1;
+    using InterfaceType =
+        xdg_decoration_unstable_v1::zxdg_decoration_manager_v1;
     XDGDecorManager(
         ObjectIDManager::ID id,
         wlalat::Unix::Socket &s,
@@ -912,7 +915,7 @@ struct XDGDecorManager
         }
 
         wlalat::Object msg_id_obj = _id_manager.allocate();
-        Tag::message_get_toplevel_decoration msg{};
+        InterfaceType::message_get_toplevel_decoration msg{};
         msg.id = wlalat::NewID{msg_id_obj};
         msg.toplevel = top_level.id();
         std::println(
@@ -921,11 +924,7 @@ struct XDGDecorManager
             dump_message(msg));
         _s.send(_id, msg);
         O.emplace(ObjectIDManager::ID{msg.id}, _s);
-        _disp.set_listener(
-            msg_id_obj,
-            O.value(),
-            std::type_identity<
-                xdg_decoration_unstable_v1::zxdg_toplevel_decoration_v1>{});
+        _disp.set_listener(msg_id_obj, O.value());
     }
 
   private:
@@ -937,7 +936,7 @@ struct XDGDecorManager
 
 struct Registry
 {
-    using Tag = wayland::wl_registry;
+    using InterfaceType = wayland::wl_registry;
 
     Registry(
         wlalat::Unix::Socket &s,
@@ -946,7 +945,7 @@ struct Registry
         SocketEventDispatcher &disp)
         : _id{id}, _s{s}, _id_manager{id_manager}, _disp{disp}
     {
-        _disp.set_listener(_id, *this, std::type_identity<Tag>{});
+        _disp.set_listener(_id, *this);
     }
 
     void on(const wayland::wl_registry::message_global &msg)
@@ -1030,10 +1029,7 @@ try {
     Display display{s, id_manager, disp};
 
     wlalat::Object protocol_hardcoded_display_object_id{1};
-    disp.set_listener(
-        protocol_hardcoded_display_object_id,
-        display,
-        std::type_identity<wayland::wl_display>{});
+    disp.set_listener(protocol_hardcoded_display_object_id, display);
 
     std::optional<Shm> shm;
     std::optional<ShmPool> pool;
@@ -1082,12 +1078,12 @@ try {
         }
 
         if (!decor_manager) {
-            using Tag = decltype(decor_manager)::value_type::Tag;
-            using IdT = std::type_identity<Tag>;
-            auto id_op = registry.try_bind(Tag::Meta::name, {});
+            using InterfaceType =
+                decltype(decor_manager)::value_type::InterfaceType;
+            auto id_op = registry.try_bind(InterfaceType::Meta::name, {});
             if (id_op) {
                 decor_manager.emplace(id_op.value(), s, id_manager, disp);
-                disp.set_listener(id_op.value(), decor_manager.value(), IdT{});
+                disp.set_listener(id_op.value(), decor_manager.value());
             }
         }
 
@@ -1102,78 +1098,69 @@ try {
         }
 
         if (!shm) {
-            using Tag = decltype(shm)::value_type::Tag;
-            using IdT = std::type_identity<Tag>;
-            auto id_op = registry.try_bind(Tag::Meta::name, {});
+            using InterfaceType = decltype(shm)::value_type::InterfaceType;
+            auto id_op = registry.try_bind(InterfaceType::Meta::name, {});
             if (id_op) {
                 shm.emplace(s, id_op.value());
-                disp.set_listener(id_op.value(), shm.value(), IdT{});
+                disp.set_listener(id_op.value(), shm.value());
             }
         }
 
         if (!compositor) {
-            using Tag = decltype(compositor)::value_type::Tag;
-            using IdT = std::type_identity<Tag>;
-            auto id_op = registry.try_bind(Tag::Meta::name, {});
+            using InterfaceType =
+                decltype(compositor)::value_type::InterfaceType;
+            auto id_op = registry.try_bind(InterfaceType::Meta::name, {});
             if (id_op) {
                 compositor.emplace(id_op.value(), s);
-                disp.set_listener(id_op.value(), compositor.value(), IdT{});
+                disp.set_listener(id_op.value(), compositor.value());
             }
         }
 
         if (!xdg) {
-            using Tag = decltype(xdg)::value_type::Tag;
-            using IdT = std::type_identity<Tag>;
-            auto id_op = registry.try_bind(Tag::Meta::name, {});
+            using InterfaceType = decltype(xdg)::value_type::InterfaceType;
+            auto id_op = registry.try_bind(InterfaceType::Meta::name, {});
             if (id_op) {
                 xdg.emplace(id_op.value(), s);
-                using IdT = std::type_identity<decltype(xdg)::value_type::Tag>;
-                disp.set_listener(id_op.value(), xdg.value(), IdT{});
+                using IdT = std::type_identity<
+                    decltype(xdg)::value_type::InterfaceType>;
+                disp.set_listener(id_op.value(), xdg.value());
             }
         }
 
         if (!xdg_surface && surface && xdg) {
             auto id = xdg->get_xdg_surface(id_manager, surface->id());
             xdg_surface.emplace(id, s);
-            using IdT =
-                std::type_identity<decltype(xdg_surface)::value_type::Tag>;
-            disp.set_listener(id, xdg_surface.value(), IdT{});
+            disp.set_listener(id, xdg_surface.value());
         }
 
         if (!xdg_top_level && xdg_surface) {
             auto id = xdg_surface->get_top_level(id_manager);
             xdg_top_level.emplace(id, s);
-            using IdT =
-                std::type_identity<decltype(xdg_top_level)::value_type::Tag>;
-            disp.set_listener(id, xdg_top_level.value(), IdT{});
+            disp.set_listener(id, xdg_top_level.value());
         }
 
         if (compositor && !surface) {
             auto id = compositor->create_surface(id_manager);
             surface.emplace(id, s);
-            using IdT = std::type_identity<decltype(surface)::value_type::Tag>;
-            disp.set_listener(id, surface.value(), IdT{});
+            disp.set_listener(id, surface.value());
         }
 
         if (shm && !pool) {
             auto pool_id = shm->create_pool(id_manager);
             pool.emplace(pool_id, s);
-            using IdT = std::type_identity<decltype(pool)::value_type::Tag>;
-            disp.set_listener(pool_id, pool.value(), IdT{});
+            disp.set_listener(pool_id, pool.value());
         }
 
         if (pool && !buffer_0) {
             auto buffer_id = pool->create_buffer(id_manager, 0);
             buffer_0.emplace(buffer_id, s);
-            using IdT = std::type_identity<decltype(buffer_0)::value_type::Tag>;
-            disp.set_listener(buffer_id, buffer_0.value(), IdT{});
+            disp.set_listener(buffer_id, buffer_0.value());
         }
 
         if (pool && !buffer_1) {
             auto buffer_id = pool->create_buffer(id_manager, 1);
             buffer_1.emplace(buffer_id, s);
-            using IdT = std::type_identity<decltype(buffer_1)::value_type::Tag>;
-            disp.set_listener(buffer_id, buffer_1.value(), IdT{});
+            disp.set_listener(buffer_id, buffer_1.value());
         }
 
         bool can_initial_commit = !initial_commit;
