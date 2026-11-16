@@ -199,19 +199,16 @@ struct Generator
         return B0;
     }
 
-    LineList gen_args_meta(
-        std::string_view msg_name,
-        size_t opcode,
-        std::string_view interface_type_using)
+    LineList gen_args_meta(std::string_view msg_name, size_t opcode)
     {
         LineList O;
         O += "struct Meta";
         O += "{";
         LineList B0;
 
-        B0 += std::format("using InterfaceTag = {};", interface_type_using);
         B0 += std::format("static constexpr char name[] = \"{}\";", msg_name);
-        B0 += std::format("static constexpr const unsigned short opcode = {};", opcode);
+        B0 += std::format(
+            "static constexpr const unsigned short opcode = {};", opcode);
 
         B0.indent();
         O += std::move(B0);
@@ -317,7 +314,7 @@ struct Generator
         }
 
         auto type_using = std::format("message_{}", name);
-        B += gen_args_meta(name, opcode, interface_name);
+        B += gen_args_meta(name, opcode);
 
         std::vector<std::string_view> arg_names;
         std::vector<std::string_view> arg_types;
@@ -329,6 +326,7 @@ struct Generator
         }
 
         B += std::format("using Type = {};", type_using);
+        B += std::format("using InterfaceType = {};", interface_name);
         B += gen_VisitPointers(arg_names);
         B += gen_VisitNames(arg_names);
         B += gen_Tags(arg_types);

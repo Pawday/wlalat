@@ -10,11 +10,11 @@ struct message_sync
     typename PMeta::new_id_t callback;
     struct Meta
     {
-        using InterfaceTag = wl_display;
         static constexpr char name[] = "sync";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_sync;
+    using InterfaceType = wl_display;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -50,11 +50,11 @@ struct message_get_registry
     typename PMeta::new_id_t registry;
     struct Meta
     {
-        using InterfaceTag = wl_display;
         static constexpr char name[] = "get_registry";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_get_registry;
+    using InterfaceType = wl_display;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -92,11 +92,11 @@ struct message_error
     typename PMeta::string_t message;
     struct Meta
     {
-        using InterfaceTag = wl_display;
         static constexpr char name[] = "error";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_error;
+    using InterfaceType = wl_display;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -138,11 +138,11 @@ struct message_delete_id
     typename PMeta::uint_t id;
     struct Meta
     {
-        using InterfaceTag = wl_display;
         static constexpr char name[] = "delete_id";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_delete_id;
+    using InterfaceType = wl_display;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -201,11 +201,11 @@ struct message_bind
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = wl_registry;
         static constexpr char name[] = "bind";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_bind;
+    using InterfaceType = wl_registry;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -252,11 +252,11 @@ struct message_global
     typename PMeta::uint_t version;
     struct Meta
     {
-        using InterfaceTag = wl_registry;
         static constexpr char name[] = "global";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_global;
+    using InterfaceType = wl_registry;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -298,11 +298,11 @@ struct message_global_remove
     typename PMeta::uint_t name;
     struct Meta
     {
-        using InterfaceTag = wl_registry;
         static constexpr char name[] = "global_remove";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_global_remove;
+    using InterfaceType = wl_registry;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -357,11 +357,11 @@ struct message_done
     typename PMeta::uint_t callback_data;
     struct Meta
     {
-        using InterfaceTag = wl_callback;
         static constexpr char name[] = "done";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_done;
+    using InterfaceType = wl_callback;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -414,11 +414,11 @@ struct message_create_surface
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = wl_compositor;
         static constexpr char name[] = "create_surface";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_create_surface;
+    using InterfaceType = wl_compositor;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -454,11 +454,11 @@ struct message_create_region
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = wl_compositor;
         static constexpr char name[] = "create_region";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_create_region;
+    using InterfaceType = wl_compositor;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -493,11 +493,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_compositor;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_release;
+    using InterfaceType = wl_compositor;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -554,11 +554,11 @@ struct message_create_buffer
     typename PMeta::uint_t format;
     struct Meta
     {
-        using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "create_buffer";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_create_buffer;
+    using InterfaceType = wl_shm_pool;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -608,11 +608,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_shm_pool;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -645,11 +645,11 @@ struct message_resize
     typename PMeta::int_t size;
     struct Meta
     {
-        using InterfaceTag = wl_shm_pool;
         static constexpr char name[] = "resize";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_resize;
+    using InterfaceType = wl_shm_pool;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -706,11 +706,11 @@ struct message_create_pool
     typename PMeta::int_t size;
     struct Meta
     {
-        using InterfaceTag = wl_shm;
         static constexpr char name[] = "create_pool";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_create_pool;
+    using InterfaceType = wl_shm;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -751,11 +751,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_shm;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_release;
+    using InterfaceType = wl_shm;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -788,11 +788,11 @@ struct message_format
     typename PMeta::uint_t format;
     struct Meta
     {
-        using InterfaceTag = wl_shm;
         static constexpr char name[] = "format";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_format;
+    using InterfaceType = wl_shm;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -846,11 +846,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_buffer;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_buffer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -882,11 +882,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_buffer;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_release;
+    using InterfaceType = wl_buffer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -938,11 +938,11 @@ struct message_accept
     typename PMeta::string_t mime_type;
     struct Meta
     {
-        using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "accept";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_accept;
+    using InterfaceType = wl_data_offer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -982,11 +982,11 @@ struct message_receive
     typename PMeta::fd_t fd;
     struct Meta
     {
-        using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "receive";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_receive;
+    using InterfaceType = wl_data_offer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1024,11 +1024,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_data_offer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1060,11 +1060,11 @@ struct message_finish
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "finish";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_finish;
+    using InterfaceType = wl_data_offer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1098,11 +1098,11 @@ struct message_set_actions
     typename PMeta::uint_t preferred_action;
     struct Meta
     {
-        using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "set_actions";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_set_actions;
+    using InterfaceType = wl_data_offer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1141,11 +1141,11 @@ struct message_offer
     typename PMeta::string_t mime_type;
     struct Meta
     {
-        using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "offer";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_offer;
+    using InterfaceType = wl_data_offer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1181,11 +1181,11 @@ struct message_source_actions
     typename PMeta::uint_t source_actions;
     struct Meta
     {
-        using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "source_actions";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_source_actions;
+    using InterfaceType = wl_data_offer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1221,11 +1221,11 @@ struct message_action
     typename PMeta::uint_t dnd_action;
     struct Meta
     {
-        using InterfaceTag = wl_data_offer;
         static constexpr char name[] = "action";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_action;
+    using InterfaceType = wl_data_offer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1285,11 +1285,11 @@ struct message_offer
     typename PMeta::string_t mime_type;
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "offer";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_offer;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1324,11 +1324,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1361,11 +1361,11 @@ struct message_set_actions
     typename PMeta::uint_t dnd_actions;
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "set_actions";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_set_actions;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1401,11 +1401,11 @@ struct message_target
     typename PMeta::string_t mime_type;
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "target";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_target;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1442,11 +1442,11 @@ struct message_send
     typename PMeta::fd_t fd;
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "send";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_send;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1484,11 +1484,11 @@ struct message_cancelled
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "cancelled";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_cancelled;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1520,11 +1520,11 @@ struct message_dnd_drop_performed
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "dnd_drop_performed";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_dnd_drop_performed;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1556,11 +1556,11 @@ struct message_dnd_finished
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "dnd_finished";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_dnd_finished;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1593,11 +1593,11 @@ struct message_action
     typename PMeta::uint_t dnd_action;
     struct Meta
     {
-        using InterfaceTag = wl_data_source;
         static constexpr char name[] = "action";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_action;
+    using InterfaceType = wl_data_source;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1661,11 +1661,11 @@ struct message_start_drag
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "start_drag";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_start_drag;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1711,11 +1711,11 @@ struct message_set_selection
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "set_selection";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_set_selection;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1753,11 +1753,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_release;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1790,11 +1790,11 @@ struct message_data_offer
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "data_offer";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_data_offer;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1834,11 +1834,11 @@ struct message_enter
     typename PMeta::object_t id;
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "enter";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_enter;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1885,11 +1885,11 @@ struct message_leave
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "leave";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_leave;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1924,11 +1924,11 @@ struct message_motion
     typename PMeta::fixed_t y;
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "motion";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_motion;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -1969,11 +1969,11 @@ struct message_drop
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "drop";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_drop;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2006,11 +2006,11 @@ struct message_selection
     typename PMeta::object_t id;
     struct Meta
     {
-        using InterfaceTag = wl_data_device;
         static constexpr char name[] = "selection";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_selection;
+    using InterfaceType = wl_data_device;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2071,11 +2071,11 @@ struct message_create_data_source
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "create_data_source";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_create_data_source;
+    using InterfaceType = wl_data_device_manager;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2112,11 +2112,11 @@ struct message_get_data_device
     typename PMeta::object_t seat;
     struct Meta
     {
-        using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "get_data_device";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_get_data_device;
+    using InterfaceType = wl_data_device_manager;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2154,11 +2154,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_data_device_manager;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_release;
+    using InterfaceType = wl_data_device_manager;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2211,11 +2211,11 @@ struct message_get_shell_surface
     typename PMeta::object_t surface;
     struct Meta
     {
-        using InterfaceTag = wl_shell;
         static constexpr char name[] = "get_shell_surface";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_get_shell_surface;
+    using InterfaceType = wl_shell;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2271,11 +2271,11 @@ struct message_pong
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "pong";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_pong;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2312,11 +2312,11 @@ struct message_move
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "move";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_move;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2357,11 +2357,11 @@ struct message_resize
     typename PMeta::uint_t edges;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "resize";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_resize;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2402,11 +2402,11 @@ struct message_set_toplevel
 {
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_toplevel";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_set_toplevel;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2442,11 +2442,11 @@ struct message_set_transient
     typename PMeta::uint_t flags;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_transient";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_set_transient;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2493,11 +2493,11 @@ struct message_set_fullscreen
     typename PMeta::object_t output;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_fullscreen";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_set_fullscreen;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2544,11 +2544,11 @@ struct message_set_popup
     typename PMeta::uint_t flags;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_popup";
         static constexpr const unsigned short opcode = 6;
     };
     using Type = message_set_popup;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2599,11 +2599,11 @@ struct message_set_maximized
     typename PMeta::object_t output;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_maximized";
         static constexpr const unsigned short opcode = 7;
     };
     using Type = message_set_maximized;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2639,11 +2639,11 @@ struct message_set_title
     typename PMeta::string_t title;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_title";
         static constexpr const unsigned short opcode = 8;
     };
     using Type = message_set_title;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2679,11 +2679,11 @@ struct message_set_class
     typename PMeta::string_t class_;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "set_class";
         static constexpr const unsigned short opcode = 9;
     };
     using Type = message_set_class;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2719,11 +2719,11 @@ struct message_ping
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "ping";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_ping;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2761,11 +2761,11 @@ struct message_configure
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_configure;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2806,11 +2806,11 @@ struct message_popup_done
 {
     struct Meta
     {
-        using InterfaceTag = wl_shell_surface;
         static constexpr char name[] = "popup_done";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_popup_done;
+    using InterfaceType = wl_shell_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2871,11 +2871,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2910,11 +2910,11 @@ struct message_attach
     typename PMeta::int_t y;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "attach";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_attach;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -2959,11 +2959,11 @@ struct message_damage
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "damage";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_damage;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3008,11 +3008,11 @@ struct message_frame
     typename PMeta::new_id_t callback;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "frame";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_frame;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3048,11 +3048,11 @@ struct message_set_opaque_region
     typename PMeta::object_t region;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_opaque_region";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_set_opaque_region;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3088,11 +3088,11 @@ struct message_set_input_region
     typename PMeta::object_t region;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_input_region";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_set_input_region;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3127,11 +3127,11 @@ struct message_commit
 {
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "commit";
         static constexpr const unsigned short opcode = 6;
     };
     using Type = message_commit;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3164,11 +3164,11 @@ struct message_set_buffer_transform
     typename PMeta::int_t transform;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_buffer_transform";
         static constexpr const unsigned short opcode = 7;
     };
     using Type = message_set_buffer_transform;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3204,11 +3204,11 @@ struct message_set_buffer_scale
     typename PMeta::int_t scale;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "set_buffer_scale";
         static constexpr const unsigned short opcode = 8;
     };
     using Type = message_set_buffer_scale;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3247,11 +3247,11 @@ struct message_damage_buffer
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "damage_buffer";
         static constexpr const unsigned short opcode = 9;
     };
     using Type = message_damage_buffer;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3297,11 +3297,11 @@ struct message_offset
     typename PMeta::int_t y;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "offset";
         static constexpr const unsigned short opcode = 10;
     };
     using Type = message_offset;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3340,11 +3340,11 @@ struct message_get_release
     typename PMeta::new_id_t callback;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "get_release";
         static constexpr const unsigned short opcode = 11;
     };
     using Type = message_get_release;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3380,11 +3380,11 @@ struct message_enter
     typename PMeta::object_t output;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "enter";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_enter;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3420,11 +3420,11 @@ struct message_leave
     typename PMeta::object_t output;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "leave";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_leave;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3460,11 +3460,11 @@ struct message_preferred_buffer_scale
     typename PMeta::int_t factor;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "preferred_buffer_scale";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_preferred_buffer_scale;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3500,11 +3500,11 @@ struct message_preferred_buffer_transform
     typename PMeta::uint_t transform;
     struct Meta
     {
-        using InterfaceTag = wl_surface;
         static constexpr char name[] = "preferred_buffer_transform";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_preferred_buffer_transform;
+    using InterfaceType = wl_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3572,11 +3572,11 @@ struct message_get_pointer
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_pointer";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_get_pointer;
+    using InterfaceType = wl_seat;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3612,11 +3612,11 @@ struct message_get_keyboard
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_keyboard";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_get_keyboard;
+    using InterfaceType = wl_seat;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3652,11 +3652,11 @@ struct message_get_touch
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = wl_seat;
         static constexpr char name[] = "get_touch";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_get_touch;
+    using InterfaceType = wl_seat;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3691,11 +3691,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_seat;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_release;
+    using InterfaceType = wl_seat;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3728,11 +3728,11 @@ struct message_capabilities
     typename PMeta::uint_t capabilities;
     struct Meta
     {
-        using InterfaceTag = wl_seat;
         static constexpr char name[] = "capabilities";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_capabilities;
+    using InterfaceType = wl_seat;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3768,11 +3768,11 @@ struct message_name
     typename PMeta::string_t name;
     struct Meta
     {
-        using InterfaceTag = wl_seat;
         static constexpr char name[] = "name";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_name;
+    using InterfaceType = wl_seat;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3833,11 +3833,11 @@ struct message_set_cursor
     typename PMeta::int_t hotspot_y;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "set_cursor";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_set_cursor;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3881,11 +3881,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_release;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3921,11 +3921,11 @@ struct message_enter
     typename PMeta::fixed_t surface_y;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "enter";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_enter;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -3971,11 +3971,11 @@ struct message_leave
     typename PMeta::object_t surface;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "leave";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_leave;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4016,11 +4016,11 @@ struct message_motion
     typename PMeta::fixed_t surface_y;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "motion";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_motion;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4065,11 +4065,11 @@ struct message_button
     typename PMeta::uint_t state;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "button";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_button;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4116,11 +4116,11 @@ struct message_axis
     typename PMeta::fixed_t value;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_axis;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4161,11 +4161,11 @@ struct message_frame
 {
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "frame";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_frame;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4198,11 +4198,11 @@ struct message_axis_source
     typename PMeta::uint_t axis_source;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_source";
         static constexpr const unsigned short opcode = 6;
     };
     using Type = message_axis_source;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4239,11 +4239,11 @@ struct message_axis_stop
     typename PMeta::uint_t axis;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_stop";
         static constexpr const unsigned short opcode = 7;
     };
     using Type = message_axis_stop;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4283,11 +4283,11 @@ struct message_axis_discrete
     typename PMeta::int_t discrete;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_discrete";
         static constexpr const unsigned short opcode = 8;
     };
     using Type = message_axis_discrete;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4327,11 +4327,11 @@ struct message_axis_value120
     typename PMeta::int_t value120;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_value120";
         static constexpr const unsigned short opcode = 9;
     };
     using Type = message_axis_value120;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4371,11 +4371,11 @@ struct message_axis_relative_direction
     typename PMeta::uint_t direction;
     struct Meta
     {
-        using InterfaceTag = wl_pointer;
         static constexpr char name[] = "axis_relative_direction";
         static constexpr const unsigned short opcode = 10;
     };
     using Type = message_axis_relative_direction;
+    using InterfaceType = wl_pointer;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4442,11 +4442,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_release;
+    using InterfaceType = wl_keyboard;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4481,11 +4481,11 @@ struct message_keymap
     typename PMeta::uint_t size;
     struct Meta
     {
-        using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "keymap";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_keymap;
+    using InterfaceType = wl_keyboard;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4529,11 +4529,11 @@ struct message_enter
     typename PMeta::array_t keys;
     struct Meta
     {
-        using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "enter";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_enter;
+    using InterfaceType = wl_keyboard;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4576,11 +4576,11 @@ struct message_leave
     typename PMeta::object_t surface;
     struct Meta
     {
-        using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "leave";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_leave;
+    using InterfaceType = wl_keyboard;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4622,11 +4622,11 @@ struct message_key
     typename PMeta::uint_t state;
     struct Meta
     {
-        using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "key";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_key;
+    using InterfaceType = wl_keyboard;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4675,11 +4675,11 @@ struct message_modifiers
     typename PMeta::uint_t group;
     struct Meta
     {
-        using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "modifiers";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_modifiers;
+    using InterfaceType = wl_keyboard;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4728,11 +4728,11 @@ struct message_repeat_info
     typename PMeta::int_t delay;
     struct Meta
     {
-        using InterfaceTag = wl_keyboard;
         static constexpr char name[] = "repeat_info";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_repeat_info;
+    using InterfaceType = wl_keyboard;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4793,11 +4793,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_touch;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_release;
+    using InterfaceType = wl_touch;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4835,11 +4835,11 @@ struct message_down
     typename PMeta::fixed_t y;
     struct Meta
     {
-        using InterfaceTag = wl_touch;
         static constexpr char name[] = "down";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_down;
+    using InterfaceType = wl_touch;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4892,11 +4892,11 @@ struct message_up
     typename PMeta::int_t id;
     struct Meta
     {
-        using InterfaceTag = wl_touch;
         static constexpr char name[] = "up";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_up;
+    using InterfaceType = wl_touch;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4941,11 +4941,11 @@ struct message_motion
     typename PMeta::fixed_t y;
     struct Meta
     {
-        using InterfaceTag = wl_touch;
         static constexpr char name[] = "motion";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_motion;
+    using InterfaceType = wl_touch;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -4989,11 +4989,11 @@ struct message_frame
 {
     struct Meta
     {
-        using InterfaceTag = wl_touch;
         static constexpr char name[] = "frame";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_frame;
+    using InterfaceType = wl_touch;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5025,11 +5025,11 @@ struct message_cancel
 {
     struct Meta
     {
-        using InterfaceTag = wl_touch;
         static constexpr char name[] = "cancel";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_cancel;
+    using InterfaceType = wl_touch;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5064,11 +5064,11 @@ struct message_shape
     typename PMeta::fixed_t minor;
     struct Meta
     {
-        using InterfaceTag = wl_touch;
         static constexpr char name[] = "shape";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_shape;
+    using InterfaceType = wl_touch;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5111,11 +5111,11 @@ struct message_orientation
     typename PMeta::fixed_t orientation;
     struct Meta
     {
-        using InterfaceTag = wl_touch;
         static constexpr char name[] = "orientation";
         static constexpr const unsigned short opcode = 6;
     };
     using Type = message_orientation;
+    using InterfaceType = wl_touch;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5177,11 +5177,11 @@ struct message_release
 {
     struct Meta
     {
-        using InterfaceTag = wl_output;
         static constexpr char name[] = "release";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_release;
+    using InterfaceType = wl_output;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5221,11 +5221,11 @@ struct message_geometry
     typename PMeta::int_t transform;
     struct Meta
     {
-        using InterfaceTag = wl_output;
         static constexpr char name[] = "geometry";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_geometry;
+    using InterfaceType = wl_output;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5285,11 +5285,11 @@ struct message_mode
     typename PMeta::int_t refresh;
     struct Meta
     {
-        using InterfaceTag = wl_output;
         static constexpr char name[] = "mode";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_mode;
+    using InterfaceType = wl_output;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5333,11 +5333,11 @@ struct message_done
 {
     struct Meta
     {
-        using InterfaceTag = wl_output;
         static constexpr char name[] = "done";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_done;
+    using InterfaceType = wl_output;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5370,11 +5370,11 @@ struct message_scale
     typename PMeta::int_t factor;
     struct Meta
     {
-        using InterfaceTag = wl_output;
         static constexpr char name[] = "scale";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_scale;
+    using InterfaceType = wl_output;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5410,11 +5410,11 @@ struct message_name
     typename PMeta::string_t name;
     struct Meta
     {
-        using InterfaceTag = wl_output;
         static constexpr char name[] = "name";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_name;
+    using InterfaceType = wl_output;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5450,11 +5450,11 @@ struct message_description
     typename PMeta::string_t description;
     struct Meta
     {
-        using InterfaceTag = wl_output;
         static constexpr char name[] = "description";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_description;
+    using InterfaceType = wl_output;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5512,11 +5512,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_region;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_region;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5552,11 +5552,11 @@ struct message_add
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = wl_region;
         static constexpr char name[] = "add";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_add;
+    using InterfaceType = wl_region;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5604,11 +5604,11 @@ struct message_subtract
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = wl_region;
         static constexpr char name[] = "subtract";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_subtract;
+    using InterfaceType = wl_region;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5671,11 +5671,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_subcompositor;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_subcompositor;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5710,11 +5710,11 @@ struct message_get_subsurface
     typename PMeta::object_t parent;
     struct Meta
     {
-        using InterfaceTag = wl_subcompositor;
         static constexpr char name[] = "get_subsurface";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_get_subsurface;
+    using InterfaceType = wl_subcompositor;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5773,11 +5773,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_subsurface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5811,11 +5811,11 @@ struct message_set_position
     typename PMeta::int_t y;
     struct Meta
     {
-        using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_position";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_set_position;
+    using InterfaceType = wl_subsurface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5854,11 +5854,11 @@ struct message_place_above
     typename PMeta::object_t sibling;
     struct Meta
     {
-        using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "place_above";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_place_above;
+    using InterfaceType = wl_subsurface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5894,11 +5894,11 @@ struct message_place_below
     typename PMeta::object_t sibling;
     struct Meta
     {
-        using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "place_below";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_place_below;
+    using InterfaceType = wl_subsurface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5933,11 +5933,11 @@ struct message_set_sync
 {
     struct Meta
     {
-        using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_sync";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_set_sync;
+    using InterfaceType = wl_subsurface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -5969,11 +5969,11 @@ struct message_set_desync
 {
     struct Meta
     {
-        using InterfaceTag = wl_subsurface;
         static constexpr char name[] = "set_desync";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_set_desync;
+    using InterfaceType = wl_subsurface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6027,11 +6027,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = wl_fixes;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = wl_fixes;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6064,11 +6064,11 @@ struct message_destroy_registry
     typename PMeta::object_t registry;
     struct Meta
     {
-        using InterfaceTag = wl_fixes;
         static constexpr char name[] = "destroy_registry";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_destroy_registry;
+    using InterfaceType = wl_fixes;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6105,11 +6105,11 @@ struct message_ack_global_remove
     typename PMeta::uint_t name;
     struct Meta
     {
-        using InterfaceTag = wl_fixes;
         static constexpr char name[] = "ack_global_remove";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_ack_global_remove;
+    using InterfaceType = wl_fixes;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6168,11 +6168,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = zxdg_decoration_manager_v1;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = zxdg_decoration_manager_v1;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6206,11 +6206,11 @@ struct message_get_toplevel_decoration
     typename PMeta::object_t toplevel;
     struct Meta
     {
-        using InterfaceTag = zxdg_decoration_manager_v1;
         static constexpr char name[] = "get_toplevel_decoration";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_get_toplevel_decoration;
+    using InterfaceType = zxdg_decoration_manager_v1;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6266,11 +6266,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = zxdg_toplevel_decoration_v1;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6303,11 +6303,11 @@ struct message_set_mode
     typename PMeta::uint_t mode;
     struct Meta
     {
-        using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "set_mode";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_set_mode;
+    using InterfaceType = zxdg_toplevel_decoration_v1;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6342,11 +6342,11 @@ struct message_unset_mode
 {
     struct Meta
     {
-        using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "unset_mode";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_unset_mode;
+    using InterfaceType = zxdg_toplevel_decoration_v1;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6379,11 +6379,11 @@ struct message_configure
     typename PMeta::uint_t mode;
     struct Meta
     {
-        using InterfaceTag = zxdg_toplevel_decoration_v1;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_configure;
+    using InterfaceType = zxdg_toplevel_decoration_v1;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6440,11 +6440,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = xdg_wm_base;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6477,11 +6477,11 @@ struct message_create_positioner
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "create_positioner";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_create_positioner;
+    using InterfaceType = xdg_wm_base;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6518,11 +6518,11 @@ struct message_get_xdg_surface
     typename PMeta::object_t surface;
     struct Meta
     {
-        using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "get_xdg_surface";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_get_xdg_surface;
+    using InterfaceType = xdg_wm_base;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6561,11 +6561,11 @@ struct message_pong
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "pong";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_pong;
+    using InterfaceType = xdg_wm_base;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6601,11 +6601,11 @@ struct message_ping
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = xdg_wm_base;
         static constexpr char name[] = "ping";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_ping;
+    using InterfaceType = xdg_wm_base;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6661,11 +6661,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6699,11 +6699,11 @@ struct message_set_size
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_size";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_set_size;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6745,11 +6745,11 @@ struct message_set_anchor_rect
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_anchor_rect";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_set_anchor_rect;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6794,11 +6794,11 @@ struct message_set_anchor
     typename PMeta::uint_t anchor;
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_anchor";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_set_anchor;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6834,11 +6834,11 @@ struct message_set_gravity
     typename PMeta::uint_t gravity;
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_gravity";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_set_gravity;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6874,11 +6874,11 @@ struct message_set_constraint_adjustment
     typename PMeta::uint_t constraint_adjustment;
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_constraint_adjustment";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_set_constraint_adjustment;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6915,11 +6915,11 @@ struct message_set_offset
     typename PMeta::int_t y;
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_offset";
         static constexpr const unsigned short opcode = 6;
     };
     using Type = message_set_offset;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6957,11 +6957,11 @@ struct message_set_reactive
 {
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_reactive";
         static constexpr const unsigned short opcode = 7;
     };
     using Type = message_set_reactive;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -6995,11 +6995,11 @@ struct message_set_parent_size
     typename PMeta::int_t parent_height;
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_parent_size";
         static constexpr const unsigned short opcode = 8;
     };
     using Type = message_set_parent_size;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7038,11 +7038,11 @@ struct message_set_parent_configure
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = xdg_positioner;
         static constexpr char name[] = "set_parent_configure";
         static constexpr const unsigned short opcode = 9;
     };
     using Type = message_set_parent_configure;
+    using InterfaceType = xdg_positioner;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7103,11 +7103,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = xdg_surface;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = xdg_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7140,11 +7140,11 @@ struct message_get_toplevel
     typename PMeta::new_id_t id;
     struct Meta
     {
-        using InterfaceTag = xdg_surface;
         static constexpr char name[] = "get_toplevel";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_get_toplevel;
+    using InterfaceType = xdg_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7182,11 +7182,11 @@ struct message_get_popup
     typename PMeta::object_t positioner;
     struct Meta
     {
-        using InterfaceTag = xdg_surface;
         static constexpr char name[] = "get_popup";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_get_popup;
+    using InterfaceType = xdg_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7231,11 +7231,11 @@ struct message_set_window_geometry
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = xdg_surface;
         static constexpr char name[] = "set_window_geometry";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_set_window_geometry;
+    using InterfaceType = xdg_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7280,11 +7280,11 @@ struct message_ack_configure
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = xdg_surface;
         static constexpr char name[] = "ack_configure";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_ack_configure;
+    using InterfaceType = xdg_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7320,11 +7320,11 @@ struct message_configure
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = xdg_surface;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_configure;
+    using InterfaceType = xdg_surface;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7381,11 +7381,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7418,11 +7418,11 @@ struct message_set_parent
     typename PMeta::object_t parent;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_parent";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_set_parent;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7458,11 +7458,11 @@ struct message_set_title
     typename PMeta::string_t title;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_title";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_set_title;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7498,11 +7498,11 @@ struct message_set_app_id
     typename PMeta::string_t app_id;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_app_id";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_set_app_id;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7541,11 +7541,11 @@ struct message_show_window_menu
     typename PMeta::int_t y;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "show_window_menu";
         static constexpr const unsigned short opcode = 4;
     };
     using Type = message_show_window_menu;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7591,11 +7591,11 @@ struct message_move
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "move";
         static constexpr const unsigned short opcode = 5;
     };
     using Type = message_move;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7636,11 +7636,11 @@ struct message_resize
     typename PMeta::uint_t edges;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "resize";
         static constexpr const unsigned short opcode = 6;
     };
     using Type = message_resize;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7683,11 +7683,11 @@ struct message_set_max_size
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_max_size";
         static constexpr const unsigned short opcode = 7;
     };
     using Type = message_set_max_size;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7727,11 +7727,11 @@ struct message_set_min_size
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_min_size";
         static constexpr const unsigned short opcode = 8;
     };
     using Type = message_set_min_size;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7769,11 +7769,11 @@ struct message_set_maximized
 {
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_maximized";
         static constexpr const unsigned short opcode = 9;
     };
     using Type = message_set_maximized;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7805,11 +7805,11 @@ struct message_unset_maximized
 {
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "unset_maximized";
         static constexpr const unsigned short opcode = 10;
     };
     using Type = message_unset_maximized;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7842,11 +7842,11 @@ struct message_set_fullscreen
     typename PMeta::object_t output;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_fullscreen";
         static constexpr const unsigned short opcode = 11;
     };
     using Type = message_set_fullscreen;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7881,11 +7881,11 @@ struct message_unset_fullscreen
 {
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "unset_fullscreen";
         static constexpr const unsigned short opcode = 12;
     };
     using Type = message_unset_fullscreen;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7917,11 +7917,11 @@ struct message_set_minimized
 {
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "set_minimized";
         static constexpr const unsigned short opcode = 13;
     };
     using Type = message_set_minimized;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -7956,11 +7956,11 @@ struct message_configure
     typename PMeta::array_t states;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_configure;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8001,11 +8001,11 @@ struct message_close
 {
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "close";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_close;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8039,11 +8039,11 @@ struct message_configure_bounds
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "configure_bounds";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_configure_bounds;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8082,11 +8082,11 @@ struct message_wm_capabilities
     typename PMeta::array_t capabilities;
     struct Meta
     {
-        using InterfaceTag = xdg_toplevel;
         static constexpr char name[] = "wm_capabilities";
         static constexpr const unsigned short opcode = 3;
     };
     using Type = message_wm_capabilities;
+    using InterfaceType = xdg_toplevel;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8155,11 +8155,11 @@ struct message_destroy
 {
     struct Meta
     {
-        using InterfaceTag = xdg_popup;
         static constexpr char name[] = "destroy";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_destroy;
+    using InterfaceType = xdg_popup;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8193,11 +8193,11 @@ struct message_grab
     typename PMeta::uint_t serial;
     struct Meta
     {
-        using InterfaceTag = xdg_popup;
         static constexpr char name[] = "grab";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_grab;
+    using InterfaceType = xdg_popup;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8237,11 +8237,11 @@ struct message_reposition
     typename PMeta::uint_t token;
     struct Meta
     {
-        using InterfaceTag = xdg_popup;
         static constexpr char name[] = "reposition";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_reposition;
+    using InterfaceType = xdg_popup;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8283,11 +8283,11 @@ struct message_configure
     typename PMeta::int_t height;
     struct Meta
     {
-        using InterfaceTag = xdg_popup;
         static constexpr char name[] = "configure";
         static constexpr const unsigned short opcode = 0;
     };
     using Type = message_configure;
+    using InterfaceType = xdg_popup;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8331,11 +8331,11 @@ struct message_popup_done
 {
     struct Meta
     {
-        using InterfaceTag = xdg_popup;
         static constexpr char name[] = "popup_done";
         static constexpr const unsigned short opcode = 1;
     };
     using Type = message_popup_done;
+    using InterfaceType = xdg_popup;
     template <typename Visitor>
     struct VisitPointers
     {
@@ -8368,11 +8368,11 @@ struct message_repositioned
     typename PMeta::uint_t token;
     struct Meta
     {
-        using InterfaceTag = xdg_popup;
         static constexpr char name[] = "repositioned";
         static constexpr const unsigned short opcode = 2;
     };
     using Type = message_repositioned;
+    using InterfaceType = xdg_popup;
     template <typename Visitor>
     struct VisitPointers
     {
