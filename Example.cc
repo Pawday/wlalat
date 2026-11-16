@@ -268,6 +268,20 @@ std::string dump_message(const MsgT &M)
     return std::format("{}({})", MsgT::Meta::name, dump_message_args(M));
 }
 
+template <typename MsgT>
+void dump_ingress_message(wlalat::Object id, const MsgT &M)
+{
+    auto &name = MsgT::InterfaceType::Meta::name;
+    std::println("<- {}@{}.{}", name, id.raw(), dump_message(M));
+}
+
+template <typename MsgT>
+void dump_egress_message(wlalat::Object id, const MsgT &M)
+{
+    auto &name = MsgT::InterfaceType::Meta::name;
+    std::println("-> {}@{}.{}", name, id.raw(), dump_message(M));
+}
+
 template <typename... Alternatives>
 auto alternatives_array(std::type_identity<std::variant<Alternatives...>>)
 {
@@ -413,11 +427,7 @@ struct SocketEventDispatcher
                     throw std::runtime_error{m_op.error()};
                 }
 
-                std::println(
-                    "<- {}@{}.{}",
-                    LType::InterfaceType::Meta::name,
-                    _object_id.raw(),
-                    dump_message(m_op.value()));
+                dump_ingress_message(_object_id, m_op.value());
                 L.on(m_op.value());
                 return true;
             }
@@ -509,7 +519,7 @@ struct Display
         _disp.set_listener(callback_object_id, *obj);
         _sync_callbacks[callback_object_id.raw()] = obj;
 
-        std::println("-> wl_display@1.{}", dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
         return std::weak_ptr{obj};
     }
@@ -550,14 +560,14 @@ struct Surface
     {
         wayland::wl_surface::message_attach msg{};
         msg.buffer = buffer_id;
-        std::println("-> wl_surface@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
     }
 
     void commit()
     {
         wayland::wl_surface::message_commit msg{};
-        std::println("-> wl_surface@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
     }
 
@@ -568,7 +578,7 @@ struct Surface
         msg.y = wlalat::Int{0};
         msg.width = wlalat::Int{w};
         msg.height = wlalat::Int{h};
-        std::println("-> wl_surface@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
     }
 
@@ -601,7 +611,7 @@ struct Compositor
         wayland::wl_compositor::message_create_surface msg{};
         msg.id = O;
 
-        std::println("-> wl_compositor@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
         return O;
     }
@@ -652,7 +662,7 @@ struct ShmPool
         msg.height = wlalat::Int{h};
         msg.stride = wlalat::Int{w * 4};
         msg.format = wlalat::UInt{0};
-        std::println("-> wl_shm_pool@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
         return O;
     }
@@ -731,7 +741,7 @@ struct Shm
             }
         }
 
-        std::println("-> wl_shm@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
 
         return O;
@@ -798,7 +808,7 @@ struct XDGSurface
     {
         xdg_shell::xdg_surface::message_ack_configure msg{};
         msg.serial = wlalat::UInt{serial};
-        std::println("-> xdg_surface@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
     }
 
@@ -809,7 +819,7 @@ struct XDGSurface
         xdg_shell::xdg_surface::message_get_toplevel msg{};
         msg.id = O;
 
-        std::println("-> xdg_surface@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
         return O;
     }
@@ -838,7 +848,7 @@ struct XDGBase
     {
         xdg_shell::xdg_wm_base::message_pong msg{};
         msg.serial = wlalat::UInt{serial};
-        std::println("-> xdg_wm_base@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
     }
 
@@ -849,7 +859,7 @@ struct XDGBase
         xdg_shell::xdg_wm_base::message_get_xdg_surface msg{};
         msg.id = O;
         msg.surface = surface_id;
-        std::println("-> xdg_wm_base@{}.{}", _id.raw(), dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
         return O;
     }
@@ -877,8 +887,7 @@ struct XDGDecorTopLevel
     {
         InterfaceType::message_set_mode M{};
         M.mode = wlalat::UInt{2}; // server side mode
-        std::println(
-            "-> zxdg_toplevel_decoration_v1@{}.{}", _id.raw(), dump_message(M));
+        dump_egress_message(_id, M);
         _s.send(_id, M);
     }
 
@@ -911,10 +920,7 @@ struct XDGDecorManager
         InterfaceType::message_get_toplevel_decoration msg{};
         msg.id = wlalat::NewID{msg_id_obj};
         msg.toplevel = top_level.id();
-        std::println(
-            "-> zxdg_decoration_manager_v1@{}.{}",
-            _id.raw(),
-            dump_message(msg));
+        dump_egress_message(_id, msg);
         _s.send(_id, msg);
         O.emplace(ObjectIDManager::ID{msg.id}, _s);
         _disp.set_listener(msg_id_obj, O.value());
@@ -986,7 +992,7 @@ struct Registry
         bind_msg.id_version = bind_version;
         ObjectIDManager::ID new_id = _id_manager.allocate();
         bind_msg.id = new_id;
-        std::println("-> wl_registry@{}.{}", _id.raw(), dump_message(bind_msg));
+        dump_egress_message(_id, bind_msg);
         _s.send(_id, bind_msg);
         return new_id;
     }
@@ -1047,8 +1053,8 @@ try {
     wayland::wl_display::message_get_registry m{};
     m.registry = registry_tag;
 
-    std::println("-> wl_display@1.{}", dump_message(m));
-    s.send(wlalat::Object{1}, m);
+    dump_egress_message(protocol_hardcoded_display_object_id, m);
+    s.send(protocol_hardcoded_display_object_id, m);
 
     auto last_message = std::chrono::steady_clock::now();
 
