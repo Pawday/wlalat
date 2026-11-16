@@ -217,12 +217,12 @@ struct TypeFormatVis
 
     void my_format(const wlalat::NewID &v)
     {
-        std::format_to(O, "(new_id)@{}", v.raw());
+        std::format_to(O, "(new_id)#{}", v.raw());
     }
 
     void my_format(const wlalat::Object &v)
     {
-        std::format_to(O, "(object)@{}", v.raw());
+        std::format_to(O, "(object)#{}", v.raw());
     }
 
     void my_format(const wlalat::Int &v)
@@ -272,14 +272,14 @@ template <typename MsgT>
 void dump_ingress_message(wlalat::Object id, const MsgT &M)
 {
     auto &name = MsgT::InterfaceType::Meta::name;
-    std::println("<- {}@{}.{}", name, id.raw(), dump_message(M));
+    std::println("<- {}#{}.{}", name, id.raw(), dump_message(M));
 }
 
 template <typename MsgT>
 void dump_egress_message(wlalat::Object id, const MsgT &M)
 {
     auto &name = MsgT::InterfaceType::Meta::name;
-    std::println("-> {}@{}.{}", name, id.raw(), dump_message(M));
+    std::println("-> {}#{}.{}", name, id.raw(), dump_message(M));
 }
 
 template <typename... Alternatives>
@@ -386,7 +386,7 @@ struct SocketEventDispatcher
         auto listener_it = _listeners.find(H.object_id);
         if (listener_it == std::end(_listeners)) {
             auto msg =
-                std::format("Missing listener for object@{}", H.object_id);
+                std::format("Missing listener for object #{}", H.object_id);
             std::println("[WARN]: {}", msg);
             return false;
         }
