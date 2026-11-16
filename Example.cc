@@ -342,23 +342,20 @@ struct SocketEventDispatcher
     template <typename LType>
     void set_listener(wlalat::Object object_id, LType &L)
     {
-        using InterfaceT = typename LType::InterfaceType;
-        using EventsVariantId = InterfaceT::template Events<MessageVariantId>;
-        EventsVariantId event_id{};
         _listeners.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(object_id.raw()),
-            std::forward_as_tuple(_s, std::addressof(L), event_id));
+            std::forward_as_tuple(object_id, _s, std::addressof(L)));
     }
 
-    void remove_listener(uint_least32_t object_id)
+    void remove_listener(wlalat::Object object_id)
     {
-        auto listener_it = _listeners.find(object_id);
+        auto listener_it = _listeners.find(object_id.raw());
         if (listener_it == std::end(_listeners)) {
             auto msg = std::format(
                 "SocketEventDispatcher::remove_listener({}): Listener does not "
                 "exist",
-                object_id);
+                object_id.raw());
             throw std::runtime_error{std::move(msg)};
         }
         _listeners.erase(listener_it);
@@ -385,11 +382,10 @@ struct SocketEventDispatcher
   private:
     struct Listener
     {
-        template <typename LType, typename EventVarintT>
-        Listener(
-            wlalat::Unix::Socket &s, LType *l, std::type_identity<EventVarintT>)
-            : _s{s}, _l_ptr{l},
-              V_recv_dispatch{&Listener::T_recv_dispatch<EventVarintT, LType>}
+        template <typename LType>
+        Listener(wlalat::Object object_id, wlalat::Unix::Socket &s, LType *l)
+            : _object_id{object_id}, _s{s}, _l_ptr{l},
+              V_recv_dispatch{&Listener::T_recv_dispatch<LType>}
         {
         }
 
@@ -404,6 +400,7 @@ struct SocketEventDispatcher
             LType &L;
             uint_least16_t &opcode;
             wlalat::Unix::Socket &s;
+            wlalat::Object &_object_id;
 
             template <typename MessageT>
             bool operator()(const std::type_identity<MessageT> M)
@@ -415,6 +412,12 @@ struct SocketEventDispatcher
                 if (!m_op) {
                     throw std::runtime_error{m_op.error()};
                 }
+
+                std::println(
+                    "<- {}@{}.{}",
+                    LType::InterfaceType::Meta::name,
+                    _object_id.raw(),
+                    dump_message(m_op.value()));
                 L.on(m_op.value());
                 return true;
             }
@@ -425,15 +428,17 @@ struct SocketEventDispatcher
             }
         };
 
-        template <typename EventVarintT, typename LType>
+        template <typename LType>
         bool T_recv_dispatch(uint_least16_t opcode)
         {
+            using InterfaceT = typename LType::InterfaceType;
+            using EventsVariantId =
+                InterfaceT::template Events<MessageVariantId>;
             LType &L = *static_cast<LType *>(_l_ptr);
 
-            T_recv_dispatch_visitor V{L, opcode, _s};
+            T_recv_dispatch_visitor V{L, opcode, _s, _object_id};
 
-            for (auto msg_type_id :
-                 alternatives_array(std::type_identity<EventVarintT>{})) {
+            for (auto msg_type_id : alternatives_array(EventsVariantId{})) {
                 if (std::visit(V, msg_type_id)) {
                     return true;
                 }
@@ -442,6 +447,7 @@ struct SocketEventDispatcher
             return false;
         }
 
+        wlalat::Object _object_id;
         wlalat::Unix::Socket &_s;
         void *_l_ptr;
         bool (Listener::*const V_recv_dispatch)(uint_least16_t opcode);
@@ -471,7 +477,6 @@ struct Callback
 
     void on(const InterfaceType::message_done &M)
     {
-        std::println("<- wl_callback@{}.{}", _id.raw(), dump_message(M));
         _done_msg = M;
     }
 
@@ -511,13 +516,11 @@ struct Display
 
     void on(const wayland::wl_display::message_error &m)
     {
-        std::println("<- wl_display@1.{}", dump_message(m));
     }
 
     void on(const wayland::wl_display::message_delete_id &m)
     {
-        std::println("<- wl_display@1.{}", dump_message(m));
-        _disp.remove_listener(m.id);
+        _disp.remove_listener(wlalat::Object{m.id});
         _id_manager.deallocate(ObjectIDManager::ID{m.id});
 
         auto sync_obj_it = _sync_callbacks.find(m.id);
@@ -577,7 +580,6 @@ struct Surface
     template <typename EventT>
     void on(const EventT &ev)
     {
-        std::println("<- wl_surface@{}.{}", _id.raw(), dump_message(ev));
     }
 
   private:
@@ -618,7 +620,6 @@ struct Buffer
     void on(const wayland::wl_buffer::message_release &m)
     {
         released = true;
-        std::println("<- wl_buffer@{}.{}", _id.raw(), dump_message(m));
     }
 
     auto id() const
@@ -659,7 +660,6 @@ struct ShmPool
     template <typename EventT>
     void on(const EventT &ev)
     {
-        std::println("<- wl_shm_pool@{}.{}", _id.raw(), dump_message(ev));
     }
 
   private:
@@ -739,7 +739,6 @@ struct Shm
 
     void on(wayland::wl_shm::message_format fmt)
     {
-        std::println("<- wl_shm@{}.{}", _id.raw(), dump_message(fmt));
     }
 
   private:
@@ -759,12 +758,10 @@ struct XDGTopLevel
     template <typename EventT>
     void on(const EventT &ev)
     {
-        std::println("<- xdg_toplevel@{}.{}", _id.raw(), dump_message(ev));
     }
 
     void on(const xdg_shell::xdg_toplevel::message_close &ev)
     {
-        std::println("<- xdg_toplevel@{}.{}", _id.raw(), dump_message(ev));
         _close_flag = true;
     }
 
@@ -793,7 +790,6 @@ struct XDGSurface
 
     void on(const xdg_shell::xdg_surface::message_configure &M)
     {
-        std::println("<- xdg_surface@{}.{}", _id.raw(), dump_message(M));
         ack_configure(M.serial);
         configured = true;
     }
@@ -835,7 +831,6 @@ struct XDGBase
 
     void on(const xdg_shell::xdg_wm_base::message_ping &M)
     {
-        std::println("<- xdg_wm_base@{}.{}", _id.raw(), dump_message(M));
         pong(M.serial);
     }
 
@@ -876,8 +871,6 @@ struct XDGDecorTopLevel
 
     void on(const InterfaceType::message_configure &M)
     {
-        std::println(
-            "<- zxdg_toplevel_decoration_v1@{}.{}", _id.raw(), dump_message(M));
     }
 
     void set_server_side()
@@ -953,7 +946,6 @@ struct Registry
         uint32_t name = msg.name;
         std::string_view interface{msg.interface};
         uint32_t version = msg.version;
-        std::println("<- wl_registry@{}.{}", _id.raw(), dump_message(msg));
 
         Global new_global;
         new_global.numeric_name = name;
@@ -1001,7 +993,6 @@ struct Registry
 
     void on(const wayland::wl_registry::message_global_remove &msg)
     {
-        std::println("<- wl_registry@{}.{}", _id.raw(), dump_message(msg));
     }
 
   private:
